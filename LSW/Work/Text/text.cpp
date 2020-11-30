@@ -6,13 +6,17 @@ namespace LSW {
 
 			void Text::_think_lines()
 			{
+				if (!fontt) return;
+
 				const auto delta_t = get_direct<std::chrono::milliseconds>(text::e_chronomillis_readonly::LAST_UPDATE_STRING);
 				const auto ups_val = get_direct<double>(text::e_double::UPDATES_PER_SECOND);
-				const auto max_length_line_size = get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE) * get_direct<int>(text::e_integer::FONT_SIZE) / (get_direct<double>(sprite::e_double::SCALE_G) * get_direct<double>(sprite::e_double::SCALE_X));
+				const auto max_length_line_size = get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE) * fontt.get_line_height() / (get_direct<double>(sprite::e_double::SCALE_G) * get_direct<double>(sprite::e_double::SCALE_X));
 				const auto max_length_total = get_direct<int>(text::e_integer::TOTAL_TEXT_MAX_LENGTH);
 				const auto max_length_line = get_direct<int>(text::e_integer::LINE_MAX_LENGTH);
 				const auto max_lines = get_direct<int>(text::e_integer::MAX_LINES_AMOUNT);
 				const auto scroll_on_line_limit = get_direct<bool>(text::e_boolean::SCROLL_INSTEAD_OF_MAX_LEN_SIZE_BLOCK);
+				const auto scroll_movement = get_direct<double>(text::e_double::SCROLL_SPEED);
+				const auto scroll_offset = get_direct<int>(text::e_integer::SCROLL_TICKS_PAUSED_SIDES);
 
 				//TOTAL_TEXT_MAX_LENGTH, LINE_MAX_LENGTH, MAX_LINES_AMOUNT
 
@@ -41,12 +45,50 @@ namespace LSW {
 						auto line = p_str.substr(0, pos);
 
 						if (max_length_line && line.size_utf8() > static_cast<size_t>(max_length_line)) {
-							while (line.size_utf8() > static_cast<size_t>(max_length_line)) line.pop_utf8();
+							if (scroll_movement == 0.0) {
+								while (line.size_utf8() > static_cast<size_t>(max_length_line)) line.pop_utf8();
+							}
+							else {
+								size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (line.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
+
+								if (cut <= static_cast<size_t>(scroll_offset)) cut = 0;
+								else cut -= static_cast<size_t>(scroll_offset);
+								// from now, [0, len + scroll_offset)
+
+								if (cut >= line.size()) cut = line.size() - 1;
+								// done
+
+								//const double targ_siz = max_length_line_size; title.get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE);
+								//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
+								//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
+
+								for (size_t k = 0; k < cut && line.size_utf8() > static_cast<size_t>(max_length_line); k++) line.pop_front_utf8();
+								while (line.size_utf8() > static_cast<size_t>(max_length_line)) line.pop_utf8();
+							}
 							pos = line.size();
 							if (pos) pos--; // last char is erased if not because of + 1 later there
 						}
 						if (max_length_line_size > 0.0 && !scroll_on_line_limit && fontt.get_width(line.s_str().c_str()) > max_length_line_size) {
-							while (fontt.get_width(line.s_str().c_str()) > max_length_line_size) line.pop_utf8();
+							if (scroll_movement == 0.0) {
+								while (fontt.get_width(line.s_str().c_str()) > max_length_line_size) line.pop_utf8();
+							}
+							else {
+								size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (line.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
+
+								if (cut <= static_cast<size_t>(scroll_offset)) cut = 0;
+								else cut -= static_cast<size_t>(scroll_offset);
+								// from now, [0, len + scroll_offset)
+
+								if (cut >= line.size()) cut = line.size() - 1;
+								// done
+
+								//const double targ_siz = max_length_line_size; title.get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE);
+								//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
+								//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
+
+								for (size_t k = 0; k < cut && fontt.get_width(line.s_str().c_str()) > max_length_line_size; k++) line.pop_front_utf8();
+								while (fontt.get_width(line.s_str().c_str()) > max_length_line_size) line.pop_utf8();
+							}
 							pos = line.size();
 							if (pos) pos--; // last char is erased if not because of + 1 later there
 						}
@@ -88,17 +130,64 @@ namespace LSW {
 
 					if (max_length_line_size > 0.0 && scroll_on_line_limit) {
 						for (auto& i : _buf_lines) {
-							while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_front_utf8();
+							//while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_front_utf8();
+
+							if (max_length_line && i.size_utf8() > static_cast<size_t>(max_length_line)) {
+								if (scroll_movement == 0.0) {
+									while (i.size_utf8() > static_cast<size_t>(max_length_line)) i.pop_utf8();
+								}
+								else {
+									size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (i.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
+
+									if (cut <= static_cast<size_t>(scroll_offset)) cut = 0;
+									else cut -= static_cast<size_t>(scroll_offset);
+									// from now, [0, len + scroll_offset)
+
+									if (cut >= i.size()) cut = i.size() - 1;
+									// done
+
+									//const double targ_siz = max_length_line_size; title.get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE);
+									//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
+									//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
+
+									for (size_t k = 0; k < cut && i.size_utf8() > static_cast<size_t>(max_length_line); k++) i.pop_front_utf8();
+									while (i.size_utf8() > static_cast<size_t>(max_length_line)) i.pop_utf8();
+								}
+							}
+							if (max_length_line_size > 0.0 && fontt.get_width(i.s_str().c_str()) > max_length_line_size) {
+								if (scroll_movement == 0.0) {
+									while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_utf8();
+								}
+								else {
+									size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (i.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
+
+									if (cut <= static_cast<size_t>(scroll_offset)) cut = 0;
+									else cut -= static_cast<size_t>(scroll_offset);
+									// from now, [0, len + scroll_offset)
+
+									if (cut >= i.size()) cut = i.size() - 1;
+									// done
+
+									//const double targ_siz = max_length_line_size; title.get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE);
+									//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
+									//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
+
+									for (size_t k = 0; k < cut && fontt.get_width(i.s_str().c_str()) > max_length_line_size; k++) i.pop_front_utf8();
+									while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_utf8();
+								}
+							}
+
 						}
 					}
 
+					set<uintptr_t>(text::e_uintptrt_readonly::LAST_CALCULATED_LINE_AMOUNT, _buf_lines.size());
 					set(text::e_boolean_readonly::REACHED_LIMIT, got_limited);
 				}
 			}
 			
 			void Text::_draw_text(Interface::Camera& ruler)
 			{
-				if (!_buf_lines.size()) return; // nothing to draw
+				if (!_buf_lines.size() || !fontt) return; // nothing to draw
 
 				double off_x = 0.0;
 				double off_y = 0.0;
@@ -115,7 +204,7 @@ namespace LSW {
 				const auto scale_y = get_direct<double>(sprite::e_double::SCALE_Y);
 				const auto posx = get_direct<double>(sprite::e_double_readonly::POSX);
 				const auto posy = get_direct<double>(sprite::e_double_readonly::POSY);
-				const auto font_siz = get_direct<int>(text::e_integer::FONT_SIZE);
+				const auto font_siz = fontt.get_line_height();
 				const auto lineadj = get_direct<double>(text::e_double::LINE_ADJUST);
 				const auto force_color = get_direct<bool>(text::e_boolean::USE_COLOR_INSTEAD_OF_AUTO);
 
@@ -175,7 +264,7 @@ namespace LSW {
 				const double y_offset = mode_y == 0 ? 0 : (mode_y == static_cast<int>(text::e_text_y_modes::CENTER) ? (0.5 * height * (_buf_lines.size() - 1)) : (height * (_buf_lines.size() - 1)));
 
 				for (size_t o = 0; o < _buf_lines.size(); o++) {
-					const auto& i = _buf_lines[o];
+					const auto i = _buf_lines[o];
 
 					if (should_care_about_shadow) {
 						shadow_cam.apply();
@@ -272,6 +361,7 @@ namespace LSW {
 				set<Interface::Color>(text::e_color_defaults);
 				set<int>(text::e_integer_defaults);
 				set<bool>(text::e_boolean_defaults);
+				set<uintptr_t>(text::e_uintptrt_defaults);
 
 				set(Work::text::e_color::SHADOW_COLOR, Interface::Color(0, 0, 0));
 				set(text::e_chronomillis_readonly::LAST_UPDATE_BITMAP, MILLI_NOW);
@@ -331,7 +421,9 @@ namespace LSW {
 
 			bool Text::check_fit(Tools::Cstring p_str) const
 			{
-				const auto max_length_line_size = get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE) * get_direct<int>(text::e_integer::FONT_SIZE) / (get_direct<double>(sprite::e_double::SCALE_G) * get_direct<double>(sprite::e_double::SCALE_X));
+				if (!fontt) return false;
+
+				const auto max_length_line_size = get_direct<double>(text::e_double::MAX_TEXT_LENGTH_SIZE) * fontt.get_line_height() / (get_direct<double>(sprite::e_double::SCALE_G) * get_direct<double>(sprite::e_double::SCALE_X));
 				const auto max_length_total = get_direct<int>(text::e_integer::TOTAL_TEXT_MAX_LENGTH);
 				const auto max_length_line = get_direct<int>(text::e_integer::LINE_MAX_LENGTH);
 				const auto max_lines = get_direct<int>(text::e_integer::MAX_LINES_AMOUNT);

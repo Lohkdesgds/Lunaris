@@ -383,7 +383,9 @@ namespace LSW {
 			{
 				if (xx >= display::minimum_display_size[0]) {
 					new_resolution[0] = xx;
-					if (disp) al_resize_display(disp.get(), new_resolution[0], get_height());
+					if (disp) {
+						add_once_task([&] { return al_resize_display(disp.get(), new_resolution[0], get_height()); });
+					}
 				}
 			}
 						
@@ -391,7 +393,9 @@ namespace LSW {
 			{
 				if (yy >= display::minimum_display_size[1]) {
 					new_resolution[1] = yy;
-					if (disp) al_resize_display(disp.get(), get_width(), new_resolution[1]);
+					if (disp) {
+						add_once_task([&] { return al_resize_display(disp.get(), get_width(), new_resolution[1]); });
+					}
 				}
 			}
 						

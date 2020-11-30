@@ -19,11 +19,12 @@ namespace LSW {
 
 				enum class e_chronomillis_readonly { LAST_UPDATE_BITMAP, LAST_UPDATE_STRING };
 				enum class e_boolean_readonly { REACHED_LIMIT };
+				enum class e_uintptrt_readonly { LAST_CALCULATED_LINE_AMOUNT };
 
 				enum class e_cstring { STRING };
-				enum class e_double { SHADOW_DISTANCE_X, SHADOW_DISTANCE_Y, TEXT_UPDATE_TIME, BUFFER_SCALE_RESOLUTION, UPDATES_PER_SECOND, LINE_ADJUST, MAX_TEXT_LENGTH_SIZE };
+				enum class e_double { SHADOW_DISTANCE_X, SHADOW_DISTANCE_Y, TEXT_UPDATE_TIME, BUFFER_SCALE_RESOLUTION, UPDATES_PER_SECOND, LINE_ADJUST, MAX_TEXT_LENGTH_SIZE, SCROLL_SPEED };
 				enum class e_color { SHADOW_COLOR };
-				enum class e_integer { STRING_MODE, STRING_Y_MODE, FONT_SIZE, TOTAL_TEXT_MAX_LENGTH, LINE_MAX_LENGTH, MAX_LINES_AMOUNT };
+				enum class e_integer { STRING_MODE, STRING_Y_MODE, TOTAL_TEXT_MAX_LENGTH, LINE_MAX_LENGTH, MAX_LINES_AMOUNT, SCROLL_TICKS_PAUSED_SIDES };
 				enum class e_boolean { USE_BITMAP_BUFFER, USE_COLOR_INSTEAD_OF_AUTO /*auto: &6gold&1blue*/, SCROLL_INSTEAD_OF_MAX_LEN_SIZE_BLOCK /*on max length in "pixels" but not in bytes, scroll?*/ };
 				enum class e_sprite_ref { FOLLOWING };
 
@@ -39,18 +40,22 @@ namespace LSW {
 					{0.0,																										(e_double::SHADOW_DISTANCE_Y),							("shadow_distance_y")},
 					{1.0,																										(e_double::BUFFER_SCALE_RESOLUTION),					("buffer_scale_resolution")},
 					{2.0,																										(e_double::UPDATES_PER_SECOND),							("updates_per_second")},
-					{1.0,																										(e_double::LINE_ADJUST),								("line_adjust")}
+					{1.0,																										(e_double::LINE_ADJUST),								("line_adjust")},
+					{0.0,																										(e_double::SCROLL_SPEED),								("scroll_speed")} // 0.0 = no scroll
 				};
 				const Tools::SuperMap<Tools::FastFunction<Interface::Color>>				e_color_defaults = {
 					{Interface::Color(),																						(e_color::SHADOW_COLOR),								("shadow_color")}
 				};
+				const Tools::SuperMap<Tools::FastFunction<uintptr_t>>						e_uintptrt_defaults = {
+					{(uintptr_t)0,																								(e_uintptrt_readonly::LAST_CALCULATED_LINE_AMOUNT),		("last_calculated_line_amount")}
+				};
 				const Tools::SuperMap<Tools::FastFunction<int>>								e_integer_defaults = {
 					{0,																											(e_integer::STRING_MODE),								("string_mode")},
 					{0,																											(e_integer::STRING_Y_MODE),								("string_y_mode")},
-					{75,																										(e_integer::FONT_SIZE),									("font_size")},
 					{0,																											(e_integer::TOTAL_TEXT_MAX_LENGTH),						("total_text_max_length")},
 					{0,																											(e_integer::LINE_MAX_LENGTH),							("line_max_length")},
-					{0,																											(e_integer::MAX_LINES_AMOUNT),							("max_lines_amount")}
+					{0,																											(e_integer::MAX_LINES_AMOUNT),							("max_lines_amount")},
+					{5,																											(e_integer::SCROLL_TICKS_PAUSED_SIDES),					("scroll_ticks_paused_sides")} // if X at SCROLL_SPEED, 1/X * second(s) paused end/begin
 				};
 				const Tools::SuperMap<Tools::FastFunction<bool>>							e_boolean_defaults = {
 					{false,																										(e_boolean_readonly::REACHED_LIMIT),					("reached_limit")},

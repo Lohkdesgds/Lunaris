@@ -21,7 +21,7 @@ namespace LSW {
 			};
 
 			/// <summary>
-			/// <para>String, but with colors. Only 16 colors are supported. &HEX translates to color, like "&1Blue &4Red &6Gold &fstrings".</para>
+			/// <para>String, but with colors. Only 16 colors are supported. &amp;HEX translates to color, like "&amp;1Blue &amp;4Red &amp;6Gold &amp;fstrings".</para>
 			/// </summary>
 			class Cstring {
 				std::vector<char_c> str;
