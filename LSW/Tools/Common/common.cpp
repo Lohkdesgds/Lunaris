@@ -207,6 +207,11 @@ namespace LSW {
 				return str;
 			}
 
+			bool operator==(const std::any& a, const std::any& b)
+			{
+				return a.type() == b.type() && memcmp(&a, &b, sizeof(std::any)) == 0;
+			}
+
 		}
 	}
 }

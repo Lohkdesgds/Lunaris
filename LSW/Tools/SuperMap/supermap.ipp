@@ -44,9 +44,7 @@ namespace LSW {
 			inline void SuperMap<T>::add(const SuperMap& mp)
 			{
 				for (auto& i : mp.sps) {
-					SuperPair<T> spp;
-					spp = i;
-					add(spp);
+					add(i);
 				}
 			}
 
@@ -69,7 +67,17 @@ namespace LSW {
 			template<typename T>
 			inline void SuperMap<T>::add(const SuperPair<T>& sp)
 			{
-				sps.push_back(sp);
+				bool found = false;
+				for (auto& i : sps) {
+					if (i.is_similar(sp)) {
+						i.update_or_set(sp);
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					sps.push_back(sp);
+				}
 			}
 
 			template<typename T>

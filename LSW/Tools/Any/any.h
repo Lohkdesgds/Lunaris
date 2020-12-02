@@ -24,18 +24,18 @@ namespace LSW {
 				template<typename... Args> Any(Args...);
 
 				/// <summary>
-				/// <para>Set a string as variable (internally  it will be saved as std::string).</para>
-				/// </summary>
-				/// <param name="{char*}">String.</param>
-				/// <returns>{Any&} itself</returns>
-				Any& operator=(char*);
-
-				/// <summary>
-				/// <para>Set a string as variable (internally  it will be saved as std::string).</para>
+				/// <para>Set a string as variable (internally it will be saved as std::string).</para>
 				/// </summary>
 				/// <param name="{char*}">String.</param>
 				/// <returns>{Any&} itself</returns>
 				Any& operator=(const char*);
+
+				/// <summary>
+				/// <para>Compare internal data.</para>
+				/// <para>THIS IS EXPERIMENTAL AND ONLY WORKS WITH POD/SMALL DATA!</para>
+				/// </summary>
+				/// <returns>{bool} True if equal.</returns>
+				bool operator==(const Any&) const;
 
 				/// <summary>
 				/// <para>Get value directly.</para>

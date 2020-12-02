@@ -117,6 +117,19 @@ namespace LSW {
 				/// <returns>{T} The value's reference.</returns>
 				const T& get_value() const;
 
+				/// <summary>
+				/// <para>It they share any key, true.</para>
+				/// </summary>
+				/// <param name="{SuperPair}">Another SuperPair.</param>
+				/// <returns>{bool} True if similar (share at least one key).</returns>
+				bool is_similar(const SuperPair&) const;
+
+				/// <summary>
+				/// <para>Update matching types to this.</para>
+				/// </summary>
+				/// <param name="{SuperPair}">Another SuperPair.</param>
+				void update_or_set(const SuperPair&);
+
 
 				/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 

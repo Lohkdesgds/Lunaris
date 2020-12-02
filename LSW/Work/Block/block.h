@@ -101,6 +101,12 @@ namespace LSW {
 				void clone(const Block&);
 
 				/// <summary>
+				/// <para>Clone other Block Bitmaps.</para>
+				/// </summary>
+				/// <param name="{Block}">Other to copy from.</param>
+				void clone_bitmaps(const Block&);
+
+				/// <summary>
 				/// <para>Add a Bitmap to be drawn here (more than 1 = "slideshow").</para>
 				/// </summary>
 				/// <param name="{Bitmap}">A Bitmap.</param>

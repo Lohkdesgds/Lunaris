@@ -7,6 +7,7 @@
 #include <numeric>
 #include <thread>
 #include <random>
+#include <any>
 #include <stdarg.h>
 #include <limits.h>
 
@@ -154,6 +155,15 @@ namespace LSW {
 			/// <param name="{...}">The arguments.</param>
 			/// <returns>{std::string} Returns the string generated.</returns>
 			std::string sprintf_a(const char*, ...);
+
+			/// <summary>
+			/// <para>Compare internal data.</para>
+			/// <para>THIS IS EXPERIMENTAL AND ONLY WORKS WITH POD/SMALL DATA!</para>
+			/// </summary>
+			/// <param name="{std::any}">One.</param>
+			/// <param name="{std::any}">Another.</param>
+			/// <returns>{bool} True if equal.</returns>
+			bool operator==(const std::any&, const std::any&);
 
 		}
 	}

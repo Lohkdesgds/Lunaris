@@ -338,9 +338,3 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-
-LSW/whatever.ogg
-LSW/older_tests.txt
-LSW/test_example.txt
-LSW_final/LIB/
-LSW_final/SETUP.txt

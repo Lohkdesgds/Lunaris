@@ -150,6 +150,11 @@ namespace LSW {
 				set(block::e_chronomillis_readonly::LAST_FRAME, MILLI_NOW);
 				//set(block::e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION, MILLI_NOW);
 			}
+
+			void Block::clone_bitmaps(const Block& other)
+			{
+				bitmaps = other.bitmaps;
+			}
 			
 			void Block::insert(const Interface::Bitmap& bmp)
 			{

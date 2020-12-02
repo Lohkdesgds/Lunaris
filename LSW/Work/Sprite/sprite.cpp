@@ -163,6 +163,7 @@ namespace LSW {
 				set<int>(*other.get<int>());
 				set<Interface::Color>(*other.get<Interface::Color>());
 				set<uintptr_t>(*other.get<uintptr_t>());
+				set(sprite::e_uintptrt::DATA_FROM, (uintptr_t)this);
 			}
 
 			void Sprite_Base::operator=(const Sprite_Base& oth)

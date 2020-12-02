@@ -1,3 +1,4 @@
+#include "superpair.h"
 #pragma once
 
 namespace LSW {
@@ -75,6 +76,36 @@ namespace LSW {
 			inline const T& SuperPair<T>::get_value() const
 			{
 				return holding;
+			}
+
+			template<typename T>
+			inline bool SuperPair<T>::is_similar(const SuperPair& sp) const
+			{
+				for (auto& i : keys) {
+					for (auto& j : sp.keys) {
+						if (i == j) return true;
+					}
+				}
+				return false;
+			}
+
+			template<typename T>
+			inline void SuperPair<T>::update_or_set(const SuperPair& sp)
+			{
+				for (auto& j : sp.keys) {
+					bool add = true;
+					for (auto& i : keys) {
+						if (i.type() == j.type()) {
+							i = j;
+							add = false;
+							break;
+						}
+					}
+					if (add) {
+						keys.push_back(j);
+					}
+				}
+				holding = sp.holding;
 			}
 
 			template<typename T>
