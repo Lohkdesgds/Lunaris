@@ -98,6 +98,7 @@ namespace LSW {
 					bool m_b = false;
 					bool file_write_enabled = false;
 					bool debug_to_file = true;
+					bool skip_any_debug = false;
 
 					/*ALLEGRO_EVENT_SOURCE evsrc = ALLEGRO_EVENT_SOURCE();
 
@@ -144,6 +145,12 @@ namespace LSW {
 				/// </summary>
 				/// <param name="{bool}">Flush to file, if file set?</param>
 				void debug_write_to_file(const bool);
+
+				/// <summary>
+				/// <para>Whether debug info is shown at all.</para>
+				/// </summary>
+				/// <param name="{bool}">Show all debug or ignore all.</param>
+				void show_debug_anywhere(const bool);
 
 				/// <summary>
 				/// <para>Send debug information via debugging channel (when DEBUG mode).</para>

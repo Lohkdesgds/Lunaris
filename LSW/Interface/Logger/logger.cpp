@@ -137,6 +137,11 @@ namespace LSW {
 			{
 				g.debug_to_file = b;
 			}
+
+			void Logger::show_debug_anywhere(const bool b)
+			{
+				g.skip_any_debug = !b;
+			}
 			
 			void Logger::_debug(const std::string& whr, const std::string& str)
 			{
@@ -152,8 +157,10 @@ namespace LSW {
 				g.dbgm.unlock();
 #endif
 				Logger logg;
-				if (g.debug_to_file) logg << L::SLF << whr << "&7" << str << L::ELF;
-				else				 logg << L::SL  << whr << "&7" << str << L::EL;
+				if (!g.skip_any_debug) {
+					if (g.debug_to_file) logg << L::SLF << whr << "&7" << str << L::ELF;
+					else				 logg << L::SL << whr << "&7" << str << L::EL;
+				}
 			}
 			
 			void Logger::hook(std::function<void(const Tools::Cstring&)> f)

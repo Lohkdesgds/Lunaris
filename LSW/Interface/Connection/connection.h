@@ -94,8 +94,8 @@ namespace LSW {
 				size_t last_ping = 0;
 
 
-				std::function<void(const std::string&)> alt_receive_autodiscard; // your handle, no saving. It calls this instead.
-				std::function<std::string(void)>		alt_generate_auto;		 // it will read only from this if set.
+				std::function<void(const uintptr_t, const std::string&)> alt_receive_autodiscard; // your handle, no saving. It calls this instead.
+				std::function<std::string(void)>						 alt_generate_auto;		 // it will read only from this if set.
 
 				void handle_send(Tools::boolThreadF);
 				void handle_recv(Tools::boolThreadF);
@@ -177,7 +177,7 @@ namespace LSW {
 				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
 				/// </summary>
 				/// <param name="{std::function}">The function to handle small package reading.</param>
-				void overwrite_reads_to(std::function<void(const std::string&)>);
+				void overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)>);
 
 				/// <summary>
 				/// <para>Set a function to handle SEND RAW data.</para>
@@ -196,6 +196,13 @@ namespace LSW {
 				/// <para>Resets to default way of handling packages.</para>
 				/// </summary>
 				void reset_overwrite_sends();
+
+				/// <summary>
+				/// <para>Set performance mode in connection threads.</para>
+				/// <para>This may affect maximum bandwidth.</para>
+				/// </summary>
+				/// <param name="{performance_mode}">Performance mode.</param>
+				void set_mode(const Tools::superthread::performance_mode);
 			};
 
 			/// <summary>
@@ -210,12 +217,17 @@ namespace LSW {
 
 				size_t max_connections_allowed = 1;
 
-				Tools::SuperThread<> handle_thread{ Tools::superthread::performance_mode::PERFORMANCE };
+				Tools::SuperThread<> handle_thread { Tools::superthread::performance_mode::VERY_LOW_POWER };
+				Tools::SuperThread<> handle_disc_thread{ Tools::superthread::performance_mode::EXTREMELY_LOW_POWER };
 
 				Tools::Waiter connection_event;
 				std::vector<std::shared_ptr<Connection>> connections;
 				mutable Tools::SuperMutex connections_m;
 
+				std::function<void(std::shared_ptr<Connection>)> new_connection_f; // handle new connection automatically
+				std::function<void(const uintptr_t)> disconnected_f; // handle disconnected event automatically
+
+				void handle_disconnects(Tools::boolThreadF);
 				void handle_queue(Tools::boolThreadF);
 
 				void init();
@@ -273,8 +285,59 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{std::shared_ptr} The connection smart pointer.</returns>
 				std::shared_ptr<Connection> get_latest_connection();
+
+				/// <summary>
+				/// <para>Set a function to handle new connections directly.</para>
+				/// <para>PS: This received the shared pointer exactly before adding into the vector!</para>
+				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
+				/// </summary>
+				/// <param name="{std::function}">The function to handle new connections.</param>
+				void overwrite_handle_new_connection(std::function<void(std::shared_ptr<Connection>)>);
+
+				/// <summary>
+				/// <para>Resets to default way of handling new connections.</para>
+				/// </summary>
+				void reset_overwrite_new_connection();
+
+				/// <summary>
+				/// <para>Set a function to handle disconnections directly.</para>
+				/// <para>PS: This received the uintptr_t exactly before deleting from vector!</para>
+				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
+				/// </summary>
+				/// <param name="{std::function}">The function to handle disconnections.</param>
+				void overwrite_handle_disconnected(std::function<void(const uintptr_t)>);
+
+				/// <summary>
+				/// <para>Resets to default way of handling disconnections.</para>
+				/// </summary>
+				void reset_overwrite_disconnected();
 			};
 
+			/// <summary>
+			/// <para>Transforms anything to std::string directly for you (using memcpy_s).</para>
+			/// </summary>
+			/// <param name="{void*}">Some data.</param>
+			/// <param name="{size_t}">Data's size.</param>
+			/// <returns>{std::string} This data 'converted' to a string.</returns>
+			std::string transform_any_to_package(void*, const size_t);
+
+			/// <summary>
+			/// <para>Transforms anything to std::string directly for you (using memcpy_s).</para>
+			/// </summary>
+			/// <param name="{void*}">Some data.</param>
+			/// <param name="{size_t}">Data's size.</param>
+			/// <param name="{errno_t}">If result is empty, this holds error (if memcpy_s failed).</param>
+			/// <returns>{std::string} This data 'converted' to a string.</returns>
+			std::string transform_any_to_package(void*, const size_t, errno_t&);
+
+			/// <summary>
+			/// <para>Transforms back a package 'converted' via transform_any_to_package.</para>
+			/// </summary>
+			/// <param name="{void*}">Data to be written.</param>
+			/// <param name="{size_t}">Data size.</param>
+			/// <param name="{std::string}">The string data to read from.</param>
+			/// <returns>{bool} True on success.</returns>
+			bool transform_any_package_back(void*, const size_t, const std::string&);
 		}
 	}
 }

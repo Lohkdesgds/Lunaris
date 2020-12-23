@@ -37,6 +37,11 @@ namespace LSW {
 					std::this_thread::sleep_for(std::chrono::milliseconds(8)); // top 125 loops
 					std::this_thread::yield();
 					break;
+				case superthread::performance_mode::EXTREMELY_LOW_POWER:
+					std::this_thread::yield();
+					std::this_thread::sleep_for(std::chrono::milliseconds(25)); // top 40 loops
+					std::this_thread::yield();
+					break;
 				case superthread::performance_mode::PERFORMANCE:
 					std::this_thread::yield();
 					std::this_thread::sleep_for(std::chrono::microseconds(100)); // top 10000 loops

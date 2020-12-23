@@ -44,11 +44,11 @@ namespace LSW {
 					MOUSE_CLICK_LAST_X, MOUSE_CLICK_LAST_Y,
 					REALISTIC_RESULT_POSX, REALISTIC_RESULT_POSY, REALISTIC_RESULT_SCALE_X, REALISTIC_RESULT_SCALE_Y
 				};
-				enum class e_boolean_readonly { COLLISION_MOUSE_PRESSED, COLLISION_MOUSE_CLICK, COLLISION_COLLIDED /* related to: LAST_COLLISION_TIME */, INVALIDATE_MOUSE_NOMOVE };
+				enum class e_boolean_readonly { COLLISION_MOUSE_PRESSED, COLLISION_MOUSE_CLICK, COLLISION_COLLIDED /* related to: LAST_COLLISION_TIME */, INVALIDATE_MOUSE_NOMOVE, IS_OUTSIDE_SCREEN };
 				enum class e_tief_readonly { LAST_STATE };
 
 				enum class e_string { ID };
-				enum class e_double { TARG_POSX, TARG_POSY, SCALE_X, SCALE_Y, SCALE_G, CENTER_X, CENTER_Y, TARG_ROTATION, ACCELERATION_X, ACCELERATION_Y, SPEEDXY_LIMIT, ELASTICITY_X, ELASTICITY_Y, ROUGHNESS };
+				enum class e_double { TARG_POSX, TARG_POSY, SCALE_X, SCALE_Y, SCALE_G, CENTER_X, CENTER_Y, TARG_ROTATION, ACCELERATION_X, ACCELERATION_Y, SPEEDXY_LIMIT, ELASTICITY_X, ELASTICITY_Y, ROUGHNESS, DISTANCE_DRAWING_SCALE };
 				enum class e_boolean { DRAW, USE_COLOR, AFFECTED_BY_CAM, DRAW_DOT, DRAW_COLOR_BOX, DRAW_DEBUG_BOX, RESPECT_CAMERA_LIMITS /*Readonly means no collision or acceleration, just f()*/ };
 				enum class e_integer { COLLISION_MODE };
 				enum class e_color { COLOR };
@@ -136,7 +136,8 @@ namespace LSW {
 					{0.3,															(e_double::SPEEDXY_LIMIT),							("speed_limit")},
 					{0.85,															(e_double::ELASTICITY_X),							("elasticity_x")},
 					{0.85,															(e_double::ELASTICITY_Y),							("elasticity_y")},
-					{0.98,															(e_double::ROUGHNESS),								("roughness")}
+					{0.98,															(e_double::ROUGHNESS),								("roughness")},
+					{0.98,															(e_double::DISTANCE_DRAWING_SCALE),					("distance_drawing_scale")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<bool>> e_boolean_defaults = {
@@ -144,6 +145,7 @@ namespace LSW {
 					{false,															(e_boolean_readonly::COLLISION_MOUSE_CLICK),		("collision_mouse_click")},
 					{false,															(e_boolean_readonly::COLLISION_COLLIDED),			("collision_collided")},
 					{false,															(e_boolean_readonly::INVALIDATE_MOUSE_NOMOVE),		("invalidate_mouse_nomove")},
+					{false,															(e_boolean_readonly::IS_OUTSIDE_SCREEN),			("is_outside_screen")},
 
 					{true,															(e_boolean::DRAW),									("draw")},
 					{false,															(e_boolean::USE_COLOR),								("use_color")},

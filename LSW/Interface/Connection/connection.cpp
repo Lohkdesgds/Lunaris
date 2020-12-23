@@ -241,7 +241,7 @@ namespace LSW {
 							}
 						}
 						else if (alt_receive_autodiscard) {
-							alt_receive_autodiscard(data);
+							alt_receive_autodiscard((uintptr_t)this, data);
 							debug(common + "(auto) tasked.");
 						}
 						else {
@@ -346,7 +346,7 @@ namespace LSW {
 				return last_ping;
 			}
 
-			void Connection::overwrite_reads_to(std::function<void(const std::string&)> ow)
+			void Connection::overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)> ow)
 			{
 				alt_receive_autodiscard = ow;
 			}
@@ -358,12 +358,34 @@ namespace LSW {
 
 			void Connection::reset_overwrite_reads()
 			{
-				alt_receive_autodiscard = std::function<void(const std::string&)>();
+				alt_receive_autodiscard = std::function<void(const uintptr_t, const std::string&)>();
 			}
 
 			void Connection::reset_overwrite_sends()
 			{
 				alt_generate_auto = std::function<std::string(void)>();
+			}
+
+			void Connection::set_mode(const Tools::superthread::performance_mode m)
+			{
+				send_thread.set_performance_mode(m);
+				recv_thread.set_performance_mode(m);
+			}
+
+			void Hosting::handle_disconnects(Tools::boolThreadF run)
+			{
+				while (run() && keep_connection) {
+					Tools::AutoLock safe(connections_m);
+
+					for (size_t p = 0; p < connections.size(); p++) {
+						if (!connections[p]->is_connected()) {
+							//printf_s("\nSomeone has disconnected!");
+
+							if (disconnected_f) disconnected_f((uintptr_t)connections[p].get());
+							connections.erase(connections.begin() + p--);
+						}
+					}
+				}
 			}
 
 			void Hosting::handle_queue(Tools::boolThreadF run)
@@ -383,18 +405,13 @@ namespace LSW {
 					}
 
 					//dis->start_internally_as_host(); // cause sended last time, so should receive so there's no error
-
 					Tools::AutoLock safe(connections_m);
+
+					if (new_connection_f) new_connection_f(dis);
+
 					connections.emplace_back(std::move(dis));
 
 					//printf_s("\nSomeone has connected!");
-
-					for (size_t p = 0; p < connections.size(); p++) {
-						if (!connections[p]->is_connected()) {
-							//printf_s("\nSomeone has disconnected!");
-							connections.erase(connections.begin() + p--);
-						}
-					}
 
 					connection_event.signal_one();
 				}
@@ -407,6 +424,8 @@ namespace LSW {
 				keep_connection = true;
 				handle_thread.set([&](Tools::boolThreadF f) { handle_queue(f); });
 				handle_thread.start();
+				handle_disc_thread.set([&](Tools::boolThreadF f) { handle_disconnects(f); });
+				handle_disc_thread.start();
 			}
 
 			Hosting::Hosting(const int port, const bool ipv6)
@@ -441,7 +460,13 @@ namespace LSW {
 					::closesocket(Listening);
 					Listening = INVALID_SOCKET;
 					handle_thread.join();
+					handle_disc_thread.join();
 					Tools::AutoLock luck(connections_m);
+
+					for (size_t p = 0; p < connections.size(); p++) {
+						if (disconnected_f) disconnected_f((uintptr_t)connections[p].get());
+					}
+
 					connections.clear();
 				}
 			}
@@ -474,6 +499,51 @@ namespace LSW {
 				return connections.back();
 			}
 
-		}
+			void Hosting::overwrite_handle_new_connection(std::function<void(std::shared_ptr<Connection>)> f)
+			{
+				Tools::AutoLock safe(connections_m);
+				new_connection_f = f;
+			}
+
+			void Hosting::reset_overwrite_new_connection()
+			{
+				Tools::AutoLock safe(connections_m);
+				new_connection_f = std::function<void(std::shared_ptr<Connection>)>();
+			}
+
+			void Hosting::overwrite_handle_disconnected(std::function<void(const uintptr_t)> f)
+			{
+				Tools::AutoLock safe(connections_m);
+				disconnected_f = f;
+			}
+
+			void Hosting::reset_overwrite_disconnected()
+			{
+				Tools::AutoLock safe(connections_m);
+				disconnected_f = std::function<void(const uintptr_t)>();
+			}
+
+			std::string transform_any_to_package(void* data, const size_t size)
+			{
+				errno_t ignor;
+				return transform_any_to_package(data, size, ignor);
+			}
+
+			std::string transform_any_to_package(void* data, const size_t size, errno_t& err)
+			{
+				if (!data || !size) return "";
+				std::string buf;
+				buf.resize(size);
+				if (err = memcpy_s(buf.data(), size, data, size)) return "";
+				return std::move(buf);
+			}
+
+			bool transform_any_package_back(void* data, const size_t size, const std::string& src)
+			{
+				if (src.size() != size) return false;
+				return memcpy_s(data, size, src.data(), src.size()) == 0;
+			}
+
+}
 	}
 }

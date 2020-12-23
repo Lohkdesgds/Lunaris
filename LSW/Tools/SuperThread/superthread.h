@@ -19,6 +19,7 @@ namespace LSW {
 					BALANCED, // up to 2000 events / sec
 					LOW_POWER, // up to 500 events / sec
 					VERY_LOW_POWER, // up to 125 events / sec
+					EXTREMELY_LOW_POWER, // up to 40 events / sec
 					PERFORMANCE, // up to 10000 events / sec
 					HIGH_PERFORMANCE // undefined max number of events
 				};

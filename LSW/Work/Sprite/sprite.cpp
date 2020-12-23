@@ -193,7 +193,10 @@ namespace LSW {
 			void Sprite_Base::draw(const Interface::Camera& cam, const bool run_anyway)
 			{
 				if (!run_anyway && get_direct<uintptr_t>(sprite::e_uintptrt::DATA_FROM) != (uintptr_t)this) return;  // only original copy should update parameters
-				if (is_eq(sprite::e_boolean::DRAW, false)) return;
+				if (is_eq(sprite::e_boolean::DRAW, false)) {
+					set(sprite::e_boolean_readonly::IS_OUTSIDE_SCREEN, true);
+					return;
+				}
 
 				//if (is_eq(sprite::e_boolean::DRAW_COLOR_BOX, true) || is_eq(sprite::e_boolean::DRAW_DOT, true)) {
 
@@ -220,6 +223,23 @@ namespace LSW {
 				}
 				_cleancam.apply();
 
+				const double calculated_scale_x = scale_g * scale_x;
+				const double calculated_scale_y = scale_g * scale_y;
+
+				// should draw
+				{
+					const double dist_range = get_direct<double>(sprite::e_double::DISTANCE_DRAWING_SCALE);
+					const double offset_scale_draw = get_direct<double>(sprite::e_double::DISTANCE_DRAWING_SCALE);
+
+					const double max_dist = (1.0 + (sqrt(calculated_scale_x * calculated_scale_x + calculated_scale_y * calculated_scale_y))); // this should work even with rotation because of the nature of the calculation lmao
+
+					if (fabs(real_targ_posx - _cleancam.get_classic().x) > (max_dist * 1.0 * dist_range / _cleancam.get_classic().sx) || fabs(real_targ_posy - _cleancam.get_classic().y) > (max_dist * 1.0 * dist_range / _cleancam.get_classic().sy)) {
+						set(sprite::e_boolean_readonly::IS_OUTSIDE_SCREEN, true);
+						//debug("[TESTING] SPRITE#" + std::to_string((uintptr_t)this) + " SKIPPED, OUT OF SCREEN!");
+						return; // should skip yeah
+					}
+				}
+
 				easy_collision.latest_camera = cam.get_classic();
 
 				// delta T calculation
@@ -234,7 +254,7 @@ namespace LSW {
 
 				// new position calculation
 
-				if (al_get_time() - last_update >= sprite::maximum_time_between_collisions) {
+				if (al_get_time() - last_update >= sprite::maximum_time_between_collisions || get_direct<bool>(sprite::e_boolean_readonly::IS_OUTSIDE_SCREEN)) {
 					set(sprite::e_double_readonly::ROTATION, targ_rotation);
 					set(sprite::e_double_readonly::POSX, real_targ_posx);
 					set(sprite::e_double_readonly::POSY, real_targ_posy);
@@ -249,8 +269,8 @@ namespace LSW {
 					set(sprite::e_double_readonly::PERC_CALC_SMOOTH, perc_run);
 				}
 
-				const double calculated_scale_x = scale_g * scale_x;
-				const double calculated_scale_y = scale_g * scale_y;
+				set(sprite::e_boolean_readonly::IS_OUTSIDE_SCREEN, false);
+
 
 				if (is_eq(sprite::e_boolean::DRAW_COLOR_BOX, true)) {
 
