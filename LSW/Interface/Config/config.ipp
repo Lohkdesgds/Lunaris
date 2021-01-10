@@ -22,6 +22,15 @@ namespace LSW {
 				}
 			}
 
+			template<typename T>
+			inline void Config::ensure(const std::string& sec, const std::string& key, const std::vector<T>& defval, const config::config_section_mode mode)
+			{
+				if (!has(sec, key, mode)) {
+					set(sec, mode);
+					set(sec, key, defval);
+				}
+			}
+
 			template<>
 			inline bool Config::get_as(const std::string& sec, const std::string& key) const
 			{

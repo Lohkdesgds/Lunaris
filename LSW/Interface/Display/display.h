@@ -132,7 +132,7 @@ namespace LSW {
 				/// <para>If greater than 0.0, it will create and use a second buffer as main display with the proportion (based on screen).</para>
 				/// <para>FOR SECURITY REASONS, you can't set more than 8.0 from here.</para>
 				/// </summary>
-				/// <param name="{double}">Scale of buffer, or no buffer if <= 0.0.</param>
+				/// <param name="{double}">Scale of buffer, or no buffer if &lt;= 0.0.</param>
 				void set_double_buffering_scale(const double);
 
 				/// <summary>
@@ -144,13 +144,13 @@ namespace LSW {
 				/// <summary>
 				/// <para>Set a Camera to be applied to drawing thread.</para>
 				/// </summary>
-				/// <param name="{std::shared_ptr}">The Camera smart pointer.</param>
+				/// <param name="{Camera}">The Camera smart pointer.</param>
 				void set_camera(const Camera&);
 
 				/// <summary>
 				/// <para>Set a function that gives a valid Camera to be applied to drawing thread.</para>
 				/// </summary>
-				/// <param name="{std::function}">The function that returns a Camera pointer.</param>
+				/// <param name="{std::function}">The function that returns a Camera.</param>
 				void set_camera(std::function<Camera(void)>);
 
 				/// <summary>
@@ -162,7 +162,7 @@ namespace LSW {
 				/// <summary>
 				/// <para>Gets the latest camera set in this Display (via set_camera).</para>
 				/// </summary>
-				/// <returns>{std::shared_ptr} The Camera.</returns>
+				/// <returns>{Camera&} The Camera.</returns>
 				Camera& get_current_camera();
 
 				/// <summary>

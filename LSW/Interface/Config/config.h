@@ -137,6 +137,16 @@ namespace LSW {
 				void ensure(const std::string&, const std::string&, const std::initializer_list<T>&, const config::config_section_mode);
 
 				/// <summary>
+				/// <para>Ensures if value is not present, your default value is set.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section name.</param>
+				/// <param name="{std::string}">Key name.</param>
+				/// <param name="{std::vector}">A default list-like value.</param>
+				/// <param name="{config::config_section_mode}">Mode it has to be.</param>
+				template <typename T>
+				void ensure(const std::string&, const std::string&, const std::vector<T>&, const config::config_section_mode);
+
+				/// <summary>
 				/// <para>Set a config value.</para>
 				/// </summary>
 				/// <param name="{std::string}">Section.</param>
@@ -296,6 +306,87 @@ namespace LSW {
 				/// <param name="{std::string}">Key.</param>
 				/// <param name="{std::initializer_list}">Values.</param>
 				void set(const std::string&, const std::string&, const std::initializer_list<unsigned long long>&);
+
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<std::string>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<bool>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<char>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<int>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<float>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<double>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<unsigned>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<long>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<long long>&);
+
+				/// <summary>
+				/// <para>Set values into a config key at once.</para>
+				/// </summary>
+				/// <param name="{std::string}">Section.</param>
+				/// <param name="{std::string}">Key.</param>
+				/// <param name="{std::vector}">Values.</param>
+				void set(const std::string&, const std::string&, const std::vector<unsigned long long>&);
 
 				/// <summary>
 				/// <para>Adds a comment to the config file.</para>

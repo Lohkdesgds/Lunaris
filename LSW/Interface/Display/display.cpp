@@ -204,7 +204,7 @@ namespace LSW {
 			{
 				Tools::AutoLock sync(sync_threads);
 
-				al_set_new_display_flags(new_display_flags_apply);
+				al_set_new_display_flags(new_display_flags_apply | (is_fullscreen ? ALLEGRO_FULLSCREEN_WINDOW : 0));
 				if (new_display_refresh_rate > 0) al_set_new_display_refresh_rate(new_display_refresh_rate);
 				al_set_new_display_option(ALLEGRO_VSYNC, should_vsync ? 1 : 2, ALLEGRO_SUGGEST); // vsync after via al_wait_for_vsync
 				// prettier drawings (anti aliasing on primitives)

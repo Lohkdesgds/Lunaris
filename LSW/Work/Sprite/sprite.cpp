@@ -227,15 +227,13 @@ namespace LSW {
 				const double calculated_scale_y = scale_g * scale_y;
 
 				// should draw
-				{
-					const double dist_range = get_direct<double>(sprite::e_double::DISTANCE_DRAWING_SCALE);
-					const double offset_scale_draw = get_direct<double>(sprite::e_double::DISTANCE_DRAWING_SCALE);
+				if (const double dist_range = get_direct<double>(sprite::e_double::DISTANCE_DRAWING_SCALE); dist_range > 0.0) {
 
 					const double max_dist = (1.0 + (sqrt(calculated_scale_x * calculated_scale_x + calculated_scale_y * calculated_scale_y))); // this should work even with rotation because of the nature of the calculation lmao
 
 					if (fabs(real_targ_posx - _cleancam.get_classic().x) > (max_dist * 1.0 * dist_range / _cleancam.get_classic().sx) || fabs(real_targ_posy - _cleancam.get_classic().y) > (max_dist * 1.0 * dist_range / _cleancam.get_classic().sy)) {
 						set(sprite::e_boolean_readonly::IS_OUTSIDE_SCREEN, true);
-						//debug("[TESTING] SPRITE#" + std::to_string((uintptr_t)this) + " SKIPPED, OUT OF SCREEN!");
+
 						return; // should skip yeah
 					}
 				}

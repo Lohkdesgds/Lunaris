@@ -137,7 +137,7 @@ namespace LSW {
 					{0.85,															(e_double::ELASTICITY_X),							("elasticity_x")},
 					{0.85,															(e_double::ELASTICITY_Y),							("elasticity_y")},
 					{0.98,															(e_double::ROUGHNESS),								("roughness")},
-					{0.98,															(e_double::DISTANCE_DRAWING_SCALE),					("distance_drawing_scale")}
+					{1.0,															(e_double::DISTANCE_DRAWING_SCALE),					("distance_drawing_scale")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<bool>> e_boolean_defaults = {

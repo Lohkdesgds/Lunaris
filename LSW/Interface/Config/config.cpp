@@ -376,6 +376,107 @@ namespace LSW {
 				set(sec, key, "{" + res + "}");
 			}
 
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<std::string>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					if (i.find(';')) throw Handling::Abort(__FUNCSIG__, "Invalid character ';' in multiple values configuration!");
+					res += i + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<bool>& vals)
+			{
+				std::string res;
+				for (auto i : vals) {
+					res += std::string(i ? "true" : "false") + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<char>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<int>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<float>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<double>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<unsigned>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<long>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<long long>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
+			void Config::set(const std::string& sec, const std::string& key, const std::vector<unsigned long long>& vals)
+			{
+				std::string res;
+				for (auto& i : vals) {
+					res += std::to_string(i) + ';';
+				}
+				if (res.length() > 1) res.pop_back();
+				set(sec, key, "{" + res + "}");
+			}
+
 			void Config::comment(const std::string& sec, std::string comment)
 			{
 				for (auto& i : comment) {
