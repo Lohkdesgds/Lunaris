@@ -111,7 +111,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<std::string> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -138,7 +138,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<bool> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -165,7 +165,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<char> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -193,7 +193,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<int> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -220,7 +220,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<float> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -247,7 +247,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<double> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -276,7 +276,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<unsigned> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -305,7 +305,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<long> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -334,7 +334,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<long long> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");
@@ -363,7 +363,7 @@ namespace LSW {
 				if (!_has(sec)) throw Handling::Abort(__FUNCSIG__, "There is no section called " + sec + " in this config file (" + path + ")");
 				std::vector<unsigned long long> vec;
 				auto& s = _get(sec);
-				for (auto& i : s.key_and_value) {
+				for (const auto& i : s.key_and_value) {
 					if (i.first == key) {
 						auto str = i.second;
 						if (str.empty() || str.front() != '{' || str.back() != '}') throw Handling::Abort(__FUNCSIG__, "Fatal error trying to recover array-type config.");

@@ -31,7 +31,7 @@ namespace LSW {
 
 			const Config::section& Config::_get(const std::string& sec) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.section_name == sec) {
 						return i;
 					}
@@ -42,7 +42,7 @@ namespace LSW {
 
 			bool Config::_has(const std::string& sec) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.section_name == sec) return true;
 				}
 				return false;
@@ -144,7 +144,7 @@ namespace LSW {
 					throw Handling::Abort(__FUNCSIG__, "Failed to create a buffer to flush config.");
 				}
 
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.mode != config::config_section_mode::SAVE) continue;
 					if (!i.section_comment.empty()) al_add_config_comment(conf, i.section_name.c_str(), i.section_comment.c_str());
 					for (auto& j : i.key_and_value) {
@@ -169,7 +169,7 @@ namespace LSW {
 
 			bool Config::has(const std::string& sec, const config::config_section_mode mode) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.section_name == sec) {
 						return i.mode == mode;
 					}
@@ -179,7 +179,7 @@ namespace LSW {
 
 			bool Config::has(const std::string& sec, const std::string& key, const config::config_section_mode mode) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.section_name == sec &&  i.mode == mode){
 						for (auto& j : i.key_and_value) {
 							if (j.first == key) {
@@ -193,7 +193,7 @@ namespace LSW {
 
 			bool Config::has(const std::string& sec) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.section_name == sec) {
 						return true;
 					}
@@ -203,7 +203,7 @@ namespace LSW {
 
 			bool Config::has(const std::string& sec, const std::string& key) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (i.section_name == sec) {
 						for (auto& j : i.key_and_value) {
 							if (j.first == key) {
@@ -278,8 +278,8 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<std::string>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
-					if (i.find(';')) throw Handling::Abort(__FUNCSIG__, "Invalid character ';' in multiple values configuration!");
+				for (const auto& i : vals) {
+					if (i.find(';') != std::string::npos) throw Handling::Abort(__FUNCSIG__, "Invalid character ';' in multiple values configuration!");
 					res += i + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -289,7 +289,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<bool>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::string(i ? "true" : "false") + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -299,7 +299,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<char>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -309,7 +309,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<int>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -319,7 +319,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<float>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -329,7 +329,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<double>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -339,7 +339,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<unsigned>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -349,7 +349,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<long>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -359,7 +359,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<long long>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -369,7 +369,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::initializer_list<unsigned long long>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -379,8 +379,9 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<std::string>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
-					if (i.find(';')) throw Handling::Abort(__FUNCSIG__, "Invalid character ';' in multiple values configuration!");
+				for (const auto& i : vals) {
+					if (i.find(';') != std::string::npos)
+						throw Handling::Abort(__FUNCSIG__, "Invalid character ';' in multiple values configuration!");
 					res += i + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -400,7 +401,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<char>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -410,7 +411,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<int>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -420,7 +421,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<float>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -430,7 +431,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<double>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -440,7 +441,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<unsigned>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -450,7 +451,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<long>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -460,7 +461,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<long long>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -470,7 +471,7 @@ namespace LSW {
 			void Config::set(const std::string& sec, const std::string& key, const std::vector<unsigned long long>& vals)
 			{
 				std::string res;
-				for (auto& i : vals) {
+				for (const auto& i : vals) {
 					res += std::to_string(i) + ';';
 				}
 				if (res.length() > 1) res.pop_back();
@@ -497,7 +498,7 @@ namespace LSW {
 
 			std::string Config::get(const std::string& sec, const std::string& key) const
 			{
-				for (auto& i : conff) {
+				for (const auto& i : conff) {
 					if (sec == i.section_name) {
 						for (auto& j : i.key_and_value) {
 							if (j.first == key) return j.second;
