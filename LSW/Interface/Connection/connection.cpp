@@ -200,6 +200,8 @@ namespace LSW {
 
 					debug(common + "RECV once.");
 
+					if (has_package()) package_come_wait.signal_all();
+
 					if (fi > 0) { // if one is _pack and there're more packs, they will not have _internal_pack in between
 
 						std::string data;
@@ -242,15 +244,18 @@ namespace LSW {
 						}
 						else if (alt_receive_autodiscard) {
 							alt_receive_autodiscard((uintptr_t)this, data);
+							package_come_wait.signal_all();
 							debug(common + "(auto) tasked.");
 						}
 						else {
 							packs_received.emplace_back(std::move(data));
+							package_come_wait.signal_all();
 							debug(common + "(default) tasked.");
 						}
 					}
 					else if (fi < 0) { // lost connection
 						keep_connection = false;
+						package_come_wait.signal_all();
 						break;
 					}
 				}
@@ -311,6 +316,13 @@ namespace LSW {
 			{
 				Tools::AutoLock luck(packs_received_m);
 				return packs_received.size();
+			}
+
+			bool Connection::wait_for_package(const std::chrono::milliseconds t)
+			{
+				if (has_package()) return true;
+				package_come_wait.wait_signal(t.count());
+				return has_package();
 			}
 
 			std::string Connection::get_next()

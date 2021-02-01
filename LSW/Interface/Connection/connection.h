@@ -93,6 +93,7 @@ namespace LSW {
 				size_t packages_recv = 0;
 				size_t last_ping = 0;
 
+				Tools::Waiter package_come_wait;
 
 				std::function<void(const uintptr_t, const std::string&)> alt_receive_autodiscard; // your handle, no saving. It calls this instead.
 				std::function<std::string(void)>						 alt_generate_auto;		 // it will read only from this if set.
@@ -138,6 +139,13 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{bool} True if has something to get.</returns>
 				bool has_package() const;
+
+				/// <summary>
+				/// <para>Wait some time for a package.</para>
+				/// </summary>
+				/// <param name="{std::chrono::milliseconds}">Timeout. 0 = Infinite.</param>
+				/// <returns>{bool} True if has something to get.</returns>
+				bool wait_for_package(const std::chrono::milliseconds = std::chrono::milliseconds(0));
 
 				/// <summary>
 				/// <para>Get next package.</para>
