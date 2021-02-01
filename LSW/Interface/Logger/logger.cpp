@@ -173,7 +173,7 @@ namespace LSW {
 				hook(std::function<void(const Tools::Cstring&)>());
 			}
 			
-			const Tools::Cstring& Logger::get_last_line() const
+			const Tools::Cstring& Logger::get_last_line()
 			{
 				return g.last_str;
 			}

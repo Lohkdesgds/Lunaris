@@ -499,25 +499,25 @@ namespace LSW {
 				return connections.back();
 			}
 
-			void Hosting::overwrite_handle_new_connection(std::function<void(std::shared_ptr<Connection>)> f)
+			void Hosting::on_new_connection(std::function<void(std::shared_ptr<Connection>)> f)
 			{
 				Tools::AutoLock safe(connections_m);
 				new_connection_f = f;
 			}
 
-			void Hosting::reset_overwrite_new_connection()
+			void Hosting::reset_on_new_connection()
 			{
 				Tools::AutoLock safe(connections_m);
 				new_connection_f = std::function<void(std::shared_ptr<Connection>)>();
 			}
 
-			void Hosting::overwrite_handle_disconnected(std::function<void(const uintptr_t)> f)
+			void Hosting::on_connection_close(std::function<void(const uintptr_t)> f)
 			{
 				Tools::AutoLock safe(connections_m);
 				disconnected_f = f;
 			}
 
-			void Hosting::reset_overwrite_disconnected()
+			void Hosting::reset_on_connection_close()
 			{
 				Tools::AutoLock safe(connections_m);
 				disconnected_f = std::function<void(const uintptr_t)>();

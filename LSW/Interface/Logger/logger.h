@@ -98,7 +98,7 @@ namespace LSW {
 					bool m_b = false;
 					bool file_write_enabled = false;
 					bool debug_to_file = true;
-					bool skip_any_debug = false;
+					bool skip_any_debug = true;
 
 					/*ALLEGRO_EVENT_SOURCE evsrc = ALLEGRO_EVENT_SOURCE();
 
@@ -133,24 +133,24 @@ namespace LSW {
 				/// <para>This has to be set just once. Logging is global.</para>
 				/// </summary>
 				/// <param name="{std::string}">The path (you can use %tags%).</param>
-				void init(std::string);
+				static void init(std::string);
 
 				/// <summary>
 				/// <para>Flush log file.</para>
 				/// </summary>
-				void flush();
+				static void flush();
 
 				/// <summary>
 				/// <para>Whether debug info is saved into the file or just shown in console.</para>
 				/// </summary>
 				/// <param name="{bool}">Flush to file, if file set?</param>
-				void debug_write_to_file(const bool);
+				static void debug_write_to_file(const bool);
 
 				/// <summary>
 				/// <para>Whether debug info is shown at all.</para>
 				/// </summary>
 				/// <param name="{bool}">Show all debug or ignore all.</param>
-				void show_debug_anywhere(const bool);
+				static void show_debug_anywhere(const bool);
 
 				/// <summary>
 				/// <para>Send debug information via debugging channel (when DEBUG mode).</para>
@@ -164,18 +164,18 @@ namespace LSW {
 				/// <para>Hook a function to be called every new line of logging.</para>
 				/// </summary>
 				/// <param name="{std::function}">A function to handle the logging data.</param>
-				void hook(std::function<void(const Tools::Cstring&)>);
+				static void hook(std::function<void(const Tools::Cstring&)>);
 
 				/// <summary>
 				/// <para>Unset the hook (optional logging function).</para>
 				/// </summary>
-				void unhook();
+				static void unhook();
 
 				/// <summary>
 				/// <para>Get last line sent in console.</para>
 				/// </summary>
 				/// <returns>{Cstring} The string</returns>
-				const Tools::Cstring& get_last_line() const;
+				static const Tools::Cstring& get_last_line();
 
 				/// <summary>
 				/// <para>Operator to write.</para>

@@ -176,7 +176,7 @@ namespace LSW {
 				/// <para>WARN: All data from RECV will be handled exclusively by your custom function if you set one!</para>
 				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
 				/// </summary>
-				/// <param name="{std::function}">The function to handle small package reading.</param>
+				/// <param name="{std::function}">The function to handle a complete package reading.</param>
 				void overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)>);
 
 				/// <summary>
@@ -184,7 +184,7 @@ namespace LSW {
 				/// <para>WARN: All data has to be SENT by this. This has to be the one generating strings. Send_package won't work.</para>
 				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
 				/// </summary>
-				/// <param name="{std::function}">The function to generate strings somehow. This should return empty string so it won't lock for much longer.</param>
+				/// <param name="{std::function}">The function to generate strings somehow. This should return empty string if no package yet, so it won't lock stuff.</param>
 				void overwrite_sends_to(std::function<std::string(void)>);
 
 				/// <summary>
@@ -292,12 +292,12 @@ namespace LSW {
 				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
 				/// </summary>
 				/// <param name="{std::function}">The function to handle new connections.</param>
-				void overwrite_handle_new_connection(std::function<void(std::shared_ptr<Connection>)>);
+				void on_new_connection(std::function<void(std::shared_ptr<Connection>)>);
 
 				/// <summary>
-				/// <para>Resets to default way of handling new connections.</para>
+				/// <para>Erase current new connection custom function.</para>
 				/// </summary>
-				void reset_overwrite_new_connection();
+				void reset_on_new_connection();
 
 				/// <summary>
 				/// <para>Set a function to handle disconnections directly.</para>
@@ -305,12 +305,12 @@ namespace LSW {
 				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
 				/// </summary>
 				/// <param name="{std::function}">The function to handle disconnections.</param>
-				void overwrite_handle_disconnected(std::function<void(const uintptr_t)>);
+				void on_connection_close(std::function<void(const uintptr_t)>);
 
 				/// <summary>
-				/// <para>Resets to default way of handling disconnections.</para>
+				/// <para>Erase current connection close custom function.</para>
 				/// </summary>
-				void reset_overwrite_disconnected();
+				void reset_on_connection_close();
 			};
 
 			/// <summary>
