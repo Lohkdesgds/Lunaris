@@ -34,25 +34,44 @@ namespace LSW {
 			namespace connection {
 				constexpr int default_port = 42069;
 				constexpr unsigned package_size = 1 << 8;
+				constexpr size_t max_buffering_packages_default = 30;
 				//const std::chrono::milliseconds min_delay_no_tasks = std::chrono::milliseconds(5);
+
 				const double pinging_time = 2.0; // seconds
+				const double syncing_time = 0.5; // seconds
+
 				enum class _internal_tasks {NOT_IT,
-					PING,PONG // both sides will task this, no reason to send back result
+					PING,PONG, // both sides will task this, no reason to send back result
+					RECV_OVERLOAD_WAIT, // [0] recv buffer is overloaded, other's [1] recv receive and wait for RECV_OVERLOAD_CONTINUE
+					RECV_OVERLOAD_CONTINUE, // if [0] once overloaded, send this
+					SYNC,SYNC_BACK // Send sends this and wait for bool to toggle meaning RECV received.
 				};
 			}
 
-			struct _pack {
+			struct _pack_1 {
+				unsigned sys = 0; // if sys, _internal_task it is!
+				unsigned long long timestamp; // millisec, automatic set
+				bool has_pack_2 = true;
+				_pack_1();
+			};
+			struct _pack_2 {
 				char data[connection::package_size] = { 0 };
 				unsigned data_len = 0;
 				size_t sum_with_n_more = 0;
-				unsigned sys = 0; // if sys, _internal_task it is!
+				//unsigned sys = 0; // if sys, _internal_task it is!
 			};
+			
 			struct _unprocessed_pack {
 				std::string data;
 				unsigned sys = 0;
 
 				_unprocessed_pack(const std::string&);
 				_unprocessed_pack(std::string&&, unsigned);
+				_unprocessed_pack(_unprocessed_pack&&);
+				_unprocessed_pack(const _unprocessed_pack&);
+
+				void operator=(_unprocessed_pack&&);
+				void operator=(const _unprocessed_pack&);
 			};
 
 			/// <summary>
@@ -82,6 +101,8 @@ namespace LSW {
 				Tools::SuperMutex packs_sending_m;
 				std::vector<_unprocessed_pack> packs_sending;
 
+				size_t buf_max = connection::max_buffering_packages_default;
+
 				SOCKET connected = INVALID_SOCKET;
 				bool keep_connection = false;
 
@@ -89,14 +110,23 @@ namespace LSW {
 				Tools::SuperThread<> recv_thread{ Tools::superthread::performance_mode::PERFORMANCE };
 
 				// debugging
-				size_t packages_sent = 0;
-				size_t packages_recv = 0;
-				size_t last_ping = 0;
+				size_t packages_sent = 0, packages_sent_bytes = 0;
+				size_t packages_recv = 0, packages_recv_bytes = 0;
+				size_t last_ping = 100;
+
+				bool recv_this_buffer_overload = true; // self overload
+				bool friend_there_recv_buffer_overload = false; // received other side is overloaded
+				bool in_sync_signal_received = true;
 
 				Tools::Waiter package_come_wait;
 
 				std::function<void(const uintptr_t, const std::string&)> alt_receive_autodiscard; // your handle, no saving. It calls this instead.
 				std::function<std::string(void)>						 alt_generate_auto;		 // it will read only from this if set.
+
+				// returns false if disconnected (aka -1) | size must be > 0
+				bool ensure_send(char*, const int);
+				// returns false if disconnected (aka -1) | size must be > 0
+				bool ensure_recv(char*, const int);
 
 				void handle_send(Tools::boolThreadF);
 				void handle_recv(Tools::boolThreadF);
@@ -141,6 +171,27 @@ namespace LSW {
 				bool has_package() const;
 
 				/// <summary>
+				/// <para>Whether it's in sync, aka up to date.</para>
+				/// </summary>
+				/// <returns>{bool} True if right now it is in sync. False just means it is syncing.</returns>
+				bool in_sync() const;
+
+				/// <summary>
+				/// <para>If the other side can't receive, send becomes overloaded</para>
+				/// <para>Trying to send more packages will hold thread.</para>
+				/// </summary>
+				/// <returns>{bool} Is send "locked"?</returns>
+				bool is_receiving_buffer_full() const;
+
+				/// <summary>
+				/// <para>Is receive buffer full?</para>
+				/// <para>This will ask server to stop sending, but it can't refuse new data.</para>
+				/// <para>This might be true after not being 100% full, but it will be false after some get_next() or something.</para>
+				/// </summary>
+				/// <returns>{bool} Is recv "full" or at least once was and still almost full?</returns>
+				bool is_other_receiving_buffer_full() const;
+
+				/// <summary>
 				/// <para>Wait some time for a package.</para>
 				/// </summary>
 				/// <param name="{std::chrono::milliseconds}">Timeout. 0 = Infinite.</param>
@@ -157,27 +208,49 @@ namespace LSW {
 				/// <para>Send a package of bytes.</para>
 				/// </summary>
 				/// <param name="{std::string}">The bytes you want to send.</param>
-				void send_package(std::string);
+				/// <param name="{bool}">Force even if buffer is full.</param>
+				/// <param name="{bool}">If full, lock? (P.S.: IT MIGHT STILL LOCK if send thread locked the mutex for some milliseconds)</param>
+				/// <returns>{bool} True if added to send queue. False if FULL and no lock (third arg).</returns>
+				bool send_package(std::string, bool = false, bool = true);
 
 				/// <summary>
 				/// <para>Total small packages sent (not package itself, the small ones).</para>
-				/// <para>You can get total bytes by doing this * connection::package_size. Total bytes may be bigger than actual data sent (because of fixed size).</para>
 				/// </summary>
 				/// <returns>{size_t} Small packages sent.</returns>
 				size_t get_packages_sent() const;
 
 				/// <summary>
+				/// <para>Total all data sent in bytes.</para>
+				/// </summary>
+				/// <returns>{size_t} Sent, in bytes.</returns>
+				size_t get_packages_sent_bytes() const;
+
+				/// <summary>
 				/// <para>Total small packages received (not package itself, the small ones).</para>
-				/// <para>You can get total bytes by doing this * connection::package_size. Total bytes may be bigger than actual data sent (because of fixed size).</para>
 				/// </summary>
 				/// <returns>{size_t} Small packages received.</returns>
 				size_t get_packages_recv() const;
+
+				/// <summary>
+				/// <para>Total all data received in bytes.</para>
+				/// </summary>
+				/// <returns>{size_t} Received, in bytes.</returns>
+				size_t get_packages_recv_bytes() const;
 
 				/// <summary>
 				/// <para>Get last ping information.</para>
 				/// </summary>
 				/// <returns>{size_t} Ping in milliseconds.</returns>
 				size_t get_ping();
+
+				/// <summary>
+				/// <para>Set a max buffering of packages in memory (both send and recv).</para>
+				/// <para>By package: each complete package of yours.</para>
+				/// <para>Example: 1 mean one FULL package of yours (does not translate to direct memory size).</para>
+				/// <para>0 means infinite (no limit).</para>
+				/// </summary>
+				/// <param name="{size_t}">Amount of packages maximum in buffer.</param>
+				void set_max_buffering(const size_t);
 
 				/// <summary>
 				/// <para>Set a function to handle RECV RAW data.</para>

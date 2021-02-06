@@ -15,14 +15,18 @@ namespace LSW {
 
 			namespace superthread {
 
+
 				enum class performance_mode {
-					BALANCED, // up to 2000 events / sec
-					LOW_POWER, // up to 500 events / sec
-					VERY_LOW_POWER, // up to 125 events / sec
-					EXTREMELY_LOW_POWER, // up to 40 events / sec
-					PERFORMANCE, // up to 10000 events / sec
-					HIGH_PERFORMANCE // undefined max number of events
+					NO_CONTROL,				// doesn't even yield for a second! (WARN: may lag if NO_CONTROL threads is bigger than system's threads count!)
+					HIGH_PERFORMANCE,		// best performance with thread equilibrium
+					PERFORMANCE,			// ~30% the performance of HIGH_PERFORMANCE / sec
+					BALANCED,				// up to 1000 events / sec
+					LOW_POWER,				// up to 200 events / sec
+					VERY_LOW_POWER,			// up to 67 events / sec
+					EXTREMELY_LOW_POWER,	// up to 20 events / sec
+					_COUNT // do not use this one. It will assume PERFORMANCE
 				};
+				constexpr unsigned performance_mode_count = static_cast<unsigned>(performance_mode::_COUNT);
 
 			}
 
@@ -38,7 +42,7 @@ namespace LSW {
 				bool _thread_done_flag = true;
 				bool _die_already = false;
 				Promise<T> promise;
-				superthread::performance_mode perform{}; // balanced
+				superthread::performance_mode perform{ superthread::performance_mode::BALANCED}; // balanced
 
 				void _perf();
 

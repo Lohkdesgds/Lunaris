@@ -4,15 +4,42 @@ namespace LSW {
 	namespace v5 {
 		namespace Interface {
 
+			_pack_1::_pack_1()
+			{
+				timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			}
+
 			_unprocessed_pack::_unprocessed_pack(const std::string& s)
 			{
-				data = std::move(s);
+				data = s;
 			}
 
 			_unprocessed_pack::_unprocessed_pack(std::string&& s, unsigned u)
 			{
 				data = std::move(s);
 				sys = u;
+			}
+
+			_unprocessed_pack::_unprocessed_pack(_unprocessed_pack&& p)
+			{
+				*this = std::move(p);
+			}
+
+			_unprocessed_pack::_unprocessed_pack(const _unprocessed_pack& p)
+			{
+				*this = p;
+			}
+
+			void _unprocessed_pack::operator=(_unprocessed_pack&& p)
+			{
+				data = std::move(p.data); // here
+				sys = p.sys;
+			}
+
+			void _unprocessed_pack::operator=(const _unprocessed_pack& p)
+			{
+				data = p.data;
+				sys = p.sys;
 			}
 
 			bool ConnectionCore::initialize(const char* ip_str, const int port, const int isthis_ipv6)
@@ -93,6 +120,34 @@ namespace LSW {
 				return true;
 			}
 
+			bool Connection::ensure_send(char* data, const int len)
+			{
+				if (len <= 0) return true;
+				int fi = 0;
+				while (fi != len)
+				{
+					auto _now = ::send(connected, data + fi, len - fi, 0);
+					if (_now < 0) return false;
+					fi += _now;
+				}
+				packages_sent_bytes += len;
+				return true;
+			}
+
+			bool Connection::ensure_recv(char* data, const int len)
+			{
+				if (len <= 0) return true;
+				int fi = 0;
+				while (fi != len)
+				{
+					auto _now = ::recv(connected, data + fi, len - fi, 0);
+					if (_now < 0) return false;
+					fi += _now;
+				}
+				packages_recv_bytes += len;
+				return true;
+			}
+
 			void Connection::handle_send(Tools::boolThreadF run)
 			{
 				std::stringstream ss;
@@ -102,37 +157,86 @@ namespace LSW {
 				unsigned do_sys = 0;
 
 				EventTimer timm(connection::pinging_time);
+				EventTimer timsync(connection::syncing_time);
 
 				EventHandler evhdr;
 				evhdr.add(timm);
+				evhdr.add(timsync);
 				evhdr.set_run_autostart([&](const Interface::RawEvent& re) {
 					// add to vector so the thread here just send sync.
-					do_sys = static_cast<unsigned>(connection::_internal_tasks::PING);
+					if (re.timer_event().source == timm) {
+						do_sys = static_cast<unsigned>(connection::_internal_tasks::PING);
+					}
+					else if (re.timer_event().source == timsync) {
+						do_sys = static_cast<unsigned>(connection::_internal_tasks::SYNC);
+					}
 				});
 				timm.start();
+				timsync.start();
 				
 
 				debug(common + "Started.");
 
 				while (run() && keep_connection) {
 
-					std::string pack;
-					unsigned sys_t = 0;
+					if (!in_sync_signal_received) {
+						std::this_thread::yield();
+						continue;
+					}
 
+					std::string pack;
+					_pack_1 sys_t;
+					
 					if (do_sys) {
-						switch (do_sys) {
+						sys_t.sys = do_sys;
+
+						do_sys = 0;
+
+						switch (sys_t.sys) {
 						case static_cast<unsigned>(connection::_internal_tasks::PING): // first
 						{
-							sys_t = do_sys;
-							long long noww = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-							pack.resize(sizeof(noww));
-							memcpy_s(pack.data(), pack.size(), (void*)&noww, sizeof(noww));
+							sys_t.has_pack_2 = false;
+
+							Tools::AutoLock luck(packs_sending_m);
+
+							if (!ensure_send((char*)&sys_t, sizeof(_pack_1))) {
+								keep_connection = false;
+								package_come_wait.signal_all();
+								continue;
+							}
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::SYNC): // sync stuff
+						{
+							sys_t.has_pack_2 = false;
+
+							Tools::AutoLock luck(packs_sending_m);
+
+							in_sync_signal_received = false;
+							debug(common + "QUESTIONING SYNC");
+
+							if (!ensure_send((char*)&sys_t, sizeof(_pack_1))) {
+								keep_connection = false;
+								package_come_wait.signal_all();
+								continue;
+							}
 						}
 							break;
 						}
-						do_sys = 0;
+						continue; // go back to while
 					}
-					else if (alt_generate_auto) {
+
+					// * * * * * * * * * * * * * * * * * * * * * * CERTAINLY NOT do_sys * * * * * * * * * * * * * * * * * * * * * * //
+
+					// let ping go lol
+					if (friend_there_recv_buffer_overload) {
+						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						std::this_thread::yield();
+						continue;
+					}
+
+
+					if (alt_generate_auto) {
 						pack = alt_generate_auto();
 						if (pack.empty()) {
 							//std::this_thread::sleep_for(connection::min_delay_no_tasks); // SuperThread handles this now
@@ -147,9 +251,9 @@ namespace LSW {
 							continue;
 						}
 						else {
-							auto _temp = packs_sending.front();
+							auto& _temp = packs_sending.front();
 							pack = std::move(_temp.data);
-							sys_t = _temp.sys;
+							sys_t.sys = _temp.sys;
 							packs_sending.erase(packs_sending.begin());
 							//debug(common + "(default) send tasked.");
 						}
@@ -159,10 +263,16 @@ namespace LSW {
 
 					const unsigned len = (static_cast<unsigned>(pack.length()) - 1) / connection::package_size; // if len == package_size, it is only one pack, so (len-1)...
 
+					if (!ensure_send((char*)&sys_t, sizeof(_pack_1))) {
+						keep_connection = false;
+						break;
+					}
+
+					if (!sys_t.has_pack_2) continue; // no pack to send, just info
+
 					for (unsigned count = 0; count <= len; count++) {
-						_pack one;
+						_pack_2 one;
 						one.sum_with_n_more = len - count;
-						one.sys = sys_t;
 						std::string res = pack.substr(0, connection::package_size);
 						one.data_len = static_cast<unsigned>(res.length());
 						size_t _count = 0;
@@ -170,15 +280,14 @@ namespace LSW {
 						if (pack.length() > connection::package_size) pack = pack.substr(connection::package_size);
 						else pack.clear();
 
-						auto fi = ::send(connected, (char*)&one, sizeof(_pack), 0);
-						packages_sent++;
-
-						debug(common + "SEND once.");
-
-						if (fi < 0) {
+						if (!ensure_send((char*)&one, sizeof(_pack_2))) {
 							keep_connection = false;
 							break;
 						}
+
+						packages_sent++;
+
+						debug(common + "SEND once.");
 					}
 				}
 				evhdr.stop(); // make sure this happens before timar death
@@ -193,56 +302,152 @@ namespace LSW {
 				debug(common + "Started.");
 
 				while (run() && keep_connection) {
-					_pack pack;
 
-					auto fi = ::recv(connected, (char*)&pack, sizeof(_pack), 0);
+					if (has_package()) package_come_wait.signal_all();
+
+					// buffer is too big to continue recv. Send stop on other side.
+					if (buf_max) {
+						if (packs_received.size() >= buf_max) {
+							if (!recv_this_buffer_overload) {
+								recv_this_buffer_overload = true;
+
+								Tools::AutoLock luck(packs_sending_m);
+
+								_pack_1 smol;
+								smol.has_pack_2 = false;
+								smol.sys = static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_WAIT);
+								debug(common + "RECV OVERLOAD WAIT SENT");
+
+								if (!ensure_send((char*)&smol, sizeof(_pack_1))) {
+									keep_connection = false;
+									package_come_wait.signal_all();
+									continue;
+								}
+							}
+						}
+						else if (recv_this_buffer_overload) { // not overloaded anymore lol
+							recv_this_buffer_overload = false;
+
+							Tools::AutoLock luck(packs_sending_m);
+
+							_pack_1 smol;
+							smol.has_pack_2 = false;
+							smol.sys = static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_CONTINUE);
+							debug(common + "RECV OVERLOAD CONTINUE SENT");
+
+							if (!ensure_send((char*)&smol, sizeof(_pack_1))) {
+								keep_connection = false;
+								package_come_wait.signal_all();
+								continue;
+							}
+						}
+					}
+
+					// new code:
+
+					_pack_1 identify; // has_pack_2
+					_pack_2 pack;
+
+					if (!ensure_recv((char*)&identify, sizeof(_pack_1))) {
+						keep_connection = false;
+						package_come_wait.signal_all();
+						continue;
+					}
+
+					// no _pack_2
+					if (!identify.has_pack_2) {
+						switch (identify.sys) {
+						case static_cast<unsigned>(connection::_internal_tasks::PING): // return pong with data
+						{
+							Tools::AutoLock luck(packs_sending_m);
+
+							identify.sys = static_cast<unsigned>(connection::_internal_tasks::PONG);
+							identify.has_pack_2 = false;
+
+							if (!ensure_send((char*)&identify, sizeof(_pack_1))) {
+								keep_connection = false;
+								package_come_wait.signal_all();
+								continue;
+							}
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::PONG): // PING RETURNED! (ping pong is good because reference in time can be different, idk)
+						{
+							const auto _time_now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+							last_ping = (_time_now - identify.timestamp) / 2;
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::SYNC): // return SYNC_BACK
+						{
+							Tools::AutoLock luck(packs_sending_m);
+
+							identify.sys = static_cast<unsigned>(connection::_internal_tasks::SYNC_BACK);
+							identify.has_pack_2 = false;
+
+							if (!ensure_send((char*)&identify, sizeof(_pack_1))) {
+								keep_connection = false;
+								package_come_wait.signal_all();
+								continue;
+							}
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::SYNC_BACK): // return SYNC_BACK
+						{
+							in_sync_signal_received = true; // in sync
+							debug(common + "SYNC INDEED");
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_WAIT): // other side overload
+						{
+							friend_there_recv_buffer_overload = true; // no mutex thanks god
+							debug(common + "RECV OVERLOAD WAIT RECV");
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_CONTINUE): // other side can continue
+						{
+							friend_there_recv_buffer_overload = false; // no mutex thanks god
+							debug(common + "RECV OVERLOAD CONTINUE RECV");
+						}
+							break;
+						}
+						continue;
+					}
+
+					// has pack 2
+
+					if (!ensure_recv((char*)&pack, sizeof(_pack_2))) {
+						keep_connection = false;
+						package_come_wait.signal_all();
+						continue;
+					}
+
 					packages_recv++;
 
 					debug(common + "RECV once.");
 
-					if (has_package()) package_come_wait.signal_all();
 
-					if (fi > 0) { // if one is _pack and there're more packs, they will not have _internal_pack in between
+					std::string data;
+					Tools::AutoLock luck(packs_received_m);
+					for (unsigned p = 0; p < pack.data_len; p++) data += pack.data[p];
 
-						std::string data;
-						Tools::AutoLock luck(packs_received_m);
+					while (pack.sum_with_n_more > 0) {
+
+						if (!ensure_recv((char*)&pack, sizeof(_pack_2))) {
+							keep_connection = false;
+							package_come_wait.signal_all();
+							continue;
+						}
+
+						packages_recv++;
+
+						debug(common + "RECV once.");
+
 						for (unsigned p = 0; p < pack.data_len; p++) data += pack.data[p];
+						//printf_s("\nReceived one package.");
+					}
 
-						while (pack.sum_with_n_more > 0) {
-							auto fi2 = ::recv(connected, (char*)&pack, sizeof(_pack), 0);
-							packages_recv++;
-
-							debug(common + "RECV once.");
-
-							if (fi2 < 0) {
-								keep_connection = false;
-								break;
-							}
-							else if (fi2 == 0) continue;
-
-							for (unsigned p = 0; p < pack.data_len; p++) data += pack.data[p];
-							//printf_s("\nReceived one package.");
-						}
-
-						if (pack.sys != 0) { // system package
-							switch (pack.sys) {
-							case static_cast<unsigned>(connection::_internal_tasks::PING): // just a echo // second
-							{
-								Tools::AutoLock luck(packs_sending_m);
-								packs_sending.push_back(_unprocessed_pack{ std::move(data), static_cast<unsigned>(connection::_internal_tasks::PONG) });
-							}
-								break;
-							case static_cast<unsigned>(connection::_internal_tasks::PONG): // response // third
-							{
-								long long noww = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-								long long* before = (long long*)data.data(); // direct raw data
-
-								last_ping = (noww - *before) / 2;
-							}
-								break;
-							}
-						}
-						else if (alt_receive_autodiscard) {
+					if (identify.sys == 0) {
+						if (alt_receive_autodiscard) {
 							alt_receive_autodiscard((uintptr_t)this, data);
 							package_come_wait.signal_all();
 							debug(common + "(auto) tasked.");
@@ -253,11 +458,36 @@ namespace LSW {
 							debug(common + "(default) tasked.");
 						}
 					}
-					else if (fi < 0) { // lost connection
-						keep_connection = false;
-						package_come_wait.signal_all();
-						break;
-					}
+					/*else {
+						// * * * * * * * * * * * * * * * * * * * * IF IT NEEDS TO READ, GO HERE * * * * * * * * * * * * * * * * * * * * //
+						switch (identify.sys) {
+						case static_cast<unsigned>(connection::_internal_tasks::PING): // just a echo // second
+						{
+							Tools::AutoLock luck(packs_sending_m);
+
+							_pack_1 smol;
+							smol.has_pack_2 = false;
+							smol.sys = static_cast<unsigned>(connection::_internal_tasks::PONG);
+
+							if (!ensure_send((char*)&smol, sizeof(_pack_1))) {
+								keep_connection = false;
+								package_come_wait.signal_all();
+								continue;
+							}
+
+							packs_sending.push_back(_unprocessed_pack{ std::move(data), static_cast<unsigned>(connection::_internal_tasks::PONG) });
+						}
+							break;
+						case static_cast<unsigned>(connection::_internal_tasks::PONG): // response // third
+						{
+							long long noww = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+							long long* before = (long long*)data.data(); // direct raw data
+
+							last_ping = (noww - *before) / 2;
+						}
+							break;
+						}
+					}*/
 				}
 			}
 
@@ -318,6 +548,21 @@ namespace LSW {
 				return packs_received.size();
 			}
 
+			bool Connection::in_sync() const
+			{
+				return in_sync_signal_received;
+			}
+
+			bool Connection::is_receiving_buffer_full() const
+			{
+				return recv_this_buffer_overload;
+			}
+
+			bool Connection::is_other_receiving_buffer_full() const
+			{
+				return friend_there_recv_buffer_overload;
+			}
+
 			bool Connection::wait_for_package(const std::chrono::milliseconds t)
 			{
 				if (has_package()) return true;
@@ -328,19 +573,29 @@ namespace LSW {
 			std::string Connection::get_next()
 			{
 				if (alt_receive_autodiscard) throw Handling::Abort(__FUNCSIG__, "Recvs are overrwriten by a function! You cannot recv package when function is set!");
-				Tools::AutoLock luck(packs_received_m);
 				if (packs_received.size() == 0) return "";
+				Tools::AutoLock luck(packs_received_m);
 				std::string cpy = std::move(packs_received.front());
 				packs_received.erase(packs_received.begin());
 				return std::move(cpy);
 			}
 
-			void Connection::send_package(std::string pack)
+			bool Connection::send_package(std::string pack, bool break_law, bool lock_on_full)
 			{
 				if (alt_generate_auto) throw Handling::Abort(__FUNCSIG__, "Sends are overrwriten by a function! You cannot send package when function is set!");
+
 				Tools::AutoLock luck(packs_sending_m);
 
+				while (!break_law && buf_max && packs_sending.size() >= buf_max) {
+					if (!lock_on_full) return false;
+					luck.unlock();
+					std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					std::this_thread::yield();
+					luck.lock();
+				}
+
 				packs_sending.push_back(std::move(pack));
+				return true;
 			}
 
 			size_t Connection::get_packages_sent() const
@@ -348,14 +603,29 @@ namespace LSW {
 				return packages_sent;
 			}
 
+			size_t Connection::get_packages_sent_bytes() const
+			{
+				return packages_sent_bytes;
+			}
+
 			size_t Connection::get_packages_recv() const
 			{
 				return packages_recv;
 			}
 
+			size_t Connection::get_packages_recv_bytes() const
+			{
+				return packages_recv_bytes;
+			}
+
 			size_t Connection::get_ping()
 			{
 				return last_ping;
+			}
+
+			void Connection::set_max_buffering(const size_t mx)
+			{
+				buf_max = mx;
 			}
 
 			void Connection::overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)> ow)
@@ -556,6 +826,7 @@ namespace LSW {
 				return memcpy_s(data, size, src.data(), src.size()) == 0;
 			}
 
-}
+
+		}
 	}
 }
