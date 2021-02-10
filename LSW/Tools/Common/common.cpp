@@ -81,6 +81,11 @@ namespace LSW {
 				return std::stoull(ss.str());
 			}
 
+			unsigned long long now()
+			{
+				return std::chrono::duration_cast<std::chrono::duration<unsigned long long, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count();
+			}
+
 			std::vector<bool> translate_binary(const int v, const size_t lim)
 			{
 				std::vector<bool> b;
@@ -93,7 +98,7 @@ namespace LSW {
 				return b;
 			}
 
-			std::string byte_auto_string(double end, const size_t t, const bool space)
+			std::string byte_auto_string(double end, const size_t t, const bool space, const std::string& middle)
 			{
 				int prefix = -1;
 
@@ -102,7 +107,7 @@ namespace LSW {
 				
 				end *= 1e3;
 
-				char buf[1 << 7];
+				/*char buf[1 << 7];
 				char format[1 << 5];
 
 				if (space) sprintf_s(format, "%c.%zulf %cs", '%', t, '%');
@@ -111,7 +116,9 @@ namespace LSW {
 
 				sprintf_s(buf, format, end, prefix >= 0 ? common::known_size_ends[prefix] : "");
 
-				return buf;
+				return buf;*/
+
+				return sprintf_a("%.*lf%s%s", t, end, ((space ? " " : "") + middle).c_str(), prefix >= 0 ? common::known_size_ends[prefix] : "");
 			}
 
 			const double limit_maximize(double gotten, const double prop)

@@ -118,7 +118,7 @@ namespace LSW {
 				/// <para>Constructor to move a Text to this (move).</para>
 				/// </summary>
 				/// <param name="{Text}">The one to move attributes from.</param>
-				Text(Text&&);
+				Text(Text&&) noexcept;
 
 				/// <summary>
 				/// <para>Reference a Text (not a copy).</para>
@@ -130,7 +130,7 @@ namespace LSW {
 				/// <para>Move a Text to this (move).</para>
 				/// </summary>
 				/// <param name="{Text}">The one to move attributes from.</param>
-				void operator=(Text&&);
+				void operator=(Text&&) noexcept;
 
 				/// <summary>
 				/// <para>Clone other Text attributes.</para>

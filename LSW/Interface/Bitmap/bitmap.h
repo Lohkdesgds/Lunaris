@@ -49,7 +49,7 @@ namespace LSW {
 				/// <para>Moves the internal Bitmap's data to this.</para>
 				/// </summary>
 				/// <param name="{Bitmap}">A Bitmap to move data from.</param>
-				Bitmap(Bitmap&&);
+				Bitmap(Bitmap&&) noexcept;
 
 				/// <summary>
 				/// <para>Copy operator (+1 reference).</para>
@@ -61,7 +61,7 @@ namespace LSW {
 				/// <para>Move operator.</para>
 				/// </summary>
 				/// <param name="{Bitmap}">A Bitmap to move from.</param>
-				void operator=(Bitmap&&);
+				void operator=(Bitmap&&) noexcept;
 
 				/// <summary>
 				/// <para>Creates a Bitmap with the exact size of this Bitmap if needed. Sub bitmaps will fail.</para>
@@ -144,17 +144,17 @@ namespace LSW {
 				/// <para>Load Bitmap from file.</para>
 				/// <para>This is the RAW path, %tags% won't work. Use Tools::interpret_path.</para>
 				/// </summary>
-				/// <param name="{char*}">Path.</param>
+				/// <param name="{std::string}">Path.</param>
 				/// <returns>{bool} True if success.</returns>
-				bool load(const char*);
+				bool load(const std::string&);
 
 				/// <summary>
 				/// <para>Save Bitmap to file.</para>
 				/// <para>This is the RAW path, %tags% won't work. Use Tools::interpret_path.</para>
 				/// </summary>
-				/// <param name="{char*}">Path.</param>
+				/// <param name="{std::string}">Path.</param>
 				/// <returns>{bool} True if success.</returns>
-				bool save(const char*);
+				bool save(const std::string&);
 
 				/// <summary>
 				/// <para>Forces a RAW BITMAP to be its value (it won't delete it afterwards).</para>

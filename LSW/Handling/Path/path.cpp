@@ -44,12 +44,12 @@ namespace LSW {
 #endif
 				}
 			}
-			bool get_working_path(std::string& res, const char* path)
+			bool get_working_path(std::string& res, const std::string& path)
 			{
 				size_t siz = 0;
 
 				for (size_t p = 0; p < path::paths_count; p++) {
-					if (strcmp(path, path::paths_known[p]) == 0) {
+					if (path == path::paths_known[p]) {
 
 						getenv_s(&siz, NULL, 0, path::path_known_res[p]);
 						if (siz == 0) return false;
@@ -61,51 +61,17 @@ namespace LSW {
 					}
 				}
 
-				if (getenv_s(&siz, NULL, 0, path) == 0) {
+				if (getenv_s(&siz, NULL, 0, path.c_str()) == 0) {
 
 					if (siz == 0) return false;
 					res.resize(siz);
-					getenv_s(&siz, res.data(), siz, path);
+					getenv_s(&siz, res.data(), siz, path.c_str());
 					for (auto& i : res) i = i == '\\' ? '/' : i;
 					return true;
 				}
 
 				return false;
 			}
-			/*bool get_working_path(std::string& s, const char* u)
-			{
-				short ended = 0;
-				for (auto& i : path::paths_known) {
-					if (strcmp(u, i) == 0) return get_working_path(s, path::paths_pairs[ended].second);
-					ended++;
-				}
-				return false;
-			}
-			bool get_working_path(std::string& s, const path::paths_known_e& u)
-			{
-				size_t p = 0;
-				for (auto& i : path::paths_pairs) {
-					if (i.first == u) return get_working_path(s, i.second);
-					p++;
-				}
-				return false;
-			}
-
-			bool get_working_path(std::string& s, const int& u)
-			{
-				wchar_t Folder[1024];
-				HRESULT hr = SHGetFolderPathW(0, u, 0, 0, Folder);
-				if (SUCCEEDED(hr))
-				{
-					char str[1024] = { 0 };
-					size_t i;
-					wcstombs_s(&i, str, Folder, 1023);
-					s = str;
-					for (auto& i : s) if (i == '\\') i = '/';
-					return true;
-				}
-				return false;
-			}*/
 
 			void interpret_path(std::string& cpy)
 			{
@@ -128,13 +94,6 @@ namespace LSW {
 					pos_0 = wrk.find('%');
 					if (pos_0 >= cpy.length()) break; // no more found (invalid pos)
 					pos_0 += min_pos;
-
-					// if "\%", ignore this, continue. Commented if \%tag% should ignore \ before %tag%
-					/*if (pos_0 > 0 && cpy[pos_0 - 1] == '\\') {
-						endresult += cpy.substr(min_pos, pos_0 - min_pos);
-						min_pos = pos_0 + 1;
-						continue;
-					}*/
 
 					pos_1 = cpy.substr(pos_0 + 1).find('%');
 					if (pos_1 >= cpy.length()) break; // there is only one (invalid pos)

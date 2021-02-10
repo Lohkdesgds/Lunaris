@@ -19,7 +19,8 @@ namespace LSW {
 				size_t point = 0, reserved = 0;
 			public:
 				/// <summary>
-				/// <para>Resize the internal vector to this size, so you can call call + this - 1 (call counts).</para>
+				/// <para>Resize the internal vector to this size, so you can call start() + (this - 1) (click_one() times).</para>
+				/// <para>Example: 3 means start(), then 2 click_one().</para>
 				/// </summary>
 				/// <param name="{size_t}">Amount of points in time.</param>
 				void prepare(const size_t);

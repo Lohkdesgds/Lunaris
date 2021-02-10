@@ -24,19 +24,11 @@ The libraries are compiled with static ALLEGRO (for release) and /MT or /MTd. Yo
 -> LSW_AVOID_NON_LIB : This disables including .ipp files, so any source code is from the .lib aka no new templates can be generated.
 */
 
-
 #if defined( LSW_NOT_USING_LIB ) && defined( LSW_AVOID_NON_LIB )
 #error "You can't set both!"
 #endif
 
-// useful
-#if _WIN32 || _WIN64 || __x86_64__ || __ppc64__
-#if _WIN64
-#define LSW_X64
-#else
-#define LSW_X32
-#endif
-#endif
+#include "_Macros/system_work.h"
 
 #define WIN32_LEAN_AND_MEAN
 

@@ -204,7 +204,7 @@ namespace LSW {
 					trigger_func = f;
 
 					thr.set([&](Tools::boolThreadF keep) {
-						ALLEGRO_EVENT ev;
+						ALLEGRO_EVENT ev{};
 						while (keep()) {
 
 							try {

@@ -89,7 +89,7 @@ namespace LSW {
 					while (keep()) {
 
 						if (fps_cap) {
-							while (!redraw && fps_cap && keep()) std::this_thread::sleep_for(std::chrono::milliseconds(1)); // up to 500 fps good cap, 1000 limit
+							while (!redraw && fps_cap && keep()) { std::this_thread::yield(); std::this_thread::sleep_for(std::chrono::milliseconds(1)); } // up to 500 fps good cap, 1000 limit
 							redraw = false;
 						}
 						if (regen_disp_pls) {
@@ -204,9 +204,15 @@ namespace LSW {
 			{
 				Tools::AutoLock sync(sync_threads);
 
-				al_set_new_display_flags(new_display_flags_apply | (is_fullscreen ? ALLEGRO_FULLSCREEN_WINDOW : 0));
+				is_fullscreen |= static_cast<bool>(new_display_flags_apply & ALLEGRO_FULLSCREEN);
+				is_fullscreen |= static_cast<bool>(new_display_flags_apply & ALLEGRO_FULLSCREEN_WINDOW);
+				new_display_flags_apply &= ALLEGRO_FULLSCREEN;
+				new_display_flags_apply |= display::default_new_display_flags;
+				if (is_fullscreen) new_display_flags_apply |= ALLEGRO_FULLSCREEN_WINDOW;
+
+				al_set_new_display_flags(new_display_flags_apply);
 				if (new_display_refresh_rate > 0) al_set_new_display_refresh_rate(new_display_refresh_rate);
-				al_set_new_display_option(ALLEGRO_VSYNC, should_vsync ? 1 : 2, ALLEGRO_SUGGEST); // vsync after via al_wait_for_vsync
+				al_set_new_display_option(ALLEGRO_VSYNC, should_vsync ? 1 : 2, ALLEGRO_SUGGEST);
 				// prettier drawings (anti aliasing on primitives)
 				al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, ALLEGRO_SUGGEST, 2);
 				al_set_new_display_option(ALLEGRO_SAMPLES, ALLEGRO_SUGGEST, 8);

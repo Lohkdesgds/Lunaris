@@ -11,6 +11,7 @@
 #include "../../Handling/Path/path.h" // handle_path used on init
 #include "../../Tools/CString/cstring.h" // uses this as string internally to print colored chars
 #include "../../Tools/Common/common.h" // sprintf_a
+#include "../../_Macros/system_work.h" // #ifdefs
 
 /*#define __FSR_DEF__ \
 []{ auto s = std::string(__FILE__); auto p = s.rfind('\\'); p = ((p != std::string::npos) ? p : s.rfind('/')); return ("&a" + ((p != std::string::npos && ((p + 1) < s.length())) ? s.substr(p + 1) : s)); }() \

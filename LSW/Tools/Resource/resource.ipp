@@ -1,3 +1,4 @@
+#include "resource.h"
 #pragma once
 
 namespace LSW {
@@ -146,6 +147,12 @@ namespace LSW {
 			inline std::shared_ptr<T>& Resource<T>::get_shared()
 			{
 				return r;
+			}
+
+			template<typename T>
+			inline void Resource<T>::reset()
+			{
+				r.reset();
 			}
 
 		}

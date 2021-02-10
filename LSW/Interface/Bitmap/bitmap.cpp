@@ -75,7 +75,7 @@ namespace LSW {
 				*this = oth;
 			}
 
-			Bitmap::Bitmap(Bitmap&& oth)
+			Bitmap::Bitmap(Bitmap&& oth) noexcept
 			{
 				*this = std::move(oth);
 			}
@@ -86,7 +86,7 @@ namespace LSW {
 				//use_target_as_it = oth.use_target_as_it;
 			}
 
-			void Bitmap::operator=(Bitmap&& oth)
+			void Bitmap::operator=(Bitmap&& oth) noexcept
 			{
 				bitmap_orig = std::move(oth.bitmap_orig);
 				//use_target_as_it = oth.use_target_as_it;
@@ -175,18 +175,18 @@ namespace LSW {
 				check_bitmaps_memory();
 			}
 
-			bool Bitmap::load(const char* p)
+			bool Bitmap::load(const std::string& p)
 			{
 				if (!bitmap_orig) {
-					return set(al_load_bitmap(p));
+					return set(al_load_bitmap(p.c_str()));
 				}
 				return false;
 			}
 
-			bool Bitmap::save(const char* p)
+			bool Bitmap::save(const std::string& p)
 			{
 				if (!bitmap_orig.null()) {
-					return al_save_bitmap(p, quick());
+					return al_save_bitmap(p.c_str(), quick());
 				}
 				return false;
 			}

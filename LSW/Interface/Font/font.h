@@ -38,7 +38,7 @@ namespace LSW {
 				/// <para>Moves the internal Font's data to this.</para>
 				/// </summary>
 				/// <param name="{Font}">A Font to move data from.</param>
-				Font(Font&&);
+				Font(Font&&) noexcept;
 
 				/// <summary>
 				/// <para>Copy operator.</para>
@@ -50,16 +50,16 @@ namespace LSW {
 				/// <para>Move operator.</para>
 				/// </summary>
 				/// <param name="{Font}">A Font to move from.</param>
-				void operator=(Font&&);
+				void operator=(Font&&) noexcept;
 
 				/// <summary>
 				/// <para>Load a font with specific size (you may want multiple Fonts for multiple sizes).</para>
 				/// </summary>
-				/// <param name="{char*}">Path to font.</param>
+				/// <param name="{std::string}">Path to font.</param>
 				/// <param name="{int}">Size (1:1 in Camera, in units per EM; use negative for pixels in height).</param>
 				/// <param name="{int}">Flags.</param>
 				/// <returns>{bool} True if success.</returns>
-				bool load(const char*, const int = 75, const int = 0);
+				bool load(const std::string&, const int = 75, const int = 0);
 
 				/// <summary>
 				/// <para>Operator bool.</para>
@@ -101,9 +101,9 @@ namespace LSW {
 				/// <summary>
 				/// <para>Gets the width of a text with current Font.</para>
 				/// </summary>
-				/// <param name="{char*}">String.</param>
+				/// <param name="{std::string}">String.</param>
 				/// <returns>{int} The length, in pixels.</returns>
-				int get_width(const char*) const;
+				int get_width(const std::string&) const;
 
 				/// <summary>
 				/// <para>Gets the width of a text with current Font.</para>
@@ -119,8 +119,8 @@ namespace LSW {
 				/// <param name="{float}">Position X.</param>
 				/// <param name="{float}">Position Y.</param>
 				/// <param name="{int}">Flags.</param>
-				/// <param name="{char*}">String to draw.</param>
-				void draw(Color, const float, const float, const int, const char*) const;
+				/// <param name="{std::string}">String to draw.</param>
+				void draw(Color, const float, const float, const int, const std::string&) const;
 
 				/// <summary>
 				/// <para>Draw a CString.</para>

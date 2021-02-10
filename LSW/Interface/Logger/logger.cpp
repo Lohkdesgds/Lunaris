@@ -1,5 +1,5 @@
 #include "logger.h"
-
+#include "../../_Macros/system_work.h"
 
 namespace LSW {
 	namespace v5 {
@@ -217,7 +217,7 @@ namespace LSW {
 					send_last_and_cleanup(); // send last coloured string to event and clear
 					break;
 				}
-				return *this;
+				return *this;       /// yes, visual studio thinks this is an epic WARN, but it will never fail if you use gfile << L::SL(F) << fsr() << ... << L::EL(F)
 			}
 
 			Logger& Logger::operator<<(const FormatAs& nfa)

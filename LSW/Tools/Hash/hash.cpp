@@ -26,8 +26,8 @@ namespace LSW {
 
                 void _SHA256::transform(const unsigned char* message, unsigned int block_nb)
                 {
-                    uint32 w[64];
-                    uint32 wv[8];
+                    uint32 w[64]{};
+                    uint32 wv[8]{};
                     uint32 t1, t2;
                     const unsigned char* sub_block;
                     for (__int64 i = 0; i < (__int64)block_nb; i++) {
@@ -107,7 +107,7 @@ namespace LSW {
                         < (m_len % SHA224_256_BLOCK_SIZE)));
                     len_b = (m_tot_len + m_len) << 3;
                     pm_len = block_nb << 6;
-                    memset(m_block + m_len, 0, pm_len - m_len);
+                    memset(m_block + m_len, 0, static_cast<size_t>(pm_len) - static_cast<size_t>(m_len));
                     m_block[m_len] = 0x80;
                     SHA2_UNPACK32(len_b, m_block + pm_len - 4);
                     transform(m_block, block_nb);
@@ -130,7 +130,7 @@ namespace LSW {
                 ctx.update(conv.c_str(), static_cast<unsigned int>(conv.length()));
                 ctx.final(digest);
 
-                char buf[2 * imported::_SHA256::DIGEST_SIZE + 1];
+                char buf[2 * imported::_SHA256::DIGEST_SIZE + 1]{};
                 buf[2 * imported::_SHA256::DIGEST_SIZE] = 0;
                 for (int i = 0; i < imported::_SHA256::DIGEST_SIZE; i++)
                     sprintf_s(buf + (long long)i * 2, 2 * imported::_SHA256::DIGEST_SIZE + 1 - ((long long)i * 2), "%02x", digest[i]);

@@ -32,7 +32,7 @@ namespace LSW {
 						auto cpy = 1.0 * sec + ((ns % (int)1e9) / 1e9);
 						if (cpy > max_diffs[point-1]) max_diffs[point-1] = cpy;
 					}
-					point++;
+					++point;
 				}
 			}
 
@@ -147,7 +147,7 @@ namespace LSW {
 				}
 				if (gen.length()) gen.pop_back(); // '\n'
 
-				reset_max();
+				//reset_max();
 
 				return std::move(gen);
 			}

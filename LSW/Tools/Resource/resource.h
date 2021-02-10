@@ -166,6 +166,11 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{std::shared_ptr} Internal shared pointer.</returns>
 				std::shared_ptr<T>& get_shared();
+
+				/// <summary>
+				/// <para>Reset to invalid pointer.</para>
+				/// </summary>
+				void reset();
 			};
 
 		}

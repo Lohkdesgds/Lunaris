@@ -79,7 +79,7 @@ namespace LSW {
 				*this = f;
 			}
 
-			Font::Font(Font&& f)
+			Font::Font(Font&& f) noexcept
 			{
 				*this = std::move(f);
 			}
@@ -89,14 +89,14 @@ namespace LSW {
 				font = f.font;
 			}
 
-			void Font::operator=(Font&& f)
+			void Font::operator=(Font&& f) noexcept
 			{
 				font = std::move(f.font);
 			}
 
-			bool Font::load(const char* p, const int s, const int f)
+			bool Font::load(const std::string& p, const int s, const int f)
 			{
-				return set(al_load_font(p, s, f));
+				return set(al_load_font(p.c_str(), s, f));
 			}
 
 			Font::operator bool() const
@@ -132,9 +132,9 @@ namespace LSW {
 				return -1;
 			}
 
-			int Font::get_width(const char* str) const
+			int Font::get_width(const std::string& str) const
 			{
-				if (auto q = quick(); q) return al_get_text_width(q, str);
+				if (auto q = quick(); q) return al_get_text_width(q, str.c_str());
 				return -1;
 			}
 
@@ -144,9 +144,9 @@ namespace LSW {
 				return -1;
 			}
 
-			void Font::draw(Color c, const float x, const float y, const int f, const char* s) const
+			void Font::draw(Color c, const float x, const float y, const int f, const std::string& s) const
 			{
-				if (auto q = quick(); q) al_draw_text(q, c, x, y, f, s);
+				if (auto q = quick(); q) al_draw_text(q, c, x, y, f, s.c_str());
 			}
 
 			void Font::draw(const float x, const float y, const int f, Tools::Cstring s) const

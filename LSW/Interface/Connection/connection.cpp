@@ -4,45 +4,50 @@ namespace LSW {
 	namespace v5 {
 		namespace Interface {
 
-			_pack_1::_pack_1()
+			__package::__package(const package_type t)
 			{
-				timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+				prepare_to(t);
+			}
+			__package::__package()
+			{
+				ZeroMemory(&pack, sizeof(pack));
 			}
 
-			_unprocessed_pack::_unprocessed_pack(const std::string& s)
+			void __package::prepare_to(const package_type t)
 			{
-				data = s;
+				ZeroMemory(&pack, sizeof(pack));
+				type = t;
+
+				switch (t) { // the "different than 0" ones
+				case package_type::DATA:
+					pack.data.full = true;
+					break;
+				case package_type::REQUEST:
+					pack.rqst.request = package_type::SYNC; // most of the time it is like this
+					break;
+				case package_type::SYNC:
+					pack.sync.add_availability = 0;
+					pack.sync.no_limit = false;
+					break;
+				case package_type::PING:
+					pack.ping.self_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+					break;
+				}
 			}
 
-			_unprocessed_pack::_unprocessed_pack(std::string&& s, unsigned u)
+			__combined_data& __combined_data::operator+(const __combined_data& comb)
 			{
-				data = std::move(s);
-				sys = u;
+				buffer += comb.buffer;
+				is_full |= comb.is_full;
+				return *this;
 			}
 
-			_unprocessed_pack::_unprocessed_pack(_unprocessed_pack&& p)
+			__combined_data& __combined_data::operator+=(const __combined_data& comb)
 			{
-				*this = std::move(p);
+				return (*this = *this + comb);
 			}
 
-			_unprocessed_pack::_unprocessed_pack(const _unprocessed_pack& p)
-			{
-				*this = p;
-			}
-
-			void _unprocessed_pack::operator=(_unprocessed_pack&& p)
-			{
-				data = std::move(p.data); // here
-				sys = p.sys;
-			}
-
-			void _unprocessed_pack::operator=(const _unprocessed_pack& p)
-			{
-				data = p.data;
-				sys = p.sys;
-			}
-
-			bool ConnectionCore::initialize(const char* ip_str, const int port, const int isthis_ipv6)
+			bool ConnectionCore::initialize(const std::string& ip_str, const int port, const connection::connection_type contype)
 			{
 				if (init) return true;
 
@@ -52,20 +57,17 @@ namespace LSW {
 					return false;
 				}
 
-				struct addrinfo hints;
-
-				char port_str[16];
-				sprintf_s(port_str, "%d", port);
+				struct addrinfo hints{};
 
 				SecureZeroMemory(&hints, sizeof(hints));
-				if (isthis_ipv6 >= 0) hints.ai_family = isthis_ipv6 ? AF_INET6 : AF_INET;
+				if (contype != connection::connection_type::CLIENT) hints.ai_family = contype == connection::connection_type::HOST_IPV6 ? AF_INET6 : AF_INET;
 				else hints.ai_family = AF_UNSPEC;
 				hints.ai_socktype = SOCK_STREAM;
 				hints.ai_protocol = IPPROTO_TCP;
-				if (isthis_ipv6 >= 0) hints.ai_flags = AI_PASSIVE;
+				if (contype != connection::connection_type::CLIENT) hints.ai_flags = AI_PASSIVE;
 
 				// Resolve the server address and port
-				if (getaddrinfo(ip_str, port_str, &hints, &result) != 0) return [&] {failure = true; return false; }();
+				if (getaddrinfo(ip_str.empty() ? nullptr : ip_str.c_str(), Tools::sprintf_a("%d", port).c_str(), &hints, &result) != 0) return [&] {failure = true; return false; }();
 
 				init = true;
 				return true;
@@ -120,384 +122,582 @@ namespace LSW {
 				return true;
 			}
 
-			bool Connection::ensure_send(char* data, const int len)
+			void NetworkMonitor::__avg_task(nm_transf& n)
 			{
-				if (len <= 0) return true;
+				// this function is called once a sec, so current_added is how many bytes were added in the last sec
+				n.current_bytes_per_sec = n._bytes_coming.exchange(0);
+
+				n.bytes += n.current_bytes_per_sec;
+				if (n.peak_bytes_per_second < n.current_bytes_per_sec) n.peak_bytes_per_second = n.current_bytes_per_sec;
+				if (n.first_update_ms == 0) n.first_update_ms = Tools::now();
+				n.last_update_ms = Tools::now();
+			}
+
+			void NetworkMonitor::_average_thr(const Interface::RawEvent& ev)
+			{
+				if (ev.type() == ALLEGRO_EVENT_TIMER && ev.timer_event().source == timer_second) {
+					__avg_task(sending); // same formula
+					__avg_task(recving); // same formula
+				}
+			}
+
+			void NetworkMonitor::any_add(nm_transf& n, const unsigned long long a)
+			{
+				n._bytes_coming += a;
+			}
+			
+			unsigned long long NetworkMonitor::any_get_total(const nm_transf& n) const
+			{
+				return n.bytes;
+			}
+			
+			unsigned long long NetworkMonitor::any_get_peak(const nm_transf& n) const
+			{
+				return n.peak_bytes_per_second;
+			}
+			
+			unsigned long long NetworkMonitor::any_get_current_bytes_per_second(const nm_transf& n) const
+			{
+				return n.current_bytes_per_sec;
+			}
+			
+			unsigned long long NetworkMonitor::any_get_average_total(const nm_transf& n) const
+			{
+				const auto diff_t = (n.last_update_ms - n.first_update_ms);
+				return n.bytes / (diff_t ? diff_t : 1); // if never updated, give current bytes
+			}
+
+			NetworkMonitor::NetworkMonitor()
+			{
+				timer_second.set_delta(1.0);
+				per_sec_calc.add(timer_second);
+				per_sec_calc.set_run_autostart([&](const Interface::RawEvent& ev) { _average_thr(ev); });
+				timer_second.start();
+			}
+			
+			NetworkMonitor::~NetworkMonitor()
+			{
+				timer_second.stop();
+				per_sec_calc.stop();
+			}
+
+			void NetworkMonitor::clear()
+			{
+				ping = nm_ping{};
+				sending.first_update_ms = sending.last_update_ms = sending.peak_bytes_per_second = sending.bytes = sending.current_bytes_per_sec = 0;
+				sending._bytes_coming = 0;
+				recving.first_update_ms = recving.last_update_ms = recving.peak_bytes_per_second = recving.bytes = recving.current_bytes_per_sec = 0;
+				recving._bytes_coming = 0;
+			}
+
+			// ping stuff
+			void NetworkMonitor::ping_new(const unsigned a)
+			{
+				ping.current = a;
+				if (ping.adaptative_avg == 0.0) ping.adaptative_avg = a; // jump to number if zero lol
+				ping.adaptative_avg = ((1.0 * ping.adaptative_avg * ping.adaptativeness) + ping.current) / (ping.adaptativeness + 1.0);
+			}
+			
+			void NetworkMonitor::ping_set_adaptativeness(const double a)
+			{
+				if (a > 0.0) ping.adaptativeness = a;
+			}
+			
+			unsigned NetworkMonitor::ping_now() const
+			{
+				return ping.current;
+			}
+			
+			double NetworkMonitor::ping_average_now() const
+			{
+				return ping.adaptative_avg;
+			}
+
+			// transf send
+			void NetworkMonitor::send_add(const unsigned long long a)
+			{
+				any_add(sending, a);
+			}
+			
+			unsigned long long NetworkMonitor::send_get_total() const
+			{
+				return any_get_total(sending);
+			}
+			
+			unsigned long long NetworkMonitor::send_get_peak() const
+			{
+				return any_get_peak(sending);
+			}
+			
+			unsigned long long NetworkMonitor::send_get_current_bytes_per_second() const
+			{
+				return any_get_current_bytes_per_second(sending);
+			}
+			
+			unsigned long long NetworkMonitor::send_get_average_total() const
+			{
+				return any_get_average_total(sending);
+			}
+
+			// transf recv
+			void NetworkMonitor::recv_add(const unsigned long long a)
+			{
+				any_add(recving, a);
+			}
+			
+			unsigned long long NetworkMonitor::recv_get_total() const
+			{
+				return any_get_total(recving);
+			}
+			
+			unsigned long long NetworkMonitor::recv_get_peak() const
+			{
+				return any_get_peak(recving);
+			}
+			
+			unsigned long long NetworkMonitor::recv_get_current_bytes_per_second() const
+			{
+				return any_get_current_bytes_per_second(recving);
+			}
+			
+			unsigned long long NetworkMonitor::recv_get_average_total() const
+			{
+				return any_get_average_total(recving);
+			}
+
+			void Connection::add_current_limit(const int add)
+			{
+				Tools::AutoLock l(buffer_available_send_mtx);
+				buffer_available_send += add;
+			}
+
+			void Connection::pop_current_limit()
+			{
+				Tools::AutoLock l(buffer_available_send_mtx);
+				if (buffer_available_send > 0) buffer_available_send--;
+			}
+
+			void Connection::calculate_add_available(const int add)
+			{
+				if (my_buffer_limit == 0) return;
+
+				Tools::AutoLock l(buffer_available_calculated_mtx);
+
+				buffer_available_calculated += add;
+			}
+
+			void Connection::calculate_modify_buffer(const long long to_what_val_buffer_max)
+			{
+				Tools::AutoLock l(buffer_available_calculated_mtx);
+
+				long long new_val = (to_what_val_buffer_max <= 0 ? 0 : to_what_val_buffer_max);
+
+				if (new_val == 0) {
+					my_buffer_limit = 0; // infinite
+					buffer_available_calculated = 0;
+				}
+				else {
+					buffer_available_calculated += (new_val - my_buffer_limit);
+					my_buffer_limit = new_val;
+				}
+			}
+
+			long long Connection::calculate_cut_value()
+			{
+				if (my_buffer_limit == 0) return 0;
+
+				Tools::AutoLock l(buffer_available_calculated_mtx);
+
+				long long cpy = buffer_available_calculated;
+				buffer_available_calculated = 0;
+				return cpy;
+			}
+			
+			void Connection::update_myself_package()
+			{
+				myself.buffer_receive_size = buffer_receive.size();
+				myself.buffer_sending_size = buffer_sending.size();
+
+				if (my_buffer_limit != 0) {
+					myself.add_availability = calculate_cut_value();
+					myself.no_limit = false;
+				}
+				else {
+					myself.add_availability = 0;
+					myself.no_limit = true;
+				}
+
+				//myself.you_can_send_up_to = myself.you_can_send_up_to > 0 ? (static_cast<long long>(buffer_receive.size()) > myself.you_can_send_up_to ? 0 : myself.you_can_send_up_to - static_cast<long long>(buffer_receive.size())) : -1;
+			}
+			
+			void Connection::set_recv_hold(const bool will)
+			{
+				u_long iMode = will ? 0 : 1;
+				ioctlsocket(connected, FIONBIO, &iMode);
+			}
+
+			connection::_connection_status Connection::ensure_send(char* data, const int len)
+			{
+				if (len <= 0) return connection::_connection_status::EMPTY;
 				int fi = 0;
 				while (fi != len)
 				{
 					auto _now = ::send(connected, data + fi, len - fi, 0);
-					if (_now < 0) return false;
+					if (_now < 0) return connection::_connection_status::DISCONNECTED;
 					fi += _now;
 				}
-				packages_sent_bytes += len;
-				return true;
+				network_analysis.send_add(len);
+
+				return connection::_connection_status::GOOD;
 			}
 
-			bool Connection::ensure_recv(char* data, const int len)
+			connection::_connection_status Connection::ensure_recv(char* data, const int len)
 			{
-				if (len <= 0) return true;
+				if (len <= 0) return connection::_connection_status::EMPTY;
 				int fi = 0;
 				while (fi != len)
 				{
 					auto _now = ::recv(connected, data + fi, len - fi, 0);
-					if (_now < 0) return false;
+					if (_now < 0) return connection::_connection_status::EMPTY;
+					/*if (_now < 0) {
+						auto err = WSAGetLastError();
+						if (err == EAGAIN || err == EWOULDBLOCK || err == EINTR) return connection::_connection_status::EMPTY;
+						else return connection::_connection_status::DISCONNECTED;
+					}*/
 					fi += _now;
+					if (fi == 0) return connection::_connection_status::EMPTY;
 				}
-				packages_recv_bytes += len;
-				return true;
+				network_analysis.recv_add(len);
+
+				return connection::_connection_status::GOOD;
 			}
 
-			void Connection::handle_send(Tools::boolThreadF run)
+			void Connection::handle_connection_send(Tools::boolThreadF run, Tools::SuperThread<>& selfthr)
 			{
-				std::stringstream ss;
-				ss << std::this_thread::get_id();
-				const std::string common = std::string("[HANDLE_SEND] T#") + ss.str() + std::string(": ");
+				// * * * * * * * STARTUP * * * * * * * //
+				const std::string socket_identification = "&7SOCKET&8#&1" + Tools::sprintf_a("%08" PRIx64, Tools::get_thread_id()) + " &d - SEND -> &1";
+				debug(socket_identification + "&aHANDLE CONNECTION STARTED SEND");
 
-				unsigned do_sys = 0;
-
+				// - - - - - > VARIABLES < - - - - - //
 				EventTimer timm(connection::pinging_time);
-				EventTimer timsync(connection::syncing_time);
+				EventHandler evhdr{ Tools::superthread::performance_mode::EXTREMELY_LOW_POWER };
+				bool cant_send_first_time = true;
+				// control
+				bool tasked_once = false;
 
-				EventHandler evhdr;
+				// job on going
+				__combined_data data_working_on;
+
+				// - - - - - > PREPARE/START < - - - - - //
 				evhdr.add(timm);
-				evhdr.add(timsync);
 				evhdr.set_run_autostart([&](const Interface::RawEvent& re) {
-					// add to vector so the thread here just send sync.
 					if (re.timer_event().source == timm) {
-						do_sys = static_cast<unsigned>(connection::_internal_tasks::PING);
-					}
-					else if (re.timer_event().source == timsync) {
-						do_sys = static_cast<unsigned>(connection::_internal_tasks::SYNC);
+						should_ping = true;
 					}
 				});
 				timm.start();
-				timsync.start();
-				
 
-				debug(common + "Started.");
+				while ((tasked_once && keep_connection) || run()) {
 
-				while (run() && keep_connection) {
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * GENERATE DATA * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-					if (!in_sync_signal_received) {
-						std::this_thread::yield();
-						continue;
+					__package sending;
+					tasked_once = true;
+
+					// - - - - - - > SYNC EVENT, PRIORITY < - - - - - - //
+					if (should_request_sync)
+					{
+						debug(socket_identification + "&eREQUEST SYNC");
+
+						should_request_sync = false;
+
+						sending.prepare_to(__package::package_type::REQUEST);
+						sending.pack.rqst.request = __package::package_type::SYNC;
 					}
+					// - - - - - - > SYNC EVENT, PRIORITY < - - - - - - //
+					else if (should_sync)
+					{
+						debug(socket_identification + "&eSYNC");
 
-					std::string pack;
-					_pack_1 sys_t;
-					
-					if (do_sys) {
-						sys_t.sys = do_sys;
+						should_sync = false;
 
-						do_sys = 0;
+						sending.prepare_to(__package::package_type::SYNC);
+						update_myself_package();
+						sending.pack.sync = myself;
+					}
+					// - - - - - - > PING EVENT, ONCE IN A WHILE < - - - - - - //
+					else if (should_ping)
+					{
+						if (!data_working_on.buffer.empty() || buffer_sending.size()) should_request_sync = is_overloaded(); // task to do, sync
 
-						switch (sys_t.sys) {
-						case static_cast<unsigned>(connection::_internal_tasks::PING): // first
+						debug(socket_identification + "&6PING");
+
+						should_ping = false;
+
+						sending.prepare_to(__package::package_type::PING);
+					}
+					// - - - - - - > OTHER THREAD ASKED FOR A TASK < - - - - - - //
+					else if (between.size())
+					{
+						debug(socket_identification + "&3SHARED");
 						{
-							sys_t.has_pack_2 = false;
-
-							Tools::AutoLock luck(packs_sending_m);
-
-							if (!ensure_send((char*)&sys_t, sizeof(_pack_1))) {
-								keep_connection = false;
-								package_come_wait.signal_all();
-								continue;
-							}
+							Tools::AutoLock l(between_mtx);
+							sending = between[0];
+							between.erase(between.begin());
 						}
+					}
+					// - - - - - - > HAS JOB, COMPLETE IT FAST < - - - - - - //
+					else if (data_working_on.buffer.size()) // still has job to do
+					{
+						if (is_overloaded()) { // LIMIT REACHED!
+							if (cant_send_first_time) {
+								should_request_sync = true;
+								debug(socket_identification + "&4CAN'T SEND, OVERLOAD?!");
+							}
+							cant_send_first_time = false;
+							tasked_once = false; // STOP SENDING DATA
+						}
+						else { // LET'S GOO
+							cant_send_first_time = true; 
+
+							sending.prepare_to(__package::package_type::DATA);
+
+							pop_current_limit(); // take one from history if there's a limit. Updates CAN_SEND for futher use!
+							if (buffer_available_send > 0) debug(socket_identification + " &dhas " + std::to_string(buffer_available_send) + " slot(s)");
+
+							sending.pack.data.remaining = data_working_on.is_full ? (is_overloaded() ? ((data_working_on.buffer.size() - 1) / connection::package_size) : false) : 1; // false if can't send or not full from source
+							sending.pack.data.data_len = static_cast<unsigned>(data_working_on.buffer.size() > connection::package_size ? connection::package_size : data_working_on.buffer.size());
+							std::copy(data_working_on.buffer.begin(), data_working_on.buffer.begin() + sending.pack.data.data_len, sending.pack.data.buffer);
+							data_working_on.buffer.erase(data_working_on.buffer.begin(), data_working_on.buffer.begin() + sending.pack.data.data_len);
+							sending.pack.data.full = data_working_on.is_full && data_working_on.buffer.empty();
+
+							//should_request_sync |= sending.pack.data.remaining == 0;
+						}
+					}
+					// - - - - - - > NO JOB PENDING, GENERATE NEW JOB < - - - - - - //
+					else if (data_working_on.buffer.empty() && (buffer_sending.size() || send_overwrite)) // no job, prepare next job (if there is one)
+					{
+						//should_sync = true;
+
+						Tools::AutoLock l2(send_overwrite_mtx); // send_overwrite secure
+
+						debug(socket_identification + "&8DATA");
+
+						// = = = = = If has send_overwrite, try = = = = = //
+						if (send_overwrite) {
+							data_working_on.buffer = send_overwrite();
+						}
+
+						// = = = = = If no send_overwrite or no result, check default = = = = = //
+						if (data_working_on.buffer.empty() && buffer_sending.size()) {
+							Tools::AutoLock l(buffer_sending_mtx);
+
+							data_working_on = std::move(buffer_sending.front());
+							buffer_sending.erase(buffer_sending.begin());
+							sent_once_package.signal_all();
+						}
+
+						// = = = = = Check any result = = = = = //
+						tasked_once = !data_working_on.buffer.empty();
+					}
+					else { // no task
+						tasked_once = false;
+						std::this_thread::sleep_for(std::chrono::milliseconds(5)); // relax
+					}
+
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * SEND DATA TO HOST * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+					if (tasked_once) {
+						connection::_connection_status res = ensure_send((char*)&sending, sizeof(sending));
+
+						switch (res) {
+						case connection::_connection_status::DISCONNECTED:
+							keep_connection = false;
+							closesocket(connected);
 							break;
-						case static_cast<unsigned>(connection::_internal_tasks::SYNC): // sync stuff
+						case connection::_connection_status::GOOD:
+							// one more send!
+							myself.sent_count++;
+							break;
+						}
+					}
+
+				}
+			}
+
+			void Connection::handle_connection_recv(Tools::boolThreadF run, Tools::SuperThread<>& selfthr)
+			{
+				// * * * * * * * STARTUP * * * * * * * //
+				const std::string socket_identification = "&7SOCKET&8#&1" + Tools::sprintf_a("%08" PRIx64, Tools::get_thread_id()) + " &d<- RECV -  &1";
+				debug(socket_identification + "&aHANDLE CONNECTION STARTED RECV");
+
+				// - - - - - > VARIABLES < - - - - - //
+				// control
+				bool tasked_once = false;
+
+				// job on going
+				__combined_data data_working_on;
+
+				// - - - - - > PREPARE/START < - - - - - //
+				set_recv_hold(false);
+
+
+				// * * * * * * * WORK * * * * * * * //
+				while ((tasked_once && keep_connection) || run()) {
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * RETRIEVE DATA * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+					tasked_once = false;
+
+					__package received;
+					connection::_connection_status res = ensure_recv((char*)&received, sizeof(received));
+
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * *  WORK ON DATA * * * * * * * * * * * * * //
+					// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+					if (has_package()) received_package.signal_all();
+
+					// tabbing a little bit makes things more readable ;P
+					switch(res) {
+						case connection::_connection_status::DISCONNECTED:
 						{
-							sys_t.has_pack_2 = false;
+							keep_connection = false;
+							closesocket(connected);
+						}
+						break;
 
-							Tools::AutoLock luck(packs_sending_m);
+						case connection::_connection_status::EMPTY: // relax
+						{
+							std::this_thread::sleep_for(std::chrono::milliseconds(5));
+						}
+						break;
 
-							in_sync_signal_received = false;
-							debug(common + "QUESTIONING SYNC");
+						case connection::_connection_status::GOOD:
+						{
+							// one more recv!
+							myself.received_count++;
 
-							if (!ensure_send((char*)&sys_t, sizeof(_pack_1))) {
-								keep_connection = false;
-								package_come_wait.signal_all();
-								continue;
+							switch (received.type) {
+
+								// - - - - - - > REQUESTING < - - - - - - //
+								case __package::package_type::REQUEST:
+								{
+									// should_sync should not be set to true here, it would loop.
+									debug(socket_identification + "&eREQUEST GOT");
+
+									// available now
+									switch (received.pack.rqst.request) {
+									case __package::package_type::PING:
+										should_ping = true;
+										break;
+									case __package::package_type::SYNC:
+										should_sync = true;
+										break;
+									}
+								}
+								break;
+
+								// - - - - - - > SYNC TASK, SYNC INFO < - - - - - - //
+								case __package::package_type::SYNC:
+								{
+									// should_sync should not be set to true here, it would loop.
+									debug(socket_identification + "&eSYNCED");
+
+									yourself = received.pack.sync;
+									if (yourself.no_limit) {
+										if (buffer_available_send >= 0) {
+											debug(socket_identification + " &dadded unlimited slots.");
+										}
+										buffer_available_send = -1;
+									}
+									else {
+										if (buffer_available_send < 0) buffer_available_send = 0;
+										add_current_limit(yourself.add_availability);
+										debug(socket_identification + " &dadded slots, " + std::to_string(buffer_available_send) + " now");
+									}
+								}
+								break;
+
+								// - - - - - - > GOT PING, RETURN PONG! < - - - - - - //
+								case __package::package_type::PING:
+								{
+									//should_sync = true; // ping will refresh sides any time
+									debug(socket_identification + "&6PONG");
+
+									__package _sending;
+									_sending.prepare_to(__package::package_type::PONG);
+									_sending.pack.pong.self_time_ms = received.pack.ping.self_time_ms;
+
+									Tools::AutoLock l(between_mtx);
+									between.push_back(std::move(_sending));
+								}
+								break;
+
+								// - - - - - - > GOT PONG, LET'S GO! < - - - - - - //
+								case __package::package_type::PONG:
+								{
+									debug(socket_identification + "&6GOT PONG!");
+
+									network_analysis.ping_new(Tools::now() - received.pack.pong.self_time_ms);
+									//ping = Tools::now() - received.pack.pong.self_time_ms;
+								}
+								break;
+
+								// - - - - - - > NO JOB PENDING, GENERATE NEW JOB < - - - - - - //
+								case __package::package_type::DATA:
+								{
+									tasked_once = true;
+
+									data_working_on.is_full = received.pack.data.full; // last one rules
+									data_working_on.buffer.resize(data_working_on.buffer.size() + received.pack.data.data_len);
+									std::copy(received.pack.data.buffer, received.pack.data.buffer + received.pack.data.data_len, data_working_on.buffer.end() - received.pack.data.data_len);
+
+									if (received.pack.data.full) {
+
+										// = = = = = Try and, if success, move/erase = = = = = //
+										if (recv_overwrite) {
+											Tools::AutoLock l(recv_overwrite_mtx);
+											if (recv_overwrite) {
+												recv_overwrite((uintptr_t)this, std::move(data_working_on.buffer));
+											}
+
+										}
+
+										// = = = = = If not empty, it didn't move, so let's go = = = = = //
+										if (!data_working_on.buffer.empty()) {
+											Tools::AutoLock l(buffer_receive_mtx);
+											buffer_receive.push_back(std::move(data_working_on));
+											// other side already remove one. No need for calculate_add_available(-1);
+											received_package.signal_all();
+										}
+
+									}
+									last_recv_remaining = received.pack.data.remaining;
+								}
+								break;
 							}
+
 						}
-							break;
-						}
-						continue; // go back to while
-					}
-
-					// * * * * * * * * * * * * * * * * * * * * * * CERTAINLY NOT do_sys * * * * * * * * * * * * * * * * * * * * * * //
-
-					// let ping go lol
-					if (friend_there_recv_buffer_overload) {
-						std::this_thread::sleep_for(std::chrono::milliseconds(10));
-						std::this_thread::yield();
-						continue;
-					}
-
-
-					if (alt_generate_auto) {
-						pack = alt_generate_auto();
-						if (pack.empty()) {
-							//std::this_thread::sleep_for(connection::min_delay_no_tasks); // SuperThread handles this now
-							continue;
-						}
-						//debug(common + "(auto) tasked.");
-					}
-					else {
-						Tools::AutoLock luck(packs_sending_m);
-						if (packs_sending.size() == 0) {
-							//std::this_thread::sleep_for(connection::min_delay_no_tasks); // SuperThread handles this now
-							continue;
-						}
-						else {
-							auto& _temp = packs_sending.front();
-							pack = std::move(_temp.data);
-							sys_t.sys = _temp.sys;
-							packs_sending.erase(packs_sending.begin());
-							//debug(common + "(default) send tasked.");
-						}
-					}
-
-					if (!pack.length()) continue; // just to be 100% sure.
-
-					const unsigned len = (static_cast<unsigned>(pack.length()) - 1) / connection::package_size; // if len == package_size, it is only one pack, so (len-1)...
-
-					if (!ensure_send((char*)&sys_t, sizeof(_pack_1))) {
-						keep_connection = false;
 						break;
 					}
 
-					if (!sys_t.has_pack_2) continue; // no pack to send, just info
-
-					for (unsigned count = 0; count <= len; count++) {
-						_pack_2 one;
-						one.sum_with_n_more = len - count;
-						std::string res = pack.substr(0, connection::package_size);
-						one.data_len = static_cast<unsigned>(res.length());
-						size_t _count = 0;
-						for (auto& i : res) one.data[_count++] = i;
-						if (pack.length() > connection::package_size) pack = pack.substr(connection::package_size);
-						else pack.clear();
-
-						if (!ensure_send((char*)&one, sizeof(_pack_2))) {
-							keep_connection = false;
-							break;
-						}
-
-						packages_sent++;
-
-						debug(common + "SEND once.");
-					}
-				}
-				evhdr.stop(); // make sure this happens before timar death
-			}
-
-			void Connection::handle_recv(Tools::boolThreadF run)
-			{
-				std::stringstream ss;
-				ss << std::this_thread::get_id();
-				const std::string common = std::string("[HANDLE_RECV] T#") + ss.str() + std::string(": ");
-
-				debug(common + "Started.");
-
-				while (run() && keep_connection) {
-
-					if (has_package()) package_come_wait.signal_all();
-
-					// buffer is too big to continue recv. Send stop on other side.
-					if (buf_max) {
-						if (packs_received.size() >= buf_max) {
-							if (!recv_this_buffer_overload) {
-								recv_this_buffer_overload = true;
-
-								Tools::AutoLock luck(packs_sending_m);
-
-								_pack_1 smol;
-								smol.has_pack_2 = false;
-								smol.sys = static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_WAIT);
-								debug(common + "RECV OVERLOAD WAIT SENT");
-
-								if (!ensure_send((char*)&smol, sizeof(_pack_1))) {
-									keep_connection = false;
-									package_come_wait.signal_all();
-									continue;
-								}
-							}
-						}
-						else if (recv_this_buffer_overload) { // not overloaded anymore lol
-							recv_this_buffer_overload = false;
-
-							Tools::AutoLock luck(packs_sending_m);
-
-							_pack_1 smol;
-							smol.has_pack_2 = false;
-							smol.sys = static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_CONTINUE);
-							debug(common + "RECV OVERLOAD CONTINUE SENT");
-
-							if (!ensure_send((char*)&smol, sizeof(_pack_1))) {
-								keep_connection = false;
-								package_come_wait.signal_all();
-								continue;
-							}
-						}
-					}
-
-					// new code:
-
-					_pack_1 identify; // has_pack_2
-					_pack_2 pack;
-
-					if (!ensure_recv((char*)&identify, sizeof(_pack_1))) {
-						keep_connection = false;
-						package_come_wait.signal_all();
-						continue;
-					}
-
-					// no _pack_2
-					if (!identify.has_pack_2) {
-						switch (identify.sys) {
-						case static_cast<unsigned>(connection::_internal_tasks::PING): // return pong with data
-						{
-							Tools::AutoLock luck(packs_sending_m);
-
-							identify.sys = static_cast<unsigned>(connection::_internal_tasks::PONG);
-							identify.has_pack_2 = false;
-
-							if (!ensure_send((char*)&identify, sizeof(_pack_1))) {
-								keep_connection = false;
-								package_come_wait.signal_all();
-								continue;
-							}
-						}
-							break;
-						case static_cast<unsigned>(connection::_internal_tasks::PONG): // PING RETURNED! (ping pong is good because reference in time can be different, idk)
-						{
-							const auto _time_now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-							last_ping = (_time_now - identify.timestamp) / 2;
-						}
-							break;
-						case static_cast<unsigned>(connection::_internal_tasks::SYNC): // return SYNC_BACK
-						{
-							Tools::AutoLock luck(packs_sending_m);
-
-							identify.sys = static_cast<unsigned>(connection::_internal_tasks::SYNC_BACK);
-							identify.has_pack_2 = false;
-
-							if (!ensure_send((char*)&identify, sizeof(_pack_1))) {
-								keep_connection = false;
-								package_come_wait.signal_all();
-								continue;
-							}
-						}
-							break;
-						case static_cast<unsigned>(connection::_internal_tasks::SYNC_BACK): // return SYNC_BACK
-						{
-							in_sync_signal_received = true; // in sync
-							debug(common + "SYNC INDEED");
-						}
-							break;
-						case static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_WAIT): // other side overload
-						{
-							friend_there_recv_buffer_overload = true; // no mutex thanks god
-							debug(common + "RECV OVERLOAD WAIT RECV");
-						}
-							break;
-						case static_cast<unsigned>(connection::_internal_tasks::RECV_OVERLOAD_CONTINUE): // other side can continue
-						{
-							friend_there_recv_buffer_overload = false; // no mutex thanks god
-							debug(common + "RECV OVERLOAD CONTINUE RECV");
-						}
-							break;
-						}
-						continue;
-					}
-
-					// has pack 2
-
-					if (!ensure_recv((char*)&pack, sizeof(_pack_2))) {
-						keep_connection = false;
-						package_come_wait.signal_all();
-						continue;
-					}
-
-					packages_recv++;
-
-					debug(common + "RECV once.");
-
-
-					std::string data;
-					Tools::AutoLock luck(packs_received_m);
-					for (unsigned p = 0; p < pack.data_len; p++) data += pack.data[p];
-
-					while (pack.sum_with_n_more > 0) {
-
-						if (!ensure_recv((char*)&pack, sizeof(_pack_2))) {
-							keep_connection = false;
-							package_come_wait.signal_all();
-							continue;
-						}
-
-						packages_recv++;
-
-						debug(common + "RECV once.");
-
-						for (unsigned p = 0; p < pack.data_len; p++) data += pack.data[p];
-						//printf_s("\nReceived one package.");
-					}
-
-					if (identify.sys == 0) {
-						if (alt_receive_autodiscard) {
-							alt_receive_autodiscard((uintptr_t)this, data);
-							package_come_wait.signal_all();
-							debug(common + "(auto) tasked.");
-						}
-						else {
-							packs_received.emplace_back(std::move(data));
-							package_come_wait.signal_all();
-							debug(common + "(default) tasked.");
-						}
-					}
-					/*else {
-						// * * * * * * * * * * * * * * * * * * * * IF IT NEEDS TO READ, GO HERE * * * * * * * * * * * * * * * * * * * * //
-						switch (identify.sys) {
-						case static_cast<unsigned>(connection::_internal_tasks::PING): // just a echo // second
-						{
-							Tools::AutoLock luck(packs_sending_m);
-
-							_pack_1 smol;
-							smol.has_pack_2 = false;
-							smol.sys = static_cast<unsigned>(connection::_internal_tasks::PONG);
-
-							if (!ensure_send((char*)&smol, sizeof(_pack_1))) {
-								keep_connection = false;
-								package_come_wait.signal_all();
-								continue;
-							}
-
-							packs_sending.push_back(_unprocessed_pack{ std::move(data), static_cast<unsigned>(connection::_internal_tasks::PONG) });
-						}
-							break;
-						case static_cast<unsigned>(connection::_internal_tasks::PONG): // response // third
-						{
-							long long noww = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-							long long* before = (long long*)data.data(); // direct raw data
-
-							last_ping = (noww - *before) / 2;
-						}
-							break;
-						}
-					}*/
 				}
 			}
 
 			void Connection::init()
 			{
 				keep_connection = true;
-				send_thread.set([&](Tools::boolThreadF f) { handle_send(f); });
-				recv_thread.set([&](Tools::boolThreadF f) { handle_recv(f); });
-				send_thread.start();
-				recv_thread.start();
+				connection_handle_send.set([&](Tools::boolThreadF f) { handle_connection_send(f, connection_handle_send); });
+				connection_handle_recv.set([&](Tools::boolThreadF f) { handle_connection_recv(f, connection_handle_recv); });
+				connection_handle_send.start();
+				connection_handle_recv.start();
 			}
 
 			Connection::Connection(SOCKET socket)
@@ -506,6 +706,7 @@ namespace LSW {
 					connected = socket;
 					init();
 				}
+				//else throw Handling::Abort(__FUNCSIG__, "Invalid SOCKET at Connection constructor", Handling::abort::abort_level::GIVEUP);
 			}
 
 			Connection::~Connection()
@@ -513,9 +714,9 @@ namespace LSW {
 				close();
 			}
 
-			bool Connection::connect(const char* a, const int b)
+			bool Connection::connect(const std::string& a, const int b)
 			{
-				if (!core.initialize(a, b, -1)) return false;
+				if (!core.initialize(a, b, connection::connection_type::CLIENT)) return false;
 				if (!core.as_client(connected)) return false;
 				init();
 				//printf_s("\nConnected");
@@ -528,130 +729,208 @@ namespace LSW {
 				if (connected != INVALID_SOCKET) {
 					::closesocket(connected);
 					connected = INVALID_SOCKET;
-					send_thread.join();
-					recv_thread.join();
-					Tools::AutoLock lol1(packs_sending_m);
-					Tools::AutoLock lol2(packs_received_m);
-					packs_sending.clear();
-					packs_received.clear();
+
+					connection_handle_send.join();
+					connection_handle_recv.join();
+					
+					{
+						Tools::AutoLock lol1(between_mtx);
+						between.clear();
+					}
+
+					Tools::AutoLock lol2(buffer_sending_mtx);
+					Tools::AutoLock lol3(buffer_receive_mtx);
+
+					buffer_sending.clear();
+					buffer_receive.clear();
+					calculate_cut_value(); // reset
 				}
 			}
+
+			/*int Connection::performance_status_send() const
+			{
+				return balance_sending;
+			}
+
+			int Connection::performance_status_recv() const
+			{
+				return balance_receive;
+			}*/
 
 			bool Connection::is_connected() const
 			{
 				return connected != INVALID_SOCKET && keep_connection;
 			}
 
+			const NetworkMonitor& Connection::get_network_info() const
+			{
+				return network_analysis;
+			}
+
 			bool Connection::has_package() const
 			{
-				Tools::AutoLock luck(packs_received_m);
-				return packs_received.size();
+				return buffer_receive.size();
 			}
 
-			bool Connection::in_sync() const
+			void Connection::set_max_buffering(const long long u)
 			{
-				return in_sync_signal_received;
+				calculate_modify_buffer(u);
+				should_sync = true;
 			}
 
-			bool Connection::is_receiving_buffer_full() const
+			long long Connection::in_memory_can_send() const
 			{
-				return recv_this_buffer_overload;
+				return buffer_available_send;
 			}
 
-			bool Connection::is_other_receiving_buffer_full() const
+			// me sending versus what has come already
+			unsigned Connection::small_packages_on_the_way() const
 			{
-				return friend_there_recv_buffer_overload;
+
+				const auto res = (myself.sent_count - yourself.received_count); // since last update, how many hasn't been there yet?
+				return (res ? res : (myself.buffer_sending_size ? 1 : 0));
+			}
+
+			// information of _data.remaining
+			unsigned Connection::small_packages_on_my_way() const
+			{
+				return last_recv_remaining ? last_recv_remaining : (unsigned)((bool)yourself.buffer_sending_size); // estimated because there can be 2 or more "full packages" coming. If yourself.buffer_sending_size, each can be 1 or more packages.
+			}
+
+			// them vs what I have received so far
+			unsigned Connection::small_packages_received_since_last_sync() const
+			{
+				return (myself.received_count - yourself.sent_count);
 			}
 
 			bool Connection::wait_for_package(const std::chrono::milliseconds t)
 			{
 				if (has_package()) return true;
-				package_come_wait.wait_signal(t.count());
-				return has_package();
-			}
-
-			std::string Connection::get_next()
-			{
-				if (alt_receive_autodiscard) throw Handling::Abort(__FUNCSIG__, "Recvs are overrwriten by a function! You cannot recv package when function is set!");
-				if (packs_received.size() == 0) return "";
-				Tools::AutoLock luck(packs_received_m);
-				std::string cpy = std::move(packs_received.front());
-				packs_received.erase(packs_received.begin());
-				return std::move(cpy);
-			}
-
-			bool Connection::send_package(std::string pack, bool break_law, bool lock_on_full)
-			{
-				if (alt_generate_auto) throw Handling::Abort(__FUNCSIG__, "Sends are overrwriten by a function! You cannot send package when function is set!");
-
-				Tools::AutoLock luck(packs_sending_m);
-
-				while (!break_law && buf_max && packs_sending.size() >= buf_max) {
-					if (!lock_on_full) return false;
-					luck.unlock();
-					std::this_thread::sleep_for(std::chrono::milliseconds(10));
-					std::this_thread::yield();
-					luck.lock();
-				}
-
-				packs_sending.push_back(std::move(pack));
+				while (!has_package()) received_package.wait_signal(t.count());
 				return true;
 			}
 
-			size_t Connection::get_packages_sent() const
+			__combined_data Connection::get_next(const bool force_wait_for_full)
 			{
-				return packages_sent;
+				if (!has_package()) return {"", false};
+				__combined_data result{"", false};
+				Tools::AutoLock l(buffer_receive_mtx);
+				do {
+					if (buffer_receive.size() == 0) {
+						should_sync = true;
+
+						if (force_wait_for_full) {
+							l.unlock();
+							while (buffer_receive.size() == 0) { std::this_thread::yield(); std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
+							l.lock();
+						}
+						else return std::move(result);
+					}
+					__combined_data& yo = buffer_receive.front();
+					result.buffer += std::move(yo.buffer);
+					result.is_full |= yo.is_full;
+					
+					buffer_receive.erase(buffer_receive.begin());					
+					calculate_add_available(1); // has one more slot available now
+
+				} while (force_wait_for_full && !result.is_full);
+
+				should_sync = true;
+
+				return std::move(result);
 			}
 
-			size_t Connection::get_packages_sent_bytes() const
+			void Connection::send_package(const std::string& str, const bool waitt)
 			{
-				return packages_sent_bytes;
+				send_package(__combined_data{ str, true }, waitt);
 			}
 
-			size_t Connection::get_packages_recv() const
+			void Connection::send_package(const __combined_data& data, const bool waitt)
 			{
-				return packages_recv;
+				{
+					Tools::AutoLock l(buffer_sending_mtx);
+					buffer_sending.push_back(data);
+				}
+				while (buffer_sending.size()) sent_once_package.wait_signal(100);
 			}
 
-			size_t Connection::get_packages_recv_bytes() const
+			unsigned long long Connection::get_packages_sent() const
 			{
-				return packages_recv_bytes;
+				return myself.sent_count;
+			}
+
+			unsigned long long Connection::get_packages_sent_bytes() const
+			{
+				return network_analysis.send_get_total();
+			}
+
+			unsigned long long Connection::get_packages_recv() const
+			{
+				return myself.received_count;
+			}
+
+			unsigned long long Connection::get_packages_recv_bytes() const
+			{
+				return network_analysis.recv_get_total();
 			}
 
 			size_t Connection::get_ping()
 			{
-				return last_ping;
+				return network_analysis.ping_now();
 			}
 
-			void Connection::set_max_buffering(const size_t mx)
+			bool Connection::is_overloaded() const
 			{
-				buf_max = mx;
+				return buffer_available_send == 0;
 			}
 
 			void Connection::overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)> ow)
 			{
-				alt_receive_autodiscard = ow;
+				Tools::AutoLock l(recv_overwrite_mtx);
+				recv_overwrite = ow;
 			}
 
 			void Connection::overwrite_sends_to(std::function<std::string(void)> ow)
 			{
-				alt_generate_auto = ow;
+				Tools::AutoLock l(send_overwrite_mtx);
+				send_overwrite = ow;
 			}
+
+			/*void Connection::set_performance_watchdog(std::function<void(const connection::_who, const connection::_performance_adapt)> ow)
+			{
+				Tools::AutoLock l(perf_monitor_mtx);
+				perf_monitor = ow;
+			}*/
 
 			void Connection::reset_overwrite_reads()
 			{
-				alt_receive_autodiscard = std::function<void(const uintptr_t, const std::string&)>();
+				Tools::AutoLock l(recv_overwrite_mtx);
+				recv_overwrite = std::function<void(const uintptr_t, const std::string&)>();
 			}
 
 			void Connection::reset_overwrite_sends()
 			{
-				alt_generate_auto = std::function<std::string(void)>();
+				Tools::AutoLock l(send_overwrite_mtx);
+				send_overwrite = std::function<std::string(void)>();
 			}
+
+			/*void Connection::reset_performance_watchdog()
+			{
+				Tools::AutoLock l(perf_monitor_mtx);
+				perf_monitor = std::function<void(const connection::_who, const connection::_performance_adapt)>();
+			}*/
 
 			void Connection::set_mode(const Tools::superthread::performance_mode m)
 			{
-				send_thread.set_performance_mode(m);
-				recv_thread.set_performance_mode(m);
+				if (m == Tools::superthread::performance_mode::_COUNT) return;
+				connection_handle_send.set_performance_mode(m);
+				connection_handle_recv.set_performance_mode(m);
+			}
+
+			void Connection::reset_mode_default()
+			{
+				connection_handle_send.set_performance_mode(connection::default_performance_connection);
+				connection_handle_recv.set_performance_mode(connection::default_performance_connection);
 			}
 
 			void Hosting::handle_disconnects(Tools::boolThreadF run)
@@ -712,14 +991,14 @@ namespace LSW {
 
 			Hosting::Hosting(const int port, const bool ipv6)
 			{
-				core.initialize(nullptr, port, ipv6);
+				core.initialize("", port, ipv6 ? connection::connection_type::HOST_IPV6 : connection::connection_type::HOST_IPV4);
 				core.as_host(Listening);
 				init();
 			}
 
 			Hosting::Hosting(const bool ipv6)
 			{
-				core.initialize(nullptr, connection::default_port, ipv6);
+				core.initialize("", connection::default_port, ipv6 ? connection::connection_type::HOST_IPV6 : connection::connection_type::HOST_IPV4);
 				core.as_host(Listening);
 				init();
 			}
@@ -807,7 +1086,7 @@ namespace LSW {
 
 			std::string transform_any_to_package(void* data, const size_t size)
 			{
-				errno_t ignor;
+				errno_t ignor{};
 				return transform_any_to_package(data, size, ignor);
 			}
 
@@ -826,7 +1105,25 @@ namespace LSW {
 				return memcpy_s(data, size, src.data(), src.size()) == 0;
 			}
 
+			bool transform_and_send_file_auto(SmartFile& fp, Connection& cn, size_t read_buf_size)
+			{
+				if (!fp.is_open()) return false;
+				if (!fp.is_readable()) return false;
+				if (!cn.is_connected()) return false;
 
+				if (read_buf_size == 0) read_buf_size = connection::package_size * 20;
+				else if (read_buf_size < connection::package_size) read_buf_size = connection::package_size;
+
+				while (!fp.eof())
+				{
+					__combined_data data;
+					fp.read(data.buffer, read_buf_size);
+					data.is_full = fp.eof();
+					cn.send_package(data);
+				}
+
+				return true;
+			}
 		}
 	}
 }

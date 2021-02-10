@@ -39,21 +39,39 @@ namespace LSW {
 				eoff = false;
 				close();
 				Handling::interpret_path(path);
-				
-				//size_of_this = Tools::get_file_size(path);
 
-				return (fp = al_fopen(path.c_str(), convert(m).c_str()));/* {
-					al_fseek(fp, 0, ALLEGRO_SEEK_END);
-					size_of_this = al_ftell(fp);
-					al_fseek(fp, 0, ALLEGRO_SEEK_SET);
-					return true;
-				}
-				return false;*/
+				latest_mode = m;
+
+				return (fp = al_fopen(path.c_str(), convert(m).c_str()));
 			}
 
 			bool SmartFile::is_open() const
 			{
 				return fp;
+			}
+
+			smartfile::file_modes SmartFile::open_mode() const
+			{
+				return latest_mode;
+			}
+
+			bool SmartFile::is_readable() const
+			{
+				return fp && (
+					latest_mode == smartfile::file_modes::APPEND_READ_WRITE ||
+					latest_mode == smartfile::file_modes::READ ||
+					latest_mode == smartfile::file_modes::READ_WRITE_KEEP ||
+					latest_mode == smartfile::file_modes::READ_WRITE_OVERWRITE);
+			}
+
+			bool SmartFile::is_writable() const
+			{
+				return fp && (
+					latest_mode == smartfile::file_modes::APPEND_READ_WRITE ||
+					latest_mode == smartfile::file_modes::APPEND_WRITE ||
+					latest_mode == smartfile::file_modes::READ_WRITE_KEEP ||
+					latest_mode == smartfile::file_modes::READ_WRITE_OVERWRITE ||
+					latest_mode == smartfile::file_modes::WRITE);
 			}
 
 			int64_t SmartFile::total_size() const

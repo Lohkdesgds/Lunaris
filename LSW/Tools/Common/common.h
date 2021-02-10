@@ -80,6 +80,12 @@ namespace LSW {
 			uint64_t get_thread_id();
 
 			/// <summary>
+			/// <para>Get time now since epoch in milliseconds.</para>
+			/// </summary>
+			/// <returns>{unsigned long long} Current time since epoch in milliseconds.</returns>
+			unsigned long long now();
+
+			/// <summary>
 			/// <para>Transform bits into a vector of bools (up to 32 bits).</para>
 			/// <para>You can transform a char to 8 bits (bools).</para>
 			/// </summary>
@@ -95,8 +101,9 @@ namespace LSW {
 			/// <param name="{double}">The value.</param>
 			/// <param name="{size_t}">Numbers after the dot.</param>
 			/// <param name="{bool}">Do you prefer 1.3k (false) or 1.3 k (true)? (the space between the number and magnetude).</param>
+			/// <param name="{std::string}">Anything between the value and the magnitude?</param>
 			/// <returns>{std::string} The string generated.</returns>
-			std::string byte_auto_string(double, const size_t = 1, const bool = true);
+			std::string byte_auto_string(double, const size_t = 1, const bool = true, const std::string& = "");
 
 			// https://stackoverflow.com/a/26914562
 			/// <summary>

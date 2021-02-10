@@ -40,7 +40,7 @@ namespace LSW {
 					size_t arrp = 0;
 
 					size_t pos = 0;
-					while (((pos = p_str.find('\n')) != std::string::npos) || (max_length_line && p_str.size() > static_cast<size_t>(max_length_line)) || (max_length_line_size > 0.0 && fontt.get_width(p_str.s_str().c_str()) > max_length_line_size)) {
+					while (((pos = p_str.find('\n')) != std::string::npos) || (max_length_line && p_str.size() > static_cast<size_t>(max_length_line)) || (max_length_line_size > 0.0 && fontt.get_width(p_str.s_str()) > max_length_line_size)) {
 
 						auto line = p_str.substr(0, pos);
 
@@ -68,9 +68,9 @@ namespace LSW {
 							pos = line.size();
 							if (pos) pos--; // last char is erased if not because of + 1 later there
 						}
-						if (max_length_line_size > 0.0 && !scroll_on_line_limit && fontt.get_width(line.s_str().c_str()) > max_length_line_size) {
+						if (max_length_line_size > 0.0 && !scroll_on_line_limit && fontt.get_width(line.s_str()) > max_length_line_size) {
 							if (scroll_movement == 0.0) {
-								while (fontt.get_width(line.s_str().c_str()) > max_length_line_size) line.pop_utf8();
+								while (fontt.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
 							}
 							else {
 								size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (line.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
@@ -86,8 +86,8 @@ namespace LSW {
 								//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
 								//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
 
-								for (size_t k = 0; k < cut && fontt.get_width(line.s_str().c_str()) > max_length_line_size; k++) line.pop_front_utf8();
-								while (fontt.get_width(line.s_str().c_str()) > max_length_line_size) line.pop_utf8();
+								for (size_t k = 0; k < cut && fontt.get_width(line.s_str()) > max_length_line_size; k++) line.pop_front_utf8();
+								while (fontt.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
 							}
 							pos = line.size();
 							if (pos) pos--; // last char is erased if not because of + 1 later there
@@ -154,9 +154,9 @@ namespace LSW {
 									while (i.size_utf8() > static_cast<size_t>(max_length_line)) i.pop_utf8();
 								}
 							}
-							if (max_length_line_size > 0.0 && fontt.get_width(i.s_str().c_str()) > max_length_line_size) {
+							if (max_length_line_size > 0.0 && fontt.get_width(i.s_str()) > max_length_line_size) {
 								if (scroll_movement == 0.0) {
-									while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_utf8();
+									while (fontt.get_width(i.s_str()) > max_length_line_size) i.pop_utf8();
 								}
 								else {
 									size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (i.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
@@ -172,8 +172,8 @@ namespace LSW {
 									//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
 									//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
 
-									for (size_t k = 0; k < cut && fontt.get_width(i.s_str().c_str()) > max_length_line_size; k++) i.pop_front_utf8();
-									while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_utf8();
+									for (size_t k = 0; k < cut && fontt.get_width(i.s_str()) > max_length_line_size; k++) i.pop_front_utf8();
+									while (fontt.get_width(i.s_str()) > max_length_line_size) i.pop_utf8();
 								}
 							}
 
@@ -232,7 +232,7 @@ namespace LSW {
 
 				const bool should_care_about_shadow = (s_dist_x != 0.0 || s_dist_y != 0.0);
 
-				double pos_now[2];
+				double pos_now[2]{};
 
 				pos_now[0] = (((posx)*cos(p_rotation_rad)) - ((posy)*sin(p_rotation_rad)) + off_x); // transformed to sprite's coords
 				pos_now[1] = (((posy)*cos(p_rotation_rad)) + ((posx)*sin(p_rotation_rad)) + off_y); // transformed to sprite's coords
@@ -264,15 +264,15 @@ namespace LSW {
 				const double y_offset = mode_y == 0 ? 0 : (mode_y == static_cast<int>(text::e_text_y_modes::CENTER) ? (0.5 * height * (_buf_lines.size() - 1)) : (height * (_buf_lines.size() - 1)));
 
 				for (size_t o = 0; o < _buf_lines.size(); o++) {
-					const auto i = _buf_lines[o];
+					const auto& i = _buf_lines[o];
 
 					if (should_care_about_shadow) {
 						shadow_cam.apply();
-						fontt.draw(s_col, 0.0, -compensate + height * o - y_offset, mode, i.s_str().c_str());
+						fontt.draw(s_col, 0.0, -compensate + height * o - y_offset, mode, i.s_str());
 						ruler.apply();
 					}
 					if (force_color) {
-						fontt.draw(n_col, 0.0, -compensate + height * o - y_offset, mode, i.s_str().c_str());
+						fontt.draw(n_col, 0.0, -compensate + height * o - y_offset, mode, i.s_str());
 					}
 					else {
 						fontt.draw(0.0, -compensate + height * o - y_offset, mode, i);
@@ -326,7 +326,7 @@ namespace LSW {
 
 						buff.set_as_target();
 						al_clear_to_color(Interface::Color(0, 0, 0, 0));
-						auto cpy = ruler;
+						Interface::Camera cpy = ruler;
 						cpy.classic_update(buff);
 						_draw_text(cpy);
 
@@ -373,7 +373,7 @@ namespace LSW {
 				*this = other;
 			}
 						
-			Text::Text(Text&& other)
+			Text::Text(Text&& other) noexcept
 			{
 				*this = std::move(other);
 			}
@@ -390,7 +390,7 @@ namespace LSW {
 				set<Sprite_Base>(oth.get<Sprite_Base>());
 			}
 			
-			void Text::operator=(Text&& oth)
+			void Text::operator=(Text&& oth) noexcept
 			{
 				this->Sprite_Base::operator=(std::move(oth));
 
@@ -444,7 +444,7 @@ namespace LSW {
 				size_t arrp = 0;
 
 				size_t pos = 0;
-				while (((pos = p_str.find('\n')) != std::string::npos) || (max_length_line && p_str.size() > static_cast<size_t>(max_length_line)) || (max_length_line_size > 0.0 && fontt.get_width(p_str.s_str().c_str()) > max_length_line_size)) {
+				while (((pos = p_str.find('\n')) != std::string::npos) || (max_length_line && p_str.size() > static_cast<size_t>(max_length_line)) || (max_length_line_size > 0.0 && fontt.get_width(p_str.s_str()) > max_length_line_size)) {
 
 					auto line = p_str.substr(0, pos);
 
@@ -453,8 +453,8 @@ namespace LSW {
 						pos = line.size();
 						if (pos) pos--; // last char is erased if not because of + 1 later there
 					}
-					if (max_length_line_size > 0.0 && !scroll_on_line_limit && fontt.get_width(line.s_str().c_str()) > max_length_line_size) {
-						while (fontt.get_width(line.s_str().c_str()) > max_length_line_size) line.pop_utf8();
+					if (max_length_line_size > 0.0 && !scroll_on_line_limit && fontt.get_width(line.s_str()) > max_length_line_size) {
+						while (fontt.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
 						pos = line.size();
 						if (pos) pos--; // last char is erased if not because of + 1 later there
 					}

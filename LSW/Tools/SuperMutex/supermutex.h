@@ -59,11 +59,13 @@ namespace LSW {
 
 				/// <summary>
 				/// <para>Unlocks the linked SuperMutex.</para>
+				/// <para>If already unlocked (by you), it skips.</para>
 				/// </summary>
 				void unlock();
 
 				/// <summary>
 				/// <para>Locks the linked SuperMutex.</para>
+				/// <para>If already locked (by you), it skips (PS: one unlock() is needed no matter what)</para>
 				/// </summary>
 				void lock();
 			};

@@ -24,6 +24,7 @@ namespace LSW {
 				ALLEGRO_FILE* fp = nullptr;
 				//long long size_of_this = 0;
 				bool eoff = false;
+				smartfile::file_modes latest_mode{};
 
 				std::string convert(const smartfile::file_modes);
 			public:
@@ -43,6 +44,24 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{bool} True if open.</returns>
 				bool is_open() const;
+
+				/// <summary>
+				/// <para>What mode was used in open()?</para>
+				/// </summary>
+				/// <returns>{file_modes} File mode right now (if open).</returns>
+				smartfile::file_modes open_mode() const;
+
+				/// <summary>
+				/// <para>If current mode allows read, true.</para>
+				/// </summary>
+				/// <returns>{bool} Mode allows read?</returns>
+				bool is_readable() const;
+
+				/// <summary>
+				/// <para>If current mode allows write, true.</para>
+				/// </summary>
+				/// <returns>{bool} Mode allows write?</returns>
+				bool is_writable() const;
 
 				/// <summary>
 				/// <para>Tells file size right now.</para>

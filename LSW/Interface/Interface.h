@@ -7,10 +7,10 @@
 #include "Events/events.h"
 #include "EventCustom/eventcustom.h"
 #include "EventTimer/eventtimer.h"
-#include "Connection/connection.h"
 #include "Config/config.h"
 
 #include "SmartFile/smartfile.h"
+#include "Connection/connection.h"
 #include "PathManager/pathmanager.h"
 
 #include "Bitmap/bitmap.h"
