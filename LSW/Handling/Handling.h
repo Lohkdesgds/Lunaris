@@ -1,5 +1,5 @@
 #pragma once
 
-#include "Abort/abort.h"
 #include "Initialize/initialize.h"
+#include "Abort/abort.h"
 #include "Path/path.h"

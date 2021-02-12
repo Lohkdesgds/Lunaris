@@ -71,6 +71,16 @@ namespace LSW {
 			/// </summary>
 			/// <returns>{bool} Success</returns>
 			bool init_touch();
+
+#ifndef LSW_NO_PRELOAD
+			// Pre-load everything (from libraries)
+			class __pre_load_auto {
+			public:
+				__pre_load_auto();
+			};
+
+			static const __pre_load_auto __pre_load;
+#endif
 		}
 
 	}

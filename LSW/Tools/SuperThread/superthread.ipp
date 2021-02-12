@@ -26,29 +26,37 @@ namespace LSW {
 					perform = superthread::performance_mode::PERFORMANCE;
 					std::this_thread::yield();
 					break;
+
 				case superthread::performance_mode::NO_CONTROL: // UNLEASHED!
 					break;
+
 				case superthread::performance_mode::HIGH_PERFORMANCE: // yield!
 					std::this_thread::yield(); // sync
 					break;
+
 				case superthread::performance_mode::PERFORMANCE:
-					for(short u = 0; u < 4; u++) std::this_thread::yield(); // slow down
+					//for(short u = 0; u < 4; u++) std::this_thread::yield(); // slow down
+					sleep_for(std::chrono::microseconds(250));
 					break;
+
 				case superthread::performance_mode::BALANCED:
-					std::this_thread::yield();
-					std::this_thread::sleep_for(std::chrono::milliseconds(1)); // top 1000 loops
+					//std::this_thread::yield();
+					sleep_for(std::chrono::microseconds(500)); // top 1000 loops
 					break;
+
 				case superthread::performance_mode::LOW_POWER:
-					std::this_thread::yield();
-					std::this_thread::sleep_for(std::chrono::milliseconds(5)); // top 200 loops
+					//std::this_thread::yield();
+					sleep_for(std::chrono::milliseconds(3)); // top 200 loops
 					break;
+
 				case superthread::performance_mode::VERY_LOW_POWER:
-					std::this_thread::yield();
-					std::this_thread::sleep_for(std::chrono::milliseconds(15)); // top 67 loops
+					//std::this_thread::yield();
+					sleep_for(std::chrono::milliseconds(8)); // top 67 loops
 					break;
+
 				case superthread::performance_mode::EXTREMELY_LOW_POWER:
-					std::this_thread::yield();
-					std::this_thread::sleep_for(std::chrono::milliseconds(50)); // top 20 loops
+					//std::this_thread::yield();
+					sleep_for(std::chrono::milliseconds(25)); // top 20 loops
 					break;
 				}
 			}

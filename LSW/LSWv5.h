@@ -20,8 +20,9 @@ The libraries are compiled with static ALLEGRO (for release) and /MT or /MTd. Yo
 /*
 - - - - - - - - - - -|>========== SETUP MACROS POSSIBLE ==========<|- - - - - - - - - - -
 -> LSW_NOT_USING_LIB : If you're not using the .lib but the .cpp's, define this before including any header.
+-> LSW_NO_PRELOAD    : If defined, some direct functions might need the call of init_* before calling them, or they might not work.
 ### NOT FULLY DONE
--> LSW_AVOID_NON_LIB : This disables including .ipp files, so any source code is from the .lib aka no new templates can be generated.
+-> LSW_AVOID_NON_LIB : This disables including some .ipp files, so any source code is from the .lib aka no new templates can be generated.
 */
 
 #if defined( LSW_NOT_USING_LIB ) && defined( LSW_AVOID_NON_LIB )

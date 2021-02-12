@@ -86,6 +86,24 @@ namespace LSW {
 				return std::chrono::duration_cast<std::chrono::duration<unsigned long long, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count();
 			}
 
+			void sleep_for(const std::chrono::seconds dt)
+			{
+				std::this_thread::sleep_for(dt); // safe
+			}
+
+			void sleep_for(const std::chrono::milliseconds dt)
+			{
+				if (dt.count() > 10) return std::this_thread::sleep_for(dt);
+				const auto tn = std::chrono::high_resolution_clock::now();
+				while (std::chrono::high_resolution_clock::now() - tn < dt) std::this_thread::yield();
+			}
+
+			void sleep_for(const std::chrono::microseconds dt)
+			{
+				const auto tn = std::chrono::high_resolution_clock::now();
+				while (std::chrono::high_resolution_clock::now() - tn < dt) std::this_thread::yield();
+			}
+
 			std::vector<bool> translate_binary(const int v, const size_t lim)
 			{
 				std::vector<bool> b;

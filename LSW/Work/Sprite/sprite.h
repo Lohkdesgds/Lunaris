@@ -235,6 +235,13 @@ namespace LSW {
 				/// <param name="{Tools::Any}">It depends on the event.</param>
 				virtual void mouse_event(const sprite::e_tie_functional, const Tools::Any&) {}
 
+			protected:
+				/// <summary>
+				/// <para>This is so common that this might help new projects.</para>
+				/// </summary>
+				/// <param name="{Bitmap}">A Bitmap to draw using sprite's settings</param>
+				void common_bitmap_draw_task(const Interface::Bitmap&);
+
 			public:
 				using Tools::SuperFunctionalMap<double>::set;
 				using Tools::SuperFunctionalMap<double>::get;

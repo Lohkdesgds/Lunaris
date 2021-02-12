@@ -86,6 +86,24 @@ namespace LSW {
 			unsigned long long now();
 
 			/// <summary>
+			/// <para>Sleep for some time, in seconds.</para>
+			/// </summary>
+			/// <param name="{std::chrono::seconds}">Time, in seconds.</param>
+			void sleep_for(const std::chrono::seconds);
+
+			/// <summary>
+			/// <para>Sleep for some time, in milliseconds.</para>
+			/// </summary>
+			/// <param name="{std::chrono::milliseconds}">Time, in milliseconds.</param>
+			void sleep_for(const std::chrono::milliseconds);
+
+			/// <summary>
+			/// <para>Sleep for some time, in microseconds.</para>
+			/// </summary>
+			/// <param name="{std::chrono::microseconds}">Time, in microseconds.</param>
+			void sleep_for(const std::chrono::microseconds);
+
+			/// <summary>
 			/// <para>Transform bits into a vector of bools (up to 32 bits).</para>
 			/// <para>You can transform a char to 8 bits (bools).</para>
 			/// </summary>

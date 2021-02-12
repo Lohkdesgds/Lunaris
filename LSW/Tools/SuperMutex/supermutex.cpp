@@ -4,28 +4,53 @@ namespace LSW {
 	namespace v5 {
 		namespace Tools {
 
-			bool SuperMutex::weird_mtx::try_lock()
+			void SuperMutex::lock()
+			{
+				while (++m2 > 1) { --m2; }
+				who = std::this_thread::get_id();
+				// m2 == 1
+			}
+
+			bool SuperMutex::try_lock()
+			{
+				if (++m2 > 1) {
+					--m2;
+					return false;
+				}
+				return true;
+			}
+
+			void SuperMutex::unlock()
+			{
+				if (who == std::this_thread::get_id() && m2 > 0) m2--;
+			}
+
+			bool SuperMutex::is_locked() const
+			{
+				return m2 != 0;
+			}
+
+			bool SuperSemaphore::weird_mtx::try_lock()
 			{
 				if (locked) return false;
 				m.lock();
 				locked = true;
-				m.unlock();
 				return true;
 			}
 
-			void SuperMutex::weird_mtx::unlock()
+			void SuperSemaphore::weird_mtx::unlock()
 			{
-				m.lock();
+				if (!locked) return;
 				locked = false;
 				m.unlock();
 			}
-			
-			bool SuperMutex::weird_mtx::is_locked() const
+
+			bool SuperSemaphore::weird_mtx::is_locked() const
 			{
 				return locked;
 			}
 
-			void SuperMutex::lock()
+			void SuperSemaphore::lock()
 			{
 				std::mutex defu;
 				if (!mu.try_lock()) {
@@ -35,8 +60,8 @@ namespace LSW {
 					} while (!mu.try_lock());
 				}
 			}
-			
-			void SuperMutex::unlock()
+
+			void SuperSemaphore::unlock()
 			{
 				if (mu.is_locked()) {
 					mu.unlock();
@@ -45,12 +70,17 @@ namespace LSW {
 				}
 			}
 
-			bool SuperMutex::is_locked() const
+			bool SuperSemaphore::is_locked() const
 			{
 				return mu.is_locked();
 			}
 
-			AutoLock::AutoLock(SuperMutex& m, const bool autolock)
+			bool SuperSemaphore::try_lock()
+			{
+				return mu.try_lock();
+			}
+
+			AutoLock::AutoLock(__anyMutex& m, const bool autolock)
 				: you(m)
 			{
 				if (autolock) {

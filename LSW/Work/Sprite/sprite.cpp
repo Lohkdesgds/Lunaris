@@ -129,6 +129,39 @@ namespace LSW {
 				was_col = false;
 			}
 
+			void Sprite_Base::common_bitmap_draw_task(const Interface::Bitmap& bmp)
+			{
+				const int bmpx = bmp.get_width();
+				const int bmpy = bmp.get_height();
+				if (bmpx <= 0 || bmpy <= 0) {
+					throw Handling::Abort(__FUNCSIG__, "Somehow the texture have < 0 width | height!");
+				}
+
+				const float cx = 1.0f * bmpx * ((get_direct<double>(sprite::e_double::CENTER_X) + 1.0) * 0.5);
+				const float cy = 1.0f * bmpy * ((get_direct<double>(sprite::e_double::CENTER_Y) + 1.0) * 0.5);
+				const float rot_rad = 1.0f * get_direct<double>(sprite::e_double_readonly::ROTATION) * ALLEGRO_PI / 180.0;
+				const float px = get_direct<double>(sprite::e_double_readonly::POSX);
+				const float py = get_direct<double>(sprite::e_double_readonly::POSY);
+				const float dsx = 1.0f * (get_direct<double>(sprite::e_double::SCALE_X)) * (get_direct<double>(sprite::e_double::SCALE_G)) * (1.0 / bmpx);
+				const float dsy = 1.0f * (get_direct<double>(sprite::e_double::SCALE_Y)) * (get_direct<double>(sprite::e_double::SCALE_G)) * (1.0 / bmpy);
+
+				if (get_direct<bool>(sprite::e_boolean::USE_COLOR)) {
+					bmp.draw(
+						get_direct<Interface::Color>(sprite::e_color::COLOR),
+						cx, cy,
+						px, py,
+						dsx, dsy,
+						rot_rad);
+				}
+				else {
+					bmp.draw(
+						cx, cy,
+						px, py,
+						dsx, dsy,
+						rot_rad);
+				}
+			}
+
 			Sprite_Base::Sprite_Base()
 			{
 				Handling::init_basic();

@@ -44,14 +44,20 @@ namespace LSW {
 
 				if (buffer) { // just to be sure
 					buffer.set_as_target();
+
 					Interface::Camera cpy;
 					cpy.classic_transform(buffer, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
 					cpy.apply();
 
-					al_clear_to_color(background_color);
+					background_color.clear_to_this();
 
-					for (float radd = 0; radd < ALLEGRO_PI * 2; radd += delta_rad) {
+					for (double radd = 0; radd < ALLEGRO_PI * 2; radd += delta_rad) {
 						Interface::Vertex v[] = {
+							{
+								static_cast<float>(cxx),
+								static_cast<float>(cyy),
+								foreground_color
+							}, //center
 							{ 
 								static_cast<float>(2.0 * cos(radd + time_now * 0.2)),
 								static_cast<float>(2.0 * sin(radd + time_now * 0.2)),
@@ -61,13 +67,9 @@ namespace LSW {
 								static_cast<float>(2.0 * cos(radd + (delta_rad * 0.5) + time_now * 0.2)),
 								static_cast<float>(2.0 * sin(radd + (delta_rad * 0.5) + time_now * 0.2)),
 								foreground_color
-							}, //top right
-							{ 
-								static_cast<float>(cxx),
-								static_cast<float>(cyy),
-								foreground_color
-							} //center
+							} //top right
 						};
+
 						al_draw_prim(v, NULL, NULL, 0, 3, ALLEGRO_PRIM_TRIANGLE_LIST);
 					}
 
@@ -79,43 +81,11 @@ namespace LSW {
 			void ShineFX::draw_task(Interface::Camera& c)
 			{
 				check_internal();
+				c.apply();
 
 				if (!buffer) throw Handling::Abort(__FUNCSIG__, "Buffer null, can't draw!", Handling::abort::abort_level::GIVEUP);
 
-				// P.S.: same as BubbleFX
-
-				float cx, cy, px, py, dsx, dsy, rot_rad;
-				int bmpx, bmpy;
-				bmpx = buffer.get_width();
-				bmpy = buffer.get_height();
-				if (bmpx <= 0 || bmpy <= 0) {
-					throw Handling::Abort(__FUNCSIG__, "Somehow the texture have < 0 width / height!");
-				}
-
-				cx = 1.0f * bmpx * ((get_direct<double>(sprite::e_double::CENTER_X) + 1.0) * 0.5);
-				cy = 1.0f * bmpy * ((get_direct<double>(sprite::e_double::CENTER_Y) + 1.0) * 0.5);
-				rot_rad = 1.0f * get_direct<double>(sprite::e_double_readonly::ROTATION) * ALLEGRO_PI / 180.0;
-				px = get_direct<double>(sprite::e_double_readonly::POSX);
-				py = get_direct<double>(sprite::e_double_readonly::POSY);
-				dsx = 1.0f * (get_direct<double>(sprite::e_double::SCALE_X)) * (get_direct<double>(sprite::e_double::SCALE_G)) * (1.0 / bmpx);
-				dsy = 1.0f * (get_direct<double>(sprite::e_double::SCALE_Y)) * (get_direct<double>(sprite::e_double::SCALE_G)) * (1.0 / bmpy);
-
-
-				if (get_direct<bool>(sprite::e_boolean::USE_COLOR)) {
-					buffer.draw(
-						get_direct<Interface::Color>(sprite::e_color::COLOR),
-						cx, cy,
-						px, py,
-						dsx, dsy,
-						rot_rad);
-				}
-				else {
-					buffer.draw(
-						cx, cy,
-						px, py,
-						dsx, dsy,
-						rot_rad);
-				}
+				common_bitmap_draw_task(buffer);
 			}
 
 			ShineFX::ShineFX() : Sprite_Base()

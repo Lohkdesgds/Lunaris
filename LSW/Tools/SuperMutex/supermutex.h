@@ -4,18 +4,59 @@
 #include <condition_variable>
 #include <chrono>
 
+#include "../../Handling/Abort/abort.h"
+
 namespace LSW {
 	namespace v5 {
 		namespace Tools {
 
+			class __anyMutex {
+			public:
+				virtual void lock() = 0;
+				virtual bool try_lock() = 0;
+				virtual void unlock() = 0;
+				virtual bool is_locked() const = 0;
+			};
+
 			/// <summary>
-			/// <para>SuperMutex is a smart std::mutex that uses conditional to work a little better and in sequence, as a semaphore.</para>
+			/// <para>Do you need absurd performance? This might be the fastest mutex there.</para>
+			/// <para>This will probably perform better than MOST mutexes out there.</para>
+			/// <para>Only downside: it may use some CPU while locked.</para>
+			/// </summary>
+			class SuperMutex : public __anyMutex {
+				std::atomic<char> m2;
+				std::thread::id who{};
+			public:
+				/// <summary>
+				/// <para>Tries to lock and will wait for it to get unlocked so it can lock.</para>
+				/// </summary>
+				void lock();
+				/// <summary>
+				/// <para>Tries to lock and will wait for it to get unlocked so it can lock.</para>
+				/// </summary>
+				bool try_lock();
+
+				/// <summary>
+				/// <para>Unlocks and (if there's someone) notifies next that they can lock.</para>
+				/// </summary>
+				void unlock();
+
+				/// <summary>
+				/// <para>Is this locked?</para>
+				/// </summary>
+				/// <returns>{bool} True if someone already locked.</returns>
+				bool is_locked() const;
+			};
+
+
+			/// <summary>
+			/// <para>SuperSemaphore is a smart std::mutex that uses conditional to work a little better and in sequence, as a semaphore.</para>
 			/// <para>If multiple threads try to lock at the same time, it shall let the first one lock first, than the second, then the third. It is not 100% perfect because conditional may not trigger if a thread tries exactly at the same time the variable is unlocked, so there is a timeout so then it retries over and over.</para>
 			/// </summary>
-			class SuperMutex {
+			class SuperSemaphore : public __anyMutex {
 				class weird_mtx {
 					std::mutex m;
-					bool locked = false;
+					std::atomic<bool> locked = false;
 				public:
 					bool try_lock();
 					void unlock();
@@ -39,6 +80,12 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{bool} True if someone already locked.</returns>
 				bool is_locked() const;
+
+				/// <summary>
+				/// <para>Tries to lock. True if success.</para>
+				/// </summary>
+				/// <returns>{bool} True if locked.</returns>
+				bool try_lock();
 			};
 
 			/// <summary>
@@ -46,7 +93,7 @@ namespace LSW {
 			/// <para>You can lock and unlock as you please.</para>
 			/// </summary>
 			class AutoLock {
-				SuperMutex& you;
+				__anyMutex& you;
 				bool hasunlocked = false;
 			public:
 				/// <summary>
@@ -54,7 +101,7 @@ namespace LSW {
 				/// </summary>
 				/// <param name="{SuperMutex}">The SuperMutex to link.</param>
 				/// <param name="{bool}">Lock directly?</param>
-				AutoLock(SuperMutex&, const bool = true);
+				AutoLock(__anyMutex&, const bool = true);
 				~AutoLock();
 
 				/// <summary>

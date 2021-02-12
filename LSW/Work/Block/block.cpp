@@ -54,39 +54,7 @@ namespace LSW {
 
 				// P.S.: Text copied this
 
-				float cx, cy, px, py, dsx, dsy, rot_rad;
-				int bmpx, bmpy;
-				bmpx = rnn.get_width();
-				bmpy = rnn.get_height();
-				if (bmpx <= 0 || bmpy <= 0) {
-					throw Handling::Abort(__FUNCSIG__, "Somehow the texture have < 0 width / height!");
-				}
-
-				cx = 1.0f * bmpx * ((get_direct<double>(sprite::e_double::CENTER_X) + 1.0) * 0.5);
-				cy = 1.0f * bmpy * ((get_direct<double>(sprite::e_double::CENTER_Y) + 1.0) * 0.5);
-				rot_rad = 1.0f * get_direct<double>(sprite::e_double_readonly::ROTATION) * ALLEGRO_PI / 180.0;
-				px = get_direct<double>(sprite::e_double_readonly::POSX);
-				py = get_direct<double>(sprite::e_double_readonly::POSY);
-				dsx = 1.0f * (get_direct<double>(sprite::e_double::SCALE_X)) * (get_direct<double>(sprite::e_double::SCALE_G)) * (1.0 / bmpx);
-				dsy = 1.0f * (get_direct<double>(sprite::e_double::SCALE_Y)) * (get_direct<double>(sprite::e_double::SCALE_G)) * (1.0 / bmpy);
-
-
-				if (get_direct<bool>(sprite::e_boolean::USE_COLOR)) {
-					rnn.draw(
-						get_direct<Interface::Color>(sprite::e_color::COLOR),
-						cx, cy,
-						px, py,
-						dsx, dsy,
-						rot_rad);
-				}
-				else {
-					rnn.draw(
-						cx, cy,
-						px, py,
-						dsx, dsy,
-						rot_rad);
-				}
-
+				common_bitmap_draw_task(rnn);
 			}
 						
 			Block::Block() : Sprite_Base()

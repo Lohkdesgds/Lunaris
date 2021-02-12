@@ -101,7 +101,7 @@ namespace LSW {
 				size_t last_point_valid();
 
 				/// <summary>
-				/// <para>Generates table onw by one with automatic scale, one per line.</para>
+				/// <para>Generates table one by one with automatic scale, one per line.</para>
 				/// </summary>
 				/// <returns>{std::string} Table.</returns>
 				std::string generate_table_statistics();
