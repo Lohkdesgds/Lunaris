@@ -15,26 +15,32 @@ namespace LSW {
 			namespace block {
 
 				enum class e_chronomillis_readonly { 
-					LAST_FRAME//, // last time a frame was drawn
-					//LAST_TIE_FRAME_VERIFICATION // last time it verified reference bitmap size (target) 
+					LAST_FRAME // last frame time for FRAMES_PER_SECOND
 				};
-				enum class e_uintptr_t { FRAME };
-				enum class e_boolean { SET_FRAME_VALUE_READONLY };
-				enum class e_double { FRAMES_PER_SECOND/*, TIE_SIZE_TO_DISPLAY_PROPORTION*/ };
+				 
+				enum class e_uintptr_t { 
+					FRAME // the last frame selected
+				};
+
+				enum class e_boolean {
+					SET_FRAME_VALUE_READONLY // lock frame, no frame change by time
+				};
+
+				enum class e_double { 
+					FRAMES_PER_SECOND // 'slideshow' how many Bitmaps per second?
+				};
 
 				const Tools::SuperMap<Tools::FastFunction<std::chrono::milliseconds>>		e_chronomillis_defaults = {
-					{std::chrono::milliseconds(0),																		(e_chronomillis_readonly::LAST_FRAME),					("last_frame")},
-					//{std::chrono::milliseconds(0),																		(e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION),	("last_tie_verification")}
+					{std::chrono::milliseconds(0),																		(e_chronomillis_readonly::LAST_FRAME),			("block:last_frame")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<uintptr_t>>		e_uintptr_t_defaults = {
-					{(uintptr_t)0,																						(e_uintptr_t::FRAME),									("frame")}
+					{(uintptr_t)0,																						(e_uintptr_t::FRAME),							("block:frame")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<bool>>		e_boolean_defaults = {
-					{false,																								(e_boolean::SET_FRAME_VALUE_READONLY),					("set_frame_readonly")}
+					{false,																								(e_boolean::SET_FRAME_VALUE_READONLY),			("block:set_frame_readonly")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<double>>		e_double_defaults = {
-					{10.0,																								(e_double::FRAMES_PER_SECOND),							("frames_per_second")}//, // FPS, not delta sec
-					//{0.0,																								(e_double::TIE_SIZE_TO_DISPLAY_PROPORTION),				("tie_size_to_display_proportion")}
+					{10.0,																								(e_double::FRAMES_PER_SECOND),					("block:frames_per_second")}
 				};
 
 				constexpr size_t maximum_bitmap_amount = static_cast<size_t>(std::numeric_limits<int>::max());

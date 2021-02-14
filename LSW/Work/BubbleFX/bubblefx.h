@@ -9,25 +9,44 @@ namespace LSW {
 		namespace Work {
 
 			namespace bubblefx {
-				enum class e_uintptrt_readonly { VECTOR_POSITION_DRAWING, LAST_TIE_FRAME_VERIFICATION }; // SAME AS UINTPTR_T!
-				enum class e_uintptrt { DOTS_PER_FRAME_MAX };
-				enum class e_chronomillis_readonly { LAST_FRAME, LAST_TIE_FRAME_VERIFICATION };
-				enum class e_double { FRAMES_PER_SECOND, DOTS_SIZE, DOTS_VARIATION_PLUS, BLUR_INTENSITY, TIE_SIZE_TO_DISPLAY_PROPORTION };
 
-				const Tools::SuperMap<Tools::FastFunction<uintptr_t>>						e_uintptrt_defaults = {
-					{(size_t)0,																						(e_uintptrt_readonly::VECTOR_POSITION_DRAWING),			"vector_position_drawing"},
-					{(size_t)250,																					(e_uintptrt::DOTS_PER_FRAME_MAX),						"dots_per_frame_max"}
+				enum class e_uintptrt_readonly { 
+					VECTOR_POSITION_DRAWING // Vector position offset for dynamic drawing
 				};
-				const Tools::SuperMap<Tools::FastFunction<std::chrono::milliseconds>>		e_chronomillis_defaults = {
-					{std::chrono::milliseconds(0),																	(e_chronomillis_readonly::LAST_FRAME),					"last_frame"},
-					{std::chrono::milliseconds(0),																	(e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION),	"last_tie_verification"}
+
+				enum class e_uintptrt {
+					DOTS_PER_FRAME_MAX // Maximum dots per frame draw (no overload)
 				};
-				const Tools::SuperMap<Tools::FastFunction<double>>							e_double_defaults = {
-					{60.0,																							(e_double::FRAMES_PER_SECOND),							"frames_per_second"},
-					{0.055,																							(e_double::DOTS_SIZE),									"dots_size"},
-					{0.025,																							(e_double::DOTS_VARIATION_PLUS),						"dots_variation_plus"}, // sum with size, [size, size+this)
-					{0.93,																							(e_double::BLUR_INTENSITY),								"blur_intensity"},
-					{1.0,																							(e_double::TIE_SIZE_TO_DISPLAY_PROPORTION),				"tie_size_to_display_proportion"}
+
+				enum class e_chronomillis_readonly { 
+					LAST_FRAME, // Last time it has drawn
+					LAST_TIE_FRAME_VERIFICATION // Last time it tested for screen's resolution so it can resize self to it (if tied to display)
+				};
+
+				enum class e_double { 
+					FRAMES_PER_SECOND, // how many times per second should this update self?
+					DOTS_SIZE, // size of the dots in screen
+					DOTS_VARIATION_PLUS, // how much can the size change between them (min size = size, max size = size + this)?
+					BLUR_INTENSITY, // alpha channel
+					TIED_SIZE_TO_DISPLAY_PROPORTION // proportion of pixels compared to display, 1.0 means 1:1
+				};
+
+				const Tools::SuperMap<Tools::FastFunction<uintptr_t>> e_uintptrt_defaults = {
+					{(size_t)0,								(e_uintptrt_readonly::VECTOR_POSITION_DRAWING),			"bubblefx:vector_position_drawing"},
+					{(size_t)250,							(e_uintptrt::DOTS_PER_FRAME_MAX),						"bubblefx:dots_per_frame_max"}
+				};
+
+				const Tools::SuperMap<Tools::FastFunction<std::chrono::milliseconds>> e_chronomillis_defaults = {
+					{std::chrono::milliseconds(0),			(e_chronomillis_readonly::LAST_FRAME),					"bubblefx:last_frame"},
+					{std::chrono::milliseconds(0),			(e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION),	"bubblefx:last_tie_verification"}
+				};
+
+				const Tools::SuperMap<Tools::FastFunction<double>> e_double_defaults = {
+					{60.0,									(e_double::FRAMES_PER_SECOND),							"bubblefx:frames_per_second"},
+					{0.055,									(e_double::DOTS_SIZE),									"bubblefx:dots_size"},
+					{0.025,									(e_double::DOTS_VARIATION_PLUS),						"bubblefx:dots_variation_plus"}, // sum with size, [size, size+this)
+					{0.93,									(e_double::BLUR_INTENSITY),								"bubblefx:blur_intensity"},
+					{1.0,									(e_double::TIED_SIZE_TO_DISPLAY_PROPORTION),			"bubblefx:tied_size_to_display_proportion"}
 				};
 
 				struct particle {
@@ -71,7 +90,7 @@ namespace LSW {
 				/// <para>Constructor to move a BubbleFX to this (move).</para>
 				/// </summary>
 				/// <param name="{BubbleFX}">The one to move attributes from.</param>
-				BubbleFX(BubbleFX&&);
+				BubbleFX(BubbleFX&&) noexcept;
 
 				/// <summary>
 				/// <para>Reference a BubbleFX (not a copy).</para>
@@ -83,7 +102,7 @@ namespace LSW {
 				/// <para>Move a BubbleFX to this (move).</para>
 				/// </summary>
 				/// <param name="{BubbleFX}">The one to move attributes from.</param>
-				void operator=(BubbleFX&&);
+				void operator=(BubbleFX&&) noexcept;
 
 				/// <summary>
 				/// <para>Clone other BubbleFX attributes.</para>

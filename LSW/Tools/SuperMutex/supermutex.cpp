@@ -17,6 +17,7 @@ namespace LSW {
 					--m2;
 					return false;
 				}
+				who = std::this_thread::get_id();
 				return true;
 			}
 
@@ -30,44 +31,21 @@ namespace LSW {
 				return m2 != 0;
 			}
 
-			bool SuperSemaphore::weird_mtx::try_lock()
-			{
-				if (locked) return false;
-				m.lock();
-				locked = true;
-				return true;
-			}
-
-			void SuperSemaphore::weird_mtx::unlock()
-			{
-				if (!locked) return;
-				locked = false;
-				m.unlock();
-			}
-
-			bool SuperSemaphore::weird_mtx::is_locked() const
-			{
-				return locked;
-			}
-
 			void SuperSemaphore::lock()
 			{
 				std::mutex defu;
 				if (!mu.try_lock()) {
 					std::unique_lock<std::mutex> ul(defu);
 					do {
-						cond.wait_for(ul, std::chrono::milliseconds(100));
+						cond.wait_for(ul, std::chrono::milliseconds(20));
 					} while (!mu.try_lock());
 				}
 			}
 
 			void SuperSemaphore::unlock()
 			{
-				if (mu.is_locked()) {
-					mu.unlock();
-					cond.notify_one();
-					std::this_thread::sleep_for(std::chrono::milliseconds(2));
-				}
+				mu.unlock();
+				cond.notify_one();
 			}
 
 			bool SuperSemaphore::is_locked() const
@@ -89,12 +67,12 @@ namespace LSW {
 				}
 				else hasunlocked = true;
 			}
-			
+
 			AutoLock::~AutoLock()
 			{
 				if (!hasunlocked) you.unlock();
 			}
-			
+
 			void AutoLock::unlock()
 			{
 				if (!hasunlocked) {
@@ -102,7 +80,7 @@ namespace LSW {
 					you.unlock();
 				}
 			}
-			
+
 			void AutoLock::lock()
 			{
 				if (hasunlocked) {
@@ -118,12 +96,12 @@ namespace LSW {
 				if (max_t == 0) cond.wait(ul);
 				else cond.wait_for(ul, std::chrono::milliseconds(max_t));
 			}
-			
+
 			void Waiter::signal_one()
 			{
 				cond.notify_one();
 			}
-			
+
 			void Waiter::signal_all()
 			{
 				cond.notify_all();

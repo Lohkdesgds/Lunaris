@@ -8,16 +8,6 @@ namespace LSW {
 			void Block::draw_task(Interface::Camera& c)
 			{
 				if (bitmaps.empty()) return;
-				/*{
-					const auto delta_t = get_direct<std::chrono::milliseconds>(block::e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION);
-
-					if (const double _dd = get_direct<double>(block::e_double::TIE_SIZE_TO_DISPLAY_PROPORTION); _dd > 0.0 && (std::chrono::system_clock::now().time_since_epoch() > delta_t)) {
-						set(block::e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch() + block::default_delta_t_frame_delay));
-
-						Interface::Target targ(get_direct<uintptr_t>(sprite::e_uintptrt::INDEX_TARGET_IN_USE));
-						for (auto& i : bitmaps) i.copy_attributes(targ.get(), true, _dd);
-					}
-				}*/
 
 				size_t frame = static_cast<size_t>(get_direct<uintptr_t>(block::e_uintptr_t::FRAME));
 

@@ -35,14 +35,14 @@ namespace LSW {
 				}
 			}
 
-			__combined_data& __combined_data::operator+(const __combined_data& comb)
+			combined_data& combined_data::operator+(const combined_data& comb)
 			{
 				buffer += comb.buffer;
 				is_full |= comb.is_full;
 				return *this;
 			}
 
-			__combined_data& __combined_data::operator+=(const __combined_data& comb)
+			combined_data& combined_data::operator+=(const combined_data& comb)
 			{
 				return (*this = *this + comb);
 			}
@@ -265,10 +265,11 @@ namespace LSW {
 				return any_get_average_total(recving);
 			}
 
-			void Connection::add_current_limit(const int add)
+			long long Connection::add_current_limit(const int add)
 			{
+				//if (add < 0) return 0; // some error?
 				Tools::AutoLock l(buffer_available_send_mtx);
-				buffer_available_send += add;
+				return (buffer_available_send += add);
 			}
 
 			void Connection::pop_current_limit()
@@ -310,7 +311,7 @@ namespace LSW {
 
 				long long cpy = buffer_available_calculated;
 				buffer_available_calculated = 0;
-				return cpy;
+				return cpy < 0 ? 0 : cpy;
 			}
 			
 			void Connection::update_myself_package()
@@ -386,7 +387,7 @@ namespace LSW {
 				bool tasked_once = false;
 
 				// job on going
-				__combined_data data_working_on;
+				combined_data data_working_on;
 
 				// - - - - - > PREPARE/START < - - - - - //
 				evhdr.add(timm);
@@ -540,7 +541,7 @@ namespace LSW {
 				bool tasked_once = false;
 
 				// job on going
-				__combined_data data_working_on;
+				combined_data data_working_on;
 
 				// - - - - - > PREPARE/START < - - - - - //
 				set_recv_hold(false);
@@ -611,16 +612,22 @@ namespace LSW {
 									debug(socket_identification + "&eSYNCED");
 
 									yourself = received.pack.sync;
+
+									Tools::AutoLock l(buffer_available_calculated_mtx, false);
+
 									if (yourself.no_limit) {
+										l.lock();
 										if (buffer_available_send >= 0) {
 											debug(socket_identification + " &dadded unlimited slots.");
 										}
 										buffer_available_send = -1;
 									}
 									else {
+										l.lock();
 										if (buffer_available_send < 0) buffer_available_send = 0;
-										add_current_limit(yourself.add_availability);
-										debug(socket_identification + " &dadded slots, " + std::to_string(buffer_available_send) + " now");
+										l.unlock();
+										auto ref = add_current_limit(yourself.add_availability);
+										debug(socket_identification + " &dadded slots, " + std::to_string(ref) + " now");
 									}
 								}
 								break;
@@ -658,14 +665,21 @@ namespace LSW {
 									data_working_on.is_full = received.pack.data.full; // last one rules
 									data_working_on.buffer.resize(data_working_on.buffer.size() + received.pack.data.data_len);
 									std::copy(received.pack.data.buffer, received.pack.data.buffer + received.pack.data.data_len, data_working_on.buffer.end() - received.pack.data.data_len);
+									data_working_on.__represents_n_packages++;
 
-									if (received.pack.data.full) {
+									bool buffer_overflow_help = (my_buffer_limit > 0 && data_working_on.__represents_n_packages == my_buffer_limit);
+
+									if (received.pack.data.full || buffer_overflow_help) {
+
+										//data_working_on.is_full = data_working_on.is_full && !buffer_overflow_help; // if overflow, not full(?)
 
 										// = = = = = Try and, if success, move/erase = = = = = //
 										if (recv_overwrite) {
 											Tools::AutoLock l(recv_overwrite_mtx);
 											if (recv_overwrite) {
 												recv_overwrite((uintptr_t)this, std::move(data_working_on.buffer));
+												calculate_add_available(static_cast<int>(data_working_on.__represents_n_packages)); // instant regen because of automatic "free up"
+												data_working_on.__represents_n_packages = 0;
 											}
 
 										}
@@ -673,7 +687,9 @@ namespace LSW {
 										// = = = = = If not empty, it didn't move, so let's go = = = = = //
 										if (!data_working_on.buffer.empty()) {
 											Tools::AutoLock l(buffer_receive_mtx);
-											buffer_receive.push_back(std::move(data_working_on));
+											buffer_receive.push_back(std::move(data_working_on)); // no automatic regen "free up". get_next() has to be called so new space can be "available" to read
+											data_working_on.__represents_n_packages = 0; // just to be completely sure.
+
 											// other side already remove one. No need for calculate_add_available(-1);
 											received_package.signal_all();
 										}
@@ -783,6 +799,11 @@ namespace LSW {
 				return buffer_available_send;
 			}
 
+			long long Connection::in_memory_can_read() const
+			{
+				return buffer_available_calculated;
+			}
+
 			// me sending versus what has come already
 			unsigned Connection::small_packages_on_the_way() const
 			{
@@ -810,10 +831,10 @@ namespace LSW {
 				return true;
 			}
 
-			__combined_data Connection::get_next(const bool force_wait_for_full)
+			combined_data Connection::get_next(const bool force_wait_for_full)
 			{
 				if (!has_package()) return {"", false};
-				__combined_data result{"", false};
+				combined_data result{"", false};
 				Tools::AutoLock l(buffer_receive_mtx);
 				do {
 					if (buffer_receive.size() == 0) {
@@ -821,17 +842,20 @@ namespace LSW {
 
 						if (force_wait_for_full) {
 							l.unlock();
-							while (buffer_receive.size() == 0) { std::this_thread::yield(); std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
+							while (buffer_receive.size() == 0) { std::this_thread::yield(); std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // really wait
 							l.lock();
 						}
 						else return std::move(result);
 					}
-					__combined_data& yo = buffer_receive.front();
-					result.buffer += std::move(yo.buffer);
+					combined_data& yo = buffer_receive.front();
+
+					result.buffer += yo.buffer;
 					result.is_full |= yo.is_full;
-					
-					buffer_receive.erase(buffer_receive.begin());					
-					calculate_add_available(1); // has one more slot available now
+
+					calculate_add_available(static_cast<int>(yo.__represents_n_packages)); // if it gets something, free up so new stuff can keep coming!
+					should_sync = true; // new "free", update sending side!
+
+					buffer_receive.erase(buffer_receive.begin());
 
 				} while (force_wait_for_full && !result.is_full);
 
@@ -842,10 +866,10 @@ namespace LSW {
 
 			void Connection::send_package(const std::string& str, const bool waitt)
 			{
-				send_package(__combined_data{ str, true }, waitt);
+				send_package(combined_data{ str, true }, waitt);
 			}
 
-			void Connection::send_package(const __combined_data& data, const bool waitt)
+			void Connection::send_package(const combined_data& data, const bool waitt)
 			{
 				{
 					Tools::AutoLock l(buffer_sending_mtx);
@@ -881,7 +905,7 @@ namespace LSW {
 
 			bool Connection::is_overloaded() const
 			{
-				return buffer_available_send == 0;
+				return in_memory_can_send() == 0;
 			}
 
 			void Connection::overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)> ow)
@@ -1116,7 +1140,7 @@ namespace LSW {
 
 				while (!fp.eof())
 				{
-					__combined_data data;
+					combined_data data;
 					fp.read(data.buffer, read_buf_size);
 					data.is_full = fp.eof();
 					cn.send_package(data);

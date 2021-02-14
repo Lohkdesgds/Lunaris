@@ -17,54 +17,94 @@ namespace LSW {
 
 			namespace text {
 
-				enum class e_chronomillis_readonly { LAST_UPDATE_BITMAP, LAST_UPDATE_STRING };
-				enum class e_boolean_readonly { REACHED_LIMIT };
-				enum class e_uintptrt_readonly { LAST_CALCULATED_LINE_AMOUNT };
+				enum class e_chronomillis_readonly { 
+					LAST_UPDATE_BITMAP,
+					LAST_UPDATE_STRING 
+				};
 
-				enum class e_cstring { STRING };
-				enum class e_double { SHADOW_DISTANCE_X, SHADOW_DISTANCE_Y, TEXT_UPDATE_TIME, BUFFER_SCALE_RESOLUTION, UPDATES_PER_SECOND, LINE_ADJUST, MAX_TEXT_LENGTH_SIZE, SCROLL_SPEED };
-				enum class e_color { SHADOW_COLOR };
-				enum class e_integer { STRING_MODE, STRING_Y_MODE, TOTAL_TEXT_MAX_LENGTH, LINE_MAX_LENGTH, MAX_LINES_AMOUNT, SCROLL_TICKS_PAUSED_SIDES };
-				enum class e_boolean { USE_BITMAP_BUFFER, USE_COLOR_INSTEAD_OF_AUTO /*auto: &6gold&1blue*/, SCROLL_INSTEAD_OF_MAX_LEN_SIZE_BLOCK /*on max length in "pixels" but not in bytes, scroll?*/ };
-				enum class e_sprite_ref { FOLLOWING };
+				enum class e_boolean_readonly { 
+					REACHED_LIMIT 
+				};
+
+				enum class e_uintptrt_readonly {
+					LAST_CALCULATED_LINE_AMOUNT
+				};
+
+				enum class e_cstring {
+					STRING
+				};
+
+				enum class e_double { 
+					SHADOW_DISTANCE_X,
+					SHADOW_DISTANCE_Y,
+					TEXT_UPDATE_TIME,
+					BUFFER_SCALE_RESOLUTION,
+					UPDATES_PER_SECOND,
+					LINE_ADJUST, 
+					MAX_TEXT_LENGTH_SIZE,
+					SCROLL_SPEED
+				};
+
+				enum class e_color { 
+					SHADOW_COLOR 
+				};
+
+				enum class e_integer { 
+					STRING_MODE, 
+					STRING_Y_MODE,
+					TOTAL_TEXT_MAX_LENGTH, 
+					LINE_MAX_LENGTH, 
+					MAX_LINES_AMOUNT, 
+					SCROLL_TICKS_PAUSED_SIDES
+				};
+
+				enum class e_boolean { 
+					USE_BITMAP_BUFFER,
+					USE_COLOR_INSTEAD_OF_AUTO, /*auto: &6gold&1blue*/
+					SCROLL_INSTEAD_OF_MAX_LEN_SIZE_BLOCK /*on max length in "pixels" but not in bytes, scroll?*/
+				};
+
+				enum class e_sprite_ref { 
+					FOLLOWING
+				};
 
 				const Tools::SuperMap<Tools::FastFunction<std::chrono::milliseconds>>		e_chronomillis_defaults = {
-					{std::chrono::milliseconds(0),																				(e_chronomillis_readonly::LAST_UPDATE_BITMAP),			("last_update_bitmap")},
-					{std::chrono::milliseconds(0),																				(e_chronomillis_readonly::LAST_UPDATE_STRING),			("last_update_string")}
+					{std::chrono::milliseconds(0),																				(e_chronomillis_readonly::LAST_UPDATE_BITMAP),			("text:last_update_bitmap")},
+					{std::chrono::milliseconds(0),																				(e_chronomillis_readonly::LAST_UPDATE_STRING),			("text:last_update_string")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<Tools::Cstring>>					e_string_defaults = {
-					{Tools::Cstring(),																							(e_cstring::STRING),									("string")}
+					{Tools::Cstring(),																							(e_cstring::STRING),									("text:string")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<double>>							e_double_defaults = {
-					{0.0,																										(e_double::SHADOW_DISTANCE_X),							("shadow_distance_x")},
-					{0.0,																										(e_double::SHADOW_DISTANCE_Y),							("shadow_distance_y")},
-					{1.0,																										(e_double::BUFFER_SCALE_RESOLUTION),					("buffer_scale_resolution")},
-					{2.0,																										(e_double::UPDATES_PER_SECOND),							("updates_per_second")},
-					{1.0,																										(e_double::LINE_ADJUST),								("line_adjust")},
-					{0.0,																										(e_double::SCROLL_SPEED),								("scroll_speed")} // 0.0 = no scroll
+					{0.0,																										(e_double::SHADOW_DISTANCE_X),							("text:shadow_distance_x")},
+					{0.0,																										(e_double::SHADOW_DISTANCE_Y),							("text:shadow_distance_y")},
+					{1.0,																										(e_double::BUFFER_SCALE_RESOLUTION),					("text:buffer_scale_resolution")},
+					{2.0,																										(e_double::UPDATES_PER_SECOND),							("text:updates_per_second")},
+					{1.0,																										(e_double::LINE_ADJUST),								("text:line_adjust")},
+					{0.0,																										(e_double::SCROLL_SPEED),								("text:scroll_speed")} // 0.0 = no scroll
 				};
 				const Tools::SuperMap<Tools::FastFunction<Interface::Color>>				e_color_defaults = {
-					{Interface::Color(),																						(e_color::SHADOW_COLOR),								("shadow_color")}
+					{Interface::Color(),																						(e_color::SHADOW_COLOR),								("text:shadow_color")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<uintptr_t>>						e_uintptrt_defaults = {
-					{(uintptr_t)0,																								(e_uintptrt_readonly::LAST_CALCULATED_LINE_AMOUNT),		("last_calculated_line_amount")}
+					{(uintptr_t)0,																								(e_uintptrt_readonly::LAST_CALCULATED_LINE_AMOUNT),		("text:last_calculated_line_amount")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<int>>								e_integer_defaults = {
-					{0,																											(e_integer::STRING_MODE),								("string_mode")},
-					{0,																											(e_integer::STRING_Y_MODE),								("string_y_mode")},
-					{0,																											(e_integer::TOTAL_TEXT_MAX_LENGTH),						("total_text_max_length")},
-					{0,																											(e_integer::LINE_MAX_LENGTH),							("line_max_length")},
-					{0,																											(e_integer::MAX_LINES_AMOUNT),							("max_lines_amount")},
-					{5,																											(e_integer::SCROLL_TICKS_PAUSED_SIDES),					("scroll_ticks_paused_sides")} // if X at SCROLL_SPEED, 1/X * second(s) paused end/begin
+					{0,																											(e_integer::STRING_MODE),								("text:string_mode")},
+					{0,																											(e_integer::STRING_Y_MODE),								("text:string_y_mode")},
+					{0,																											(e_integer::TOTAL_TEXT_MAX_LENGTH),						("text:total_text_max_length")},
+					{0,																											(e_integer::LINE_MAX_LENGTH),							("text:line_max_length")},
+					{0,																											(e_integer::MAX_LINES_AMOUNT),							("text:max_lines_amount")},
+					{5,																											(e_integer::SCROLL_TICKS_PAUSED_SIDES),					("text:scroll_ticks_paused_sides")} // if X at SCROLL_SPEED, 1/X * second(s) paused end/begin
 				};
 				const Tools::SuperMap<Tools::FastFunction<bool>>							e_boolean_defaults = {
-					{false,																										(e_boolean_readonly::REACHED_LIMIT),					("reached_limit")},
-					{false,																										(e_boolean::USE_BITMAP_BUFFER),							("use_bitmap_buffer")},
-					{false,																										(e_boolean::USE_COLOR_INSTEAD_OF_AUTO),					("use_color_instead_of_auto")},
-					{true,																										(e_boolean::SCROLL_INSTEAD_OF_MAX_LEN_SIZE_BLOCK),		("scroll_instead_of_max_len_size_block")}
+					{false,																										(e_boolean_readonly::REACHED_LIMIT),					("text:reached_limit")},
+					{false,																										(e_boolean::USE_BITMAP_BUFFER),							("text:use_bitmap_buffer")},
+					{false,																										(e_boolean::USE_COLOR_INSTEAD_OF_AUTO),					("text:use_color_instead_of_auto")},
+					{true,																										(e_boolean::SCROLL_INSTEAD_OF_MAX_LEN_SIZE_BLOCK),		("text:scroll_instead_of_max_len_size_block")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<Sprite_Base>>						e_sprite_ref_defaults = {
-					{Sprite_Base(),																								(e_sprite_ref::FOLLOWING),								("following")}
+					{Sprite_Base(),																								(e_sprite_ref::FOLLOWING),								("text:following")}
 				};
 
 				enum class e_text_modes { LEFT, CENTER, RIGHT };

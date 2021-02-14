@@ -29,12 +29,12 @@ namespace LSW {
 				};
 
 				enum class e_double_readonly {
-					PROGRESS_SMOOTH
+					PROGRESS_SMOOTH // the progress shown, smooth value
 				};
 
 				enum class e_double {
 					PROGRESS, // [0.0, 1.0]
-					SMOOTHNESS, // [0.0, inf), se 5, (1 * curr + 5 * old) / (5 + 1); AFFECTED BY COLLISION!
+					SMOOTHNESS, // [0.0, inf), if 5, (1 * curr + 5 * old) / (5 + 1)
 					BORDER_THICKNESS, // has to greater than 0 to enable border
 					BORDER_ROUNDNESS, // has to be balanced with THICKNESS
 					BORDER_PROPORTION_X, // 1.0 = 1:1, more is offset to out
@@ -42,29 +42,29 @@ namespace LSW {
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<Interface::Color>> e_vertex_defaults = {
-					{Interface::Color{0.1f,0.08f,0.2f},									(e_color::BORDER),						("border")},
-					{Interface::Color{0.9f,0.9f,0.9f},									(e_color::FOREGROUND_TOP_LEFT),			("foreground_top_left")},
-					{Interface::Color{1.0f,1.0f,1.0f},									(e_color::FOREGROUND_TOP_RIGHT),		("foreground_top_right")},
-					{Interface::Color{0.9f,0.9f,0.9f},									(e_color::FOREGROUND_BOTTOM_LEFT),		("foreground_bottom_left")},
-					{Interface::Color{1.0f,1.0f,1.0f},									(e_color::FOREGROUND_BOTTOM_RIGHT),		("foreground_bottom_right")},
-					{Interface::Color{0.1f,0.1f,0.1f},									(e_color::BACKGROUND_TOP_LEFT),			("background_top_left")},
-					{Interface::Color{0.07f,0.07f,0.07f},								(e_color::BACKGROUND_TOP_RIGHT),		("background_top_right")},
-					{Interface::Color{0.1f,0.1f,0.1f},									(e_color::BACKGROUND_BOTTOM_LEFT),		("background_bottom_left")},
-					{Interface::Color{0.07f,0.07f,0.07f},								(e_color::BACKGROUND_BOTTOM_RIGHT),		("background_bottom_right")}
+					{Interface::Color{0.1f,0.08f,0.2f},									(e_color::BORDER),						("progressbar:border")},
+					{Interface::Color{0.9f,0.9f,0.9f},									(e_color::FOREGROUND_TOP_LEFT),			("progressbar:foreground_top_left")},
+					{Interface::Color{1.0f,1.0f,1.0f},									(e_color::FOREGROUND_TOP_RIGHT),		("progressbar:foreground_top_right")},
+					{Interface::Color{0.9f,0.9f,0.9f},									(e_color::FOREGROUND_BOTTOM_LEFT),		("progressbar:foreground_bottom_left")},
+					{Interface::Color{1.0f,1.0f,1.0f},									(e_color::FOREGROUND_BOTTOM_RIGHT),		("progressbar:foreground_bottom_right")},
+					{Interface::Color{0.1f,0.1f,0.1f},									(e_color::BACKGROUND_TOP_LEFT),			("progressbar:background_top_left")},
+					{Interface::Color{0.07f,0.07f,0.07f},								(e_color::BACKGROUND_TOP_RIGHT),		("progressbar:background_top_right")},
+					{Interface::Color{0.1f,0.1f,0.1f},									(e_color::BACKGROUND_BOTTOM_LEFT),		("progressbar:background_bottom_left")},
+					{Interface::Color{0.07f,0.07f,0.07f},								(e_color::BACKGROUND_BOTTOM_RIGHT),		("progressbar:background_bottom_right")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<bool>> e_boolean_defaults = {
-					{false,																(e_boolean::FIXED_BACKGROUND),			("fixed_background")}
+					{false,																(e_boolean::FIXED_BACKGROUND),			("progressbar:fixed_background")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<double>> e_double_defaults = {
-					{0.0,																(e_double_readonly::PROGRESS_SMOOTH),	("progress_smooth")},
-					{0.0,																(e_double::PROGRESS),					("progress")},
-					{3.0,																(e_double::SMOOTHNESS),					("smoothness")},
-					{0.04,																(e_double::BORDER_THICKNESS),			("border_thickness")},
-					{0.01,																(e_double::BORDER_ROUNDNESS),			("border_roundness")},
-					{1.012,																(e_double::BORDER_PROPORTION_X),		("border_proportion_x")},
-					{1.03,																(e_double::BORDER_PROPORTION_Y),		("border_proportion_y")}
+					{0.0,																(e_double_readonly::PROGRESS_SMOOTH),	("progressbar:progress_smooth")},
+					{0.0,																(e_double::PROGRESS),					("progressbar:progress")},
+					{3.0,																(e_double::SMOOTHNESS),					("progressbar:smoothness")},
+					{0.04,																(e_double::BORDER_THICKNESS),			("progressbar:border_thickness")},
+					{0.01,																(e_double::BORDER_ROUNDNESS),			("progressbar:border_roundness")},
+					{1.012,																(e_double::BORDER_PROPORTION_X),		("progressbar:border_proportion_x")},
+					{1.03,																(e_double::BORDER_PROPORTION_Y),		("progressbar:border_proportion_y")}
 				};
 
 

@@ -12,24 +12,34 @@ namespace LSW {
 		namespace Work {
 
 			namespace textinput {
-				enum class e_boolean_readonly { SELECTED, DISABLE_BLINK_TEMP };
-				enum class e_cstring_readonly { BUFFER };
+				enum class e_boolean_readonly {
+					SELECTED, 
+					DISABLE_BLINK_TEMP
+				};
 
-				enum class e_boolean { ENTER_BREAK_LINE, NON_AXIS_CANCEL_READING, NO_COLOR_TRANSLATION };
+				enum class e_cstring_readonly {
+					BUFFER 
+				};
+
+				enum class e_boolean { 
+					ENTER_BREAK_LINE,
+					NON_AXIS_CANCEL_READING,
+					NO_COLOR_TRANSLATION
+				};
 
 				enum class e_tie_functional {
 					SAVED_STRING = 0 // expect Cstring
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<bool>>		e_boolean_defaults = {
-					{false,							(e_boolean_readonly::SELECTED),					("selected")},
-					{false,							(e_boolean_readonly::DISABLE_BLINK_TEMP),		("disable_blink_temp")},
-					{false,							(e_boolean::ENTER_BREAK_LINE),					("enter_break_line")},
-					{false,							(e_boolean::NON_AXIS_CANCEL_READING),			("non_axis_cancel_reading")},
-					{false,							(e_boolean::NO_COLOR_TRANSLATION),				("no_color_translation")}
+					{false,							(e_boolean_readonly::SELECTED),						("textinput:selected")},
+					{false,							(e_boolean_readonly::DISABLE_BLINK_TEMP),			("textinput:disable_blink_temp")},
+					{false,							(e_boolean::ENTER_BREAK_LINE),						("textinput:enter_break_line")},
+					{false,							(e_boolean::NON_AXIS_CANCEL_READING),				("textinput:non_axis_cancel_reading")},
+					{false,							(e_boolean::NO_COLOR_TRANSLATION),					("textinput:no_color_translation")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<Tools::Cstring>>	e_cstring_defaults = {
-					{Tools::Cstring(),				(e_cstring_readonly::BUFFER),					("buffer")}
+					{Tools::Cstring(),				(e_cstring_readonly::BUFFER),						("textinput:buffer")}
 				};
 				const Tools::SuperMap<Tools::FastFunction<sprite::functional>> e_functional_defaults = {
 					{sprite::functional(),			(e_tie_functional::SAVED_STRING)}

@@ -54,14 +54,7 @@ namespace LSW {
 			/// <para>If multiple threads try to lock at the same time, it shall let the first one lock first, than the second, then the third. It is not 100% perfect because conditional may not trigger if a thread tries exactly at the same time the variable is unlocked, so there is a timeout so then it retries over and over.</para>
 			/// </summary>
 			class SuperSemaphore : public __anyMutex {
-				class weird_mtx {
-					std::mutex m;
-					std::atomic<bool> locked = false;
-				public:
-					bool try_lock();
-					void unlock();
-					bool is_locked() const;
-				} mu;
+				SuperMutex mu;
 				std::condition_variable cond;
 			public:
 

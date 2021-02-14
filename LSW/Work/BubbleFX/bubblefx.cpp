@@ -7,7 +7,7 @@ namespace LSW {
 			void BubbleFX::check_internal()
 			{
 				const double delta = get_direct<double>(bubblefx::e_double::FRAMES_PER_SECOND); // delta t, 1/t = sec
-				const double scaleg = get_direct<double>(bubblefx::e_double::TIE_SIZE_TO_DISPLAY_PROPORTION);
+				const double scaleg = get_direct<double>(bubblefx::e_double::TIED_SIZE_TO_DISPLAY_PROPORTION);
 				const std::chrono::milliseconds last_time = get_direct<std::chrono::milliseconds>(bubblefx::e_chronomillis_readonly::LAST_FRAME);
 
 				if (delta > 0.0) { // if delta <= 0, inf
@@ -99,7 +99,7 @@ namespace LSW {
 				*this = other;
 			}
 
-			BubbleFX::BubbleFX(BubbleFX&& other)
+			BubbleFX::BubbleFX(BubbleFX&& other) noexcept
 			{
 				*this = std::move(other);
 			}
@@ -117,7 +117,7 @@ namespace LSW {
 				set(bubblefx::e_chronomillis_readonly::LAST_TIE_FRAME_VERIFICATION, MILLI_NOW);
 			}
 
-			void BubbleFX::operator=(BubbleFX&& other)
+			void BubbleFX::operator=(BubbleFX&& other) noexcept
 			{
 				this->Sprite_Base::operator=(std::move(other));
 
@@ -149,7 +149,7 @@ namespace LSW {
 
 				positions.resize(amount);
 
-				const double scaleg = get_direct<double>(bubblefx::e_double::TIE_SIZE_TO_DISPLAY_PROPORTION);
+				const double scaleg = get_direct<double>(bubblefx::e_double::TIED_SIZE_TO_DISPLAY_PROPORTION);
 				const auto dot_size = get_direct<double>(bubblefx::e_double::DOTS_SIZE);
 				const auto dot_vari = get_direct<double>(bubblefx::e_double::DOTS_VARIATION_PLUS);
 

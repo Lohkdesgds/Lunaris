@@ -56,7 +56,6 @@ namespace LSW {
 				const auto default_performance_connection = Tools::superthread::performance_mode::PERFORMANCE;
 			}
 
-
 			/// <summary>
 			/// <para>__package is a small package used by Connection to send information back and forth</para>
 			/// <para>You probably don't need to touch this.</para>
@@ -123,12 +122,13 @@ namespace LSW {
 			/// <para>Packages sometimes are bigger than the small packages used for communication</para>
 			/// <para>This is a big "combined data" used to combine or slice a bigger package from or to small ones.</para>
 			/// </summary>
-			struct __combined_data {
+			struct combined_data {
 				std::string buffer;
 				bool is_full = true;
+				size_t __represents_n_packages = 0;
 
-				__combined_data& operator+(const __combined_data&);
-				__combined_data& operator+=(const __combined_data&);
+				combined_data& operator+(const combined_data&);
+				combined_data& operator+=(const combined_data&);
 			};
 
 			/// <summary>
@@ -323,9 +323,10 @@ namespace LSW {
 
 				unsigned long long last_recv_remaining = 0;
 
-				bool should_ping = true;
-				bool should_sync = false;
-				bool should_request_sync = false;
+				std::atomic<bool> should_ping = true;
+				std::atomic<bool> should_sync = false;
+				std::atomic<bool> should_request_sync = false;
+				std::atomic<size_t> freed_packages = 0;
 
 				std::vector<__package> between;
 				Tools::SuperMutex between_mtx;
@@ -343,9 +344,9 @@ namespace LSW {
 
 				// buffers
 				Tools::SuperMutex buffer_sending_mtx;
-				std::vector<__combined_data> buffer_sending;
+				std::vector<combined_data> buffer_sending;
 				Tools::SuperMutex buffer_receive_mtx;
-				std::vector<__combined_data> buffer_receive;
+				std::vector<combined_data> buffer_receive;
 
 				// overwrites
 				Tools::SuperMutex send_overwrite_mtx;
@@ -356,8 +357,8 @@ namespace LSW {
 
 				// - - - - FUNCTIONS - - - - //
 
-				// current limit THIS SENDING to other
-				void add_current_limit(const int);
+				// current limit THIS SENDING to other. return new limit
+				long long add_current_limit(const int);
 				void pop_current_limit();
 
 				// current THIS RECEIVING DATA limit and stuff.
@@ -440,6 +441,12 @@ namespace LSW {
 				long long in_memory_can_send() const;
 
 				/// <summary>
+				/// <para>How many does it believe it can receive before overload?</para>
+				/// </summary>
+				/// <returns>{long long} How many? Less than 0 means infinite.</returns>
+				long long in_memory_can_read() const;
+
+				/// <summary>
 				/// <para>Estimated packages that are on their way to the other side.</para>
 				/// <para>The real number can be equal or greater than this.</para>
 				/// <para>PS: This value sometimes might never get to zero!</para>
@@ -474,8 +481,8 @@ namespace LSW {
 				/// <para>Can be an incomplete package (not full) if buffer is full or sender has done it in steps.</para>
 				/// </summary>
 				/// <param name="{bool}">Force wait for full package (a full tagged pack). Can still return non-full, but only if there's no package to get.</param>
-				/// <returns>{__combined_data} The package received (or part of, depending on limit configuration).</returns>
-				__combined_data get_next(const bool = true);
+				/// <returns>{combined_data} The package received (or part of, depending on limit configuration).</returns>
+				combined_data get_next(const bool = true);
 
 				/// <summary>
 				/// <para>Send a package of bytes.</para>
@@ -490,9 +497,9 @@ namespace LSW {
 				/// <para>PS: If you want to send multiple files, set .is_full to false.</para>
 				/// <para>All packages with .is_full will be combined in the end when a .is_full true is sent.</para>
 				/// </summary>
-				/// <param name="{__combined_data}">The bytes you want to send.</param>
+				/// <param name="{combined_data}">The bytes you want to send.</param>
 				/// <param name="{bool}">Wait for the package to get sent? (if there are some, wait flush?)</param>
-				void send_package(const __combined_data&, const bool = false);
+				void send_package(const combined_data&, const bool = false);
 
 				/// <summary>
 				/// <para>Total small packages sent (not package itself, the small ones).</para>

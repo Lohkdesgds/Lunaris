@@ -20,9 +20,9 @@ namespace LSW {
 			namespace track {
 				
 				enum class play_mode {
-					MODE_ONCE = ALLEGRO_PLAYMODE_ONCE,
-					MODE_LOOP = ALLEGRO_PLAYMODE_LOOP,
-					MODE_BIDIR = ALLEGRO_PLAYMODE_BIDIR
+					ONCE = ALLEGRO_PLAYMODE_ONCE,
+					LOOP = ALLEGRO_PLAYMODE_LOOP,
+					BIDIR = ALLEGRO_PLAYMODE_BIDIR
 				};
 			}
 

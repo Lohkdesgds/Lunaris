@@ -39,20 +39,82 @@ namespace LSW {
 				COL_MINDIST_... = the distance it has to move in ... (on a collision tick)
 				...UPDATE... = automatic smoothing based on collision calls
 				*/
-				enum class e_double_readonly { PERC_CALC_SMOOTH, SPEED_X, SPEED_Y, LAST_COLLISION_TIME /* related to: COLLISION_COLLIDED */,
-					LAST_DRAW, LAST_UPDATE, UPDATE_DELTA, POSX, POSY, PROJECTED_POSX, PROJECTED_POSY, ROTATION/*, COL_MINDIST_X, COL_MINDIST_Y*/,
-					MOUSE_CLICK_LAST_X, MOUSE_CLICK_LAST_Y,
-					REALISTIC_RESULT_POSX, REALISTIC_RESULT_POSY, REALISTIC_RESULT_SCALE_X, REALISTIC_RESULT_SCALE_Y
+				enum class e_double_readonly { 
+					PERC_CALC_SMOOTH,
+					SPEED_X, 
+					SPEED_Y, 
+					LAST_COLLISION_TIME /* related to: COLLISION_COLLIDED */,
+					LAST_DRAW,
+					LAST_UPDATE,
+					UPDATE_DELTA, 
+					POSX, 
+					POSY,
+					PROJECTED_POSX, 
+					PROJECTED_POSY,
+					ROTATION,
+					MOUSE_CLICK_LAST_X, 
+					MOUSE_CLICK_LAST_Y,
+					REALISTIC_RESULT_POSX, 
+					REALISTIC_RESULT_POSY, 
+					REALISTIC_RESULT_SCALE_X,
+					REALISTIC_RESULT_SCALE_Y
 				};
-				enum class e_boolean_readonly { COLLISION_MOUSE_PRESSED, COLLISION_MOUSE_CLICK, COLLISION_COLLIDED /* related to: LAST_COLLISION_TIME */, INVALIDATE_MOUSE_NOMOVE, IS_OUTSIDE_SCREEN };
-				enum class e_tief_readonly { LAST_STATE };
 
-				enum class e_string { ID };
-				enum class e_double { TARG_POSX, TARG_POSY, SCALE_X, SCALE_Y, SCALE_G, CENTER_X, CENTER_Y, TARG_ROTATION, ACCELERATION_X, ACCELERATION_Y, SPEEDXY_LIMIT, ELASTICITY_X, ELASTICITY_Y, ROUGHNESS, DISTANCE_DRAWING_SCALE };
-				enum class e_boolean { DRAW, USE_COLOR, AFFECTED_BY_CAM, DRAW_DOT, DRAW_COLOR_BOX, DRAW_DEBUG_BOX, RESPECT_CAMERA_LIMITS /*Readonly means no collision or acceleration, just f()*/ };
-				enum class e_integer { COLLISION_MODE };
-				enum class e_color { COLOR };
-				enum class e_uintptrt { DATA_FROM, INDEX_TARGET_IN_USE }; // == size_t
+				enum class e_boolean_readonly { 
+					COLLISION_MOUSE_PRESSED,
+					COLLISION_MOUSE_CLICK,
+					COLLISION_COLLIDED /* related to: LAST_COLLISION_TIME */,
+					INVALIDATE_MOUSE_NOMOVE,
+					IS_OUTSIDE_SCREEN
+				};
+
+				enum class e_tief_readonly { 
+					LAST_STATE 
+				};
+
+				enum class e_string { 
+					ID
+				};
+				enum class e_double { 
+					TARG_POSX, 
+					TARG_POSY,
+					SCALE_X, 
+					SCALE_Y, 
+					SCALE_G,
+					CENTER_X,
+					CENTER_Y, 
+					TARG_ROTATION,
+					ACCELERATION_X, 
+					ACCELERATION_Y,
+					SPEEDXY_LIMIT,
+					ELASTICITY_X, 
+					ELASTICITY_Y, 
+					ROUGHNESS, 
+					DISTANCE_DRAWING_SCALE
+				};
+
+				enum class e_boolean { 
+					DRAW, 
+					USE_COLOR,
+					AFFECTED_BY_CAM,
+					DRAW_DOT, 
+					DRAW_COLOR_BOX,
+					DRAW_DEBUG_BOX
+					//RESPECT_CAMERA_LIMITS /*no collision or acceleration, just f()*/
+				};
+
+				enum class e_integer { 
+					COLLISION_MODE
+				};
+
+				enum class e_color {
+					COLOR 
+				};
+
+				enum class e_uintptrt {
+					DATA_FROM, 
+					INDEX_TARGET_IN_USE
+				}; // == size_t
 
 				enum class e_collision_mode_cast {
 					COLLISION_BOTH, // collide and move if colliding
@@ -62,16 +124,19 @@ namespace LSW {
 				};
 
 				enum class e_direction_array_version {
-					NORTH, SOUTH, EAST, WEST
+					NORTH,
+					SOUTH, 
+					EAST,
+					WEST
 				};
 
 				// saving as a int with binary vals
 				enum class e_direction {
-					NONE = 0,
-					NORTH = 1 << 0,
-					SOUTH = 1 << 1,
-					EAST  = 1 << 2,
-					WEST  = 1 << 3
+					DIR_NONE = 0,
+					DIR_NORTH = 1 << 0,
+					DIR_SOUTH = 1 << 1,
+					DIR_EAST  = 1 << 2,
+					DIR_WEST  = 1 << 3
 				};
 
 				enum class e_tie_functional { 
@@ -100,68 +165,68 @@ namespace LSW {
 				constexpr double move_accept_move_max_as_none = 0.025; // click event, how much movement is considered no move? (around the point, +/-)
 
 				const Tools::SuperMap<Tools::FastFunction<std::string>> e_string_defaults = {
-					{std::string(""),												(e_string::ID),										("id")}
+					{std::string(""),												(e_string::ID),										("sprite:id")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<double>> e_double_defaults = {
-					{0.0,															(e_double_readonly::PERC_CALC_SMOOTH),				("perc_calc_smooth")},
-					{0.0,															(e_double_readonly::SPEED_X),						("speed_x")},
-					{0.0,															(e_double_readonly::SPEED_Y),						("speed_y")},
-					{0.0,															(e_double_readonly::LAST_COLLISION_TIME),			("last_collision_time")},
-					{0.0,															(e_double_readonly::LAST_DRAW),						("last_draw")},
-					{0.0,															(e_double_readonly::LAST_UPDATE),					("last_update")},
-					{0.0,															(e_double_readonly::UPDATE_DELTA),					("update_delta")},
-					{0.0,															(e_double_readonly::POSX),							("pos_x")}, // WAS drawing POSX
-					{0.0,															(e_double_readonly::POSY),							("pos_y")}, // WAS drawing POSY
-					{0.0,															(e_double_readonly::PROJECTED_POSX),				("projected_pos_x")}, // drawing POSX
-					{0.0,															(e_double_readonly::PROJECTED_POSY),				("projected_pos_y")}, // drawing POSY
-					{0.0,															(e_double_readonly::ROTATION),						("rotation")}, // drawing ROTATION
-					{0.0,															(e_double_readonly::MOUSE_CLICK_LAST_X),			("mouse_click_last_x")},
-					{0.0,															(e_double_readonly::MOUSE_CLICK_LAST_Y),			("mouse_click_last_y")},
-					{0.0,															(e_double_readonly::REALISTIC_RESULT_POSX),			("realistic_result_x")}, // after affected_by_cam, how does it look for affected ones in position?
-					{0.0,															(e_double_readonly::REALISTIC_RESULT_POSY),			("realistic_result_y")}, // after affected_by_cam, how does it look for affected ones in position?
-					{0.0,															(e_double_readonly::REALISTIC_RESULT_SCALE_X),		("realistic_result_scale_x")}, // after affected_by_cam, how does it look for affected ones in scale?
-					{0.0,															(e_double_readonly::REALISTIC_RESULT_SCALE_Y),		("realistic_result_scale_y")}, // after affected_by_cam, how does it look for affected ones in scale?
+					{0.0,															(e_double_readonly::PERC_CALC_SMOOTH),				("sprite:perc_calc_smooth")},
+					{0.0,															(e_double_readonly::SPEED_X),						("sprite:speed_x")},
+					{0.0,															(e_double_readonly::SPEED_Y),						("sprite:speed_y")},
+					{0.0,															(e_double_readonly::LAST_COLLISION_TIME),			("sprite:last_collision_time")},
+					{0.0,															(e_double_readonly::LAST_DRAW),						("sprite:last_draw")},
+					{0.0,															(e_double_readonly::LAST_UPDATE),					("sprite:last_update")},
+					{0.0,															(e_double_readonly::UPDATE_DELTA),					("sprite:update_delta")},
+					{0.0,															(e_double_readonly::POSX),							("sprite:pos_x")},
+					{0.0,															(e_double_readonly::POSY),							("sprite:pos_y")},
+					{0.0,															(e_double_readonly::PROJECTED_POSX),				("sprite:projected_pos_x")}, // drawing POSX
+					{0.0,															(e_double_readonly::PROJECTED_POSY),				("sprite:projected_pos_y")}, // drawing POSY
+					{0.0,															(e_double_readonly::ROTATION),						("sprite:rotation")}, // drawing ROTATION
+					{0.0,															(e_double_readonly::MOUSE_CLICK_LAST_X),			("sprite:mouse_click_last_x")},
+					{0.0,															(e_double_readonly::MOUSE_CLICK_LAST_Y),			("sprite:mouse_click_last_y")},
+					{0.0,															(e_double_readonly::REALISTIC_RESULT_POSX),			("sprite:realistic_result_x")}, // after affected_by_cam, how does it look for affected ones in position?
+					{0.0,															(e_double_readonly::REALISTIC_RESULT_POSY),			("sprite:realistic_result_y")}, // after affected_by_cam, how does it look for affected ones in position?
+					{0.0,															(e_double_readonly::REALISTIC_RESULT_SCALE_X),		("sprite:realistic_result_scale_x")}, // after affected_by_cam, how does it look for affected ones in scale?
+					{0.0,															(e_double_readonly::REALISTIC_RESULT_SCALE_Y),		("sprite:realistic_result_scale_y")}, // after affected_by_cam, how does it look for affected ones in scale?
 
-					{0.0,															(e_double::TARG_POSX),								("target_pos_x")},
-					{0.0,															(e_double::TARG_POSY),								("target_pos_y")},
-					{1.0,															(e_double::SCALE_X),								("scale_x")},
-					{1.0,															(e_double::SCALE_Y),								("scale_y")},
-					{1.0,															(e_double::SCALE_G),								("scale_g")},
-					{0.0,															(e_double::CENTER_X),								("center_x")},
-					{0.0,															(e_double::CENTER_Y),								("center_y")},
-					{0.0,															(e_double::TARG_ROTATION),							("target_rotation")},
-					{0.0,															(e_double::ACCELERATION_X),							("acceleration_x")},
-					{0.0,															(e_double::ACCELERATION_Y),							("acceleration_y")},
-					{0.3,															(e_double::SPEEDXY_LIMIT),							("speed_limit")},
-					{0.85,															(e_double::ELASTICITY_X),							("elasticity_x")},
-					{0.85,															(e_double::ELASTICITY_Y),							("elasticity_y")},
-					{0.98,															(e_double::ROUGHNESS),								("roughness")},
-					{1.0,															(e_double::DISTANCE_DRAWING_SCALE),					("distance_drawing_scale")}
+					{0.0,															(e_double::TARG_POSX),								("sprite:target_pos_x")},
+					{0.0,															(e_double::TARG_POSY),								("sprite:target_pos_y")},
+					{1.0,															(e_double::SCALE_X),								("sprite:scale_x")},
+					{1.0,															(e_double::SCALE_Y),								("sprite:scale_y")},
+					{1.0,															(e_double::SCALE_G),								("sprite:scale_g")},
+					{0.0,															(e_double::CENTER_X),								("sprite:center_x")},
+					{0.0,															(e_double::CENTER_Y),								("sprite:center_y")},
+					{0.0,															(e_double::TARG_ROTATION),							("sprite:target_rotation")},
+					{0.0,															(e_double::ACCELERATION_X),							("sprite:acceleration_x")},
+					{0.0,															(e_double::ACCELERATION_Y),							("sprite:acceleration_y")},
+					{0.3,															(e_double::SPEEDXY_LIMIT),							("sprite:speed_limit")},
+					{0.85,															(e_double::ELASTICITY_X),							("sprite:elasticity_x")},
+					{0.85,															(e_double::ELASTICITY_Y),							("sprite:elasticity_y")},
+					{0.98,															(e_double::ROUGHNESS),								("sprite:roughness")},
+					{1.0,															(e_double::DISTANCE_DRAWING_SCALE),					("sprite:distance_drawing_scale")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<bool>> e_boolean_defaults = {
-					{false,															(e_boolean_readonly::COLLISION_MOUSE_PRESSED),		("collision_mouse_on")},
-					{false,															(e_boolean_readonly::COLLISION_MOUSE_CLICK),		("collision_mouse_click")},
-					{false,															(e_boolean_readonly::COLLISION_COLLIDED),			("collision_collided")},
-					{false,															(e_boolean_readonly::INVALIDATE_MOUSE_NOMOVE),		("invalidate_mouse_nomove")},
-					{false,															(e_boolean_readonly::IS_OUTSIDE_SCREEN),			("is_outside_screen")},
+					{false,															(e_boolean_readonly::COLLISION_MOUSE_PRESSED),		("sprite:collision_mouse_on")},
+					{false,															(e_boolean_readonly::COLLISION_MOUSE_CLICK),		("sprite:collision_mouse_click")},
+					{false,															(e_boolean_readonly::COLLISION_COLLIDED),			("sprite:collision_collided")},
+					{false,															(e_boolean_readonly::INVALIDATE_MOUSE_NOMOVE),		("sprite:invalidate_mouse_nomove")},
+					{false,															(e_boolean_readonly::IS_OUTSIDE_SCREEN),			("sprite:is_outside_screen")},
 
-					{true,															(e_boolean::DRAW),									("draw")},
-					{false,															(e_boolean::USE_COLOR),								("use_color")},
-					{true,															(e_boolean::AFFECTED_BY_CAM),						("affected_by_camera")},
-					{false,															(e_boolean::DRAW_DOT),								("draw_dot")}, // shows dot where it will be drawn
-					{false,															(e_boolean::DRAW_COLOR_BOX),						("draw_color_box")}, // box with COLOR
-					{false,															(e_boolean::DRAW_DEBUG_BOX),						("draw_debug_box")}, // shows rectangle where collision updated (latest update)
-					{true,															(e_boolean::RESPECT_CAMERA_LIMITS),					("respect_camera_limits")}
+					{true,															(e_boolean::DRAW),									("sprite:draw")},
+					{false,															(e_boolean::USE_COLOR),								("sprite:use_color")},
+					{true,															(e_boolean::AFFECTED_BY_CAM),						("sprite:affected_by_camera")},
+					{false,															(e_boolean::DRAW_DOT),								("sprite:draw_dot")}, // shows dot where it will be drawn
+					{false,															(e_boolean::DRAW_COLOR_BOX),						("sprite:draw_color_box")}, // box with COLOR
+					{false,															(e_boolean::DRAW_DEBUG_BOX),						("sprite:draw_debug_box")} // shows rectangle where collision updated (latest update)
+					//{true,														(e_boolean::RESPECT_CAMERA_LIMITS),					("sprite:respect_camera_limits")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<int>> e_integer_defaults = {
-					{static_cast<int>(e_collision_mode_cast::COLLISION_BOTH),		(e_integer::COLLISION_MODE),						("collision_mode")}
+					{static_cast<int>(e_collision_mode_cast::COLLISION_BOTH),(e_integer::COLLISION_MODE),								("sprite:collision_mode")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<Interface::Color>> e_color_defaults = {
-					{Interface::Color(255,255,255),									(e_color::COLOR),									("color")}
+					{Interface::Color(255,255,255),									(e_color::COLOR),									("sprite:color")}
 				};
 
 				const Tools::SuperMap<Tools::FastFunction<uintptr_t>> e_uintptrt_defaults = {
@@ -283,7 +348,7 @@ namespace LSW {
 				/// <para>Constructor to move a Sprite_Base to this (move).</para>
 				/// </summary>
 				/// <param name="{Sprite_Base}">The one to move attributes from.</param>
-				Sprite_Base(Sprite_Base&&);
+				Sprite_Base(Sprite_Base&&) noexcept;
 
 				/// <summary>
 				/// <para>Clone other Sprite_Base attributes.</para>
@@ -302,7 +367,7 @@ namespace LSW {
 				/// <para>Move a Sprite_Base to this (move).</para>
 				/// </summary>
 				/// <param name="{Sprite_Base}">The one to move attributes from.</param>
-				void operator=(Sprite_Base&&);
+				void operator=(Sprite_Base&&) noexcept;
 
 				/// <summary>
 				/// <para>Compare values right now given a key.</para>

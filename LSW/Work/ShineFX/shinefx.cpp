@@ -7,7 +7,7 @@ namespace LSW {
 			void ShineFX::check_internal()
 			{
 				const double delta = get_direct<double>(shinefx::e_double::FRAMES_PER_SECOND); // delta t, 1/t = sec
-				const double scaleg = get_direct<double>(shinefx::e_double::TIE_SIZE_TO_DISPLAY_PROPORTION);
+				const double scaleg = get_direct<double>(shinefx::e_double::TIED_SIZE_TO_DISPLAY_PROPORTION);
 				const std::chrono::milliseconds last_time = get_direct<std::chrono::milliseconds>(shinefx::e_chronomillis_readonly::LAST_FRAME);
 
 				if (delta > 0.0) { // if delta <= 0, inf
@@ -36,7 +36,7 @@ namespace LSW {
 
 				// update bitmap
 				const double delta_rad = get_direct<double>(shinefx::e_double::EACH_SIZE_RAD);
-				const double time_now = al_get_time() * get_direct<double>(shinefx::e_double::SPEED_ROTATION_T);
+				const double time_now = al_get_time() * get_direct<double>(shinefx::e_double::SPEED_ROTATION_TIME);
 				const Interface::Color foreground_color = get_direct<Interface::Color>(shinefx::e_color::FOREGROUND);
 				const Interface::Color background_color = get_direct<Interface::Color>(shinefx::e_color::BACKGROUND);
 				const double cxx = get_direct<double>(shinefx::e_double::CENTER_X);

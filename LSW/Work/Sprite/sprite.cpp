@@ -70,10 +70,10 @@ namespace LSW {
 				w = directions_cases[static_cast<int>(sprite::e_direction_array_version::WEST)] > 0;
 				e = directions_cases[static_cast<int>(sprite::e_direction_array_version::EAST)] > 0;
 
-				const int east = static_cast<int>(sprite::e_direction::EAST);
-				const int west = static_cast<int>(sprite::e_direction::WEST);
-				const int north = static_cast<int>(sprite::e_direction::NORTH);
-				const int south = static_cast<int>(sprite::e_direction::SOUTH);
+				const int east = static_cast<int>(sprite::e_direction::DIR_EAST);
+				const int west = static_cast<int>(sprite::e_direction::DIR_WEST);
+				const int north = static_cast<int>(sprite::e_direction::DIR_NORTH);
+				const int south = static_cast<int>(sprite::e_direction::DIR_SOUTH);
 
 
 				if (n) { // north
@@ -181,7 +181,7 @@ namespace LSW {
 				*this = other;
 			}
 
-			Sprite_Base::Sprite_Base(Sprite_Base&& other)
+			Sprite_Base::Sprite_Base(Sprite_Base&& other) noexcept
 			{
 				*this = std::move(other);
 			}
@@ -211,7 +211,7 @@ namespace LSW {
 				set<uintptr_t>(oth.get<uintptr_t>());
 			}
 
-			void Sprite_Base::operator=(Sprite_Base&& other)
+			void Sprite_Base::operator=(Sprite_Base&& other) noexcept
 			{
 				set<sprite::functional>(std::move(other.get<sprite::functional>()));
 				set<sprite::e_tie_functional>(std::move(other.get<sprite::e_tie_functional>()));
@@ -380,14 +380,14 @@ namespace LSW {
 					double sum_dx = 0.0;
 					double sum_dy = 0.0;
 
-					if (nowgo & static_cast<int>(sprite::e_direction::SOUTH)) {
+					if (nowgo & static_cast<int>(sprite::e_direction::DIR_SOUTH)) {
 						if (get_direct<double>(sprite::e_double_readonly::SPEED_Y) <= 0.0) {
 							set(sprite::e_double_readonly::SPEED_Y, 0.0);// sprite::minimum_sprite_accel_collision* get_direct<double>(sprite::e_double::ELASTICITY_Y));
 							//set(sprite::e_double::ACCELERATION_Y, sprite::minimum_sprite_accel_collision);
 						}
 						sum_dy = fabs(easy_collision.dy_max);
 					}
-					else if (nowgo & static_cast<int>(sprite::e_direction::NORTH)) {
+					else if (nowgo & static_cast<int>(sprite::e_direction::DIR_NORTH)) {
 						if (get_direct<double>(sprite::e_double_readonly::SPEED_Y) >= 0.0) {
 							set(sprite::e_double_readonly::SPEED_Y, 0.0); //-sprite::minimum_sprite_accel_collision * get_direct<double>(sprite::e_double::ELASTICITY_Y));
 							//set(sprite::e_double::ACCELERATION_Y, -sprite::minimum_sprite_accel_collision);
@@ -395,14 +395,14 @@ namespace LSW {
 						sum_dy = -fabs(easy_collision.dy_max);
 					}
 
-					if (nowgo & static_cast<int>(sprite::e_direction::EAST)) {
+					if (nowgo & static_cast<int>(sprite::e_direction::DIR_EAST)) {
 						if (get_direct<double>(sprite::e_double_readonly::SPEED_X) <= 0.0) {
 							set(sprite::e_double_readonly::SPEED_X, 0.0); // sprite::minimum_sprite_accel_collision * get_direct<double>(sprite::e_double::ELASTICITY_X));
 							//set(sprite::e_double::ACCELERATION_X, sprite::minimum_sprite_accel_collision);
 						}
 						sum_dx = fabs(easy_collision.dx_max);
 					}
-					else if (nowgo & static_cast<int>(sprite::e_direction::WEST)) {
+					else if (nowgo & static_cast<int>(sprite::e_direction::DIR_WEST)) {
 						if (get_direct<double>(sprite::e_double_readonly::SPEED_X) >= 0.0) {
 							set(sprite::e_double_readonly::SPEED_X, 0.0); //-sprite::minimum_sprite_accel_collision * get_direct<double>(sprite::e_double::ELASTICITY_X));
 							//set(sprite::e_double::ACCELERATION_X, -sprite::minimum_sprite_accel_collision);
@@ -456,10 +456,10 @@ namespace LSW {
 					bool invalid_nomove = !get_direct<bool>(sprite::e_boolean_readonly::COLLISION_COLLIDED);
 
 
-					double mouse_b4[2];
-
-					mouse_b4[0] = get_direct<double>(sprite::e_double_readonly::MOUSE_CLICK_LAST_X);
-					mouse_b4[1] = get_direct<double>(sprite::e_double_readonly::MOUSE_CLICK_LAST_Y);
+					const double mouse_b4[2] = {
+						get_direct<double>(sprite::e_double_readonly::MOUSE_CLICK_LAST_X),
+						get_direct<double>(sprite::e_double_readonly::MOUSE_CLICK_LAST_Y)
+					};
 
 					if (conf.has("mouse", "press_count")) {
 

@@ -13,8 +13,20 @@ namespace LSW {
 		namespace Interface {
 
 			namespace smartfile {
-				enum class file_modes { READ = 1, WRITE, READ_WRITE_KEEP, READ_WRITE_OVERWRITE, APPEND_WRITE, APPEND_READ_WRITE };
-				enum class file_seek { CURRENT = ALLEGRO_SEEK_CUR, END = ALLEGRO_SEEK_END, BEGIN = ALLEGRO_SEEK_SET };
+				enum class file_modes { 
+					READ = 1, 
+					WRITE, 
+					READ_WRITE_KEEP,
+					READ_WRITE_OVERWRITE,
+					APPEND_WRITE,
+					APPEND_READ_WRITE 
+				};
+
+				enum class file_seek { 
+					CURRENT = ALLEGRO_SEEK_CUR, 
+					END = ALLEGRO_SEEK_END, 
+					BEGIN = ALLEGRO_SEEK_SET
+				};
 			}
 
 			/// <summary>
