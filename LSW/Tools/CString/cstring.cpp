@@ -614,8 +614,9 @@ namespace LSW {
 
 			void Cstring::operator=(Cstring&& m) noexcept
 			{
-				str = std::move(m.str);
-				last_added_color = std::move(last_added_color);
+				if (m.str.size()) str = std::move(m.str);
+				else str.clear();
+				last_added_color = m.last_added_color;
 			}
 
 			void Cstring::operator=(const std::string& a)

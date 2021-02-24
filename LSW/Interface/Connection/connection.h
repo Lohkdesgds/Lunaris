@@ -35,14 +35,18 @@ namespace LSW {
 
 			namespace connection {
 				constexpr int default_port = 42069;
-				constexpr unsigned package_size = 1 << 10; // 1024 bytes
-				constexpr unsigned default_limit = 600;
+				constexpr unsigned package_size = 1 << 12; // 4096 bytes
+				constexpr size_t limit_packages_stuck_send = 2; // MemoryFiles
+				constexpr unsigned long long trigger_sync_send_thread = 15; // packages, bigger can cause higher ping. Consider LONG LONG limits!
+				constexpr unsigned long long trigger_sync_multiplier_slowdown = 1; // sleep_for (this * (pack count - trigger_sync_send_thread) );
+				constexpr unsigned long long trigger_max_time_allowed = 250; // oh man 2 seconds
 
-				const double pinging_time = 5.0; // seconds
+				const double pinging_time = 10.0; // seconds
+				//const double timeout_send = 3.0; // seconds
 
 				enum class _connection_status {
 					DISCONNECTED = -1, // error, disconnected
-					EMPTY = 0,  // nothing has been read/sent
+					FAILED = 0,  // nothing has been read/sent
 					GOOD = 1   // has read a full package
 				};
 
@@ -52,84 +56,9 @@ namespace LSW {
 					HOST_IPV6
 				};
 
-				constexpr int automatic_self_point = 3000; // DON'T SET THIS TO less or eq 0.
+				//constexpr int automatic_self_point = 3000; // DON'T SET THIS TO less or eq 0.
 				const auto default_performance_connection = Tools::superthread::performance_mode::PERFORMANCE;
 			}
-
-			/// <summary>
-			/// <para>__package is a small package used by Connection to send information back and forth</para>
-			/// <para>You probably don't need to touch this.</para>
-			/// </summary>
-			struct __package {
-				enum class package_type { DATA = 1, SYNC, REQUEST, PING, PONG };
-
-				// data and info
-				struct _data {
-					char buffer[connection::package_size]; // raw buffer
-					unsigned data_len; // buffer used len
-					unsigned long long remaining; // how many are still coming
-					bool full; // consider this full?
-				};
-				// syncronization and delay control
-				struct _sync {
-					unsigned long long sent_count; // this is its counter right now
-					unsigned long long received_count; // who sends thinks you're at this right now
-					unsigned long long buffer_sending_size; // literally buffer's size
-					unsigned long long buffer_receive_size; // literally buffer's size
-					long long add_availability; // delta how many are available "again" (aka get_next() cleaned 10, so +10) // positive
-					bool no_limit; // no limit, as it says, so add_availability is "useless"
-				};
-				// request
-				struct _rqst {
-					package_type request; // request host to do a task. Currently available: SYNC, PING
-				};
-				// ping
-				struct _ping {
-					unsigned long long self_time_ms; // sender's time since epoch, ms
-				};
-				// pong
-				struct _pong : public _ping {}; // copy
-
-				union {
-					_data data;
-					_sync sync;
-					_rqst rqst;
-					_ping ping;
-					_pong pong;
-				} pack;
-
-				package_type type{};
-
-				/// <summary>
-				/// <para>Prepare package for a type. This will initialize some stuff beforehand.</para>
-				/// </summary>
-				/// <param name="{package_type}">What package type you're planning?</param>
-				__package(const package_type);
-
-				/// <summary>
-				/// <para>No preparation, just ZeroMemory.</para>
-				/// </summary>
-				__package();
-				
-				/// <summary>
-				/// <para>Prepare package for a type. This will initialize some stuff beforehand.</para>
-				/// </summary>
-				/// <param name="{package_type}">What package type you're planning?</param>
-				void prepare_to(const package_type);
-			};
-
-			/// <summary>
-			/// <para>Packages sometimes are bigger than the small packages used for communication</para>
-			/// <para>This is a big "combined data" used to combine or slice a bigger package from or to small ones.</para>
-			/// </summary>
-			struct combined_data {
-				std::string buffer;
-				bool is_full = true;
-				size_t __represents_n_packages = 0;
-
-				combined_data& operator+(const combined_data&);
-				combined_data& operator+=(const combined_data&);
-			};
 
 			/// <summary>
 			/// <para>This is the WinSock base.</para>
@@ -172,6 +101,7 @@ namespace LSW {
 			public:
 				struct nm_ping{
 					unsigned current = 0;
+					unsigned peak = 0;
 					double adaptative_avg = 0;
 					double adaptativeness = 10; // (10 * current + new) / (10 + 1)
 				};
@@ -228,6 +158,12 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{unsigned} Last ping.</returns>
 				unsigned ping_now() const;
+
+				/// <summary>
+				/// <para>Get highest ping information.</para>
+				/// </summary>
+				/// <returns>{unsigned} Highest ping.</returns>
+				unsigned ping_peak() const;
 
 				/// <summary>
 				/// <para>Get the adaptative average ping.</para>
@@ -296,12 +232,48 @@ namespace LSW {
 				unsigned long long recv_get_average_total() const;
 			};
 
+			struct Package {
+				SmartFile big_file;
+				std::string small_data;
+				int type = 0;
+				
+				Package() = default;
+				Package(const Package&) = delete;
+				Package(Package&&);
+
+				bool has_data() const;
+				void operator=(const Package&) = delete;
+				void operator=(Package&&);
+			};
+
 			/// <summary>
 			/// <para>A connection itself (one to one).</para>
 			/// </summary>
 			class Connection {
+				enum class __package_type {PING = 1, PONG, SIGNAL, ASK_SIGNAL, PRIORITY_PACKAGE_SMALL, PACKAGE_SMALL, PACKAGE_FILE, _FAILED };
+
+				struct __package {
+					char buffer[connection::package_size]{};
+					int buffer_len = 0;
+					int package_type = 0;
+					bool wait_for_more = false;
+
+					__package() = default;
+
+					/// <summary>
+					/// <para>Directly generate a package.</para>
+					/// </summary>
+					/// <param name="{std::string}">Buffer, size equal or less than connection::package_size, or it will cut the data.</param>
+					/// <param name="{__package_type}">The package type.</param>
+					/// <param name="{bool}">Is this complete?</param>
+					__package(const std::string&, const __package_type, const bool);
+				};
+
+				const int __package_size_buffer = sizeof(__package);
+
 				// - - - - ESSENTIAL - - - - //
 				ConnectionCore core;
+				NetworkMonitor network_analysis;
 				Logger logg;
 
 				SOCKET connected = INVALID_SOCKET;
@@ -309,76 +281,61 @@ namespace LSW {
 
 				// - - - - WORKING - - - - //
 
-				// shared
-				__package::_sync myself{ 0,0,0,0,0,false }; // MEE
-				__package::_sync yourself{ 0,0,0,0,0,false }; // COPY/READ ONLY..
+				Tools::SuperThread<> thr_send;
+				Tools::SuperThread<> thr_recv;
 
-				Tools::SuperMutex buffer_available_send_mtx;
-				long long buffer_available_send = 0; // OTHER SIDE SAY THIS ONE, DO NOT TOUCH THIS
+				std::atomic<long long> packages_since_sync = 0;
+				std::atomic<unsigned long long> packages_received_trigger_sync = 0;
 
-				Tools::SuperMutex buffer_available_calculated_mtx;
-				long long buffer_available_calculated = 0; // available to recv, other side can send, so, positive.
+				// get_next_package_auto() handles these:
+				Tools::SuperMutex send_pkg_mtx;
+				std::vector<std::string> send_pkg_small_priority;
+				std::vector<std::string> send_pkg_small_normal;
+				std::vector<SmartFile> send_pkg_file;
+				Tools::Waiter send_pkg_signal;
 
-				long long my_buffer_limit = 0;
+				// submit_next_package_recv() handles these:
+				Tools::SuperMutex recv_pkg_mtx;
+				std::vector<Package> recv_pkg_normal;
+				Tools::Waiter recv_pkg_signal;
 
-				unsigned long long last_recv_remaining = 0;
+				Tools::SuperMutex read_over_mtx;
+				std::function<void(Connection&, Package&)> read_over;
 
-				std::atomic<bool> should_ping = true;
-				std::atomic<bool> should_sync = false;
-				std::atomic<bool> should_request_sync = false;
-				std::atomic<size_t> freed_packages = 0;
+				Tools::SuperMutex err_debug_mtx;
+				std::function<void(const std::string&)> err_debug;
 
-				std::vector<__package> between;
-				Tools::SuperMutex between_mtx;
+				bool has_priority_waiting() const;
 
-				// work
-				Tools::SuperThread<> connection_handle_send{ connection::default_performance_connection };
-				Tools::SuperThread<> connection_handle_recv{ connection::default_performance_connection };
+				Package get_next_priority_auto();
+				Package get_next_package_auto();
 
-				// info
-				NetworkMonitor network_analysis;
+				void submit_next_package_recv(Package&&);
 
-				// triggers
-				Tools::Waiter received_package;
-				Tools::Waiter sent_once_package;
+				bool slice_auto(Package&, __package&);
 
-				// buffers
-				Tools::SuperMutex buffer_sending_mtx;
-				std::vector<combined_data> buffer_sending;
-				Tools::SuperMutex buffer_receive_mtx;
-				std::vector<combined_data> buffer_receive;
+				void format_ping(__package&);
+				bool interpret_ping_recv(const __package&);
 
-				// overwrites
-				Tools::SuperMutex send_overwrite_mtx;
-				std::function<std::string(void)> send_overwrite;
-				Tools::SuperMutex recv_overwrite_mtx;
-				std::function<void(const uintptr_t, const std::string&)> recv_overwrite;
+				__package_type safer_cast_type(const int);
+				bool manage_status_good(const connection::_connection_status&);
 
+				// also debug()
+				void err_f(const std::string&);
 
-				// - - - - FUNCTIONS - - - - //
+				void handle_send(Tools::boolThreadF);
+				void handle_recv(Tools::boolThreadF);
 
-				// current limit THIS SENDING to other. return new limit
-				long long add_current_limit(const int);
-				void pop_current_limit();
+				bool setup_socket_buffer_send();
+				bool setup_socket_buffer_recv();
 
-				// current THIS RECEIVING DATA limit and stuff.
-				void calculate_add_available(const int);
-				void calculate_modify_buffer(const long long);
-				long long calculate_cut_value();
+				connection::_connection_status auto_send(const __package&);
+				connection::_connection_status auto_recv(__package&);
 
-				// update package "myself" so SYNC can send it
-				void update_myself_package();
-
-				// recv() holds if nothing to read?
-				void set_recv_hold(const bool);
-
-				// guaranteed all or nothing send
-				connection::_connection_status ensure_send(char*, const int);
-				// guaranteed all or nothing recv
+				connection::_connection_status ensure_send(const char*, const int);
 				connection::_connection_status ensure_recv(char*, const int);
 
-				void handle_connection_send(Tools::boolThreadF, Tools::SuperThread<>&);
-				void handle_connection_recv(Tools::boolThreadF, Tools::SuperThread<>&);
+
 
 				// starts handle's
 				void init();
@@ -415,6 +372,24 @@ namespace LSW {
 				bool is_connected() const;
 
 				/// <summary>
+				/// <para>How many Packages in memory received.</para>
+				/// </summary>
+				/// <returns>{size_t} Buffer size.</returns>
+				size_t packages_received() const;
+
+				/// <summary>
+				/// <para>How many Packages in memory to send.</para>
+				/// </summary>
+				/// <returns>{size_t} Buffer size.</returns>
+				size_t packages_sending() const;
+
+				/// <summary>
+				/// <para>Buffer load. It can be higher than 1.0 (100%) if too fast.</para>
+				/// </summary>
+				/// <returns>{double} Buffer usage [0.0,inf?]</returns>
+				double buffer_sending_load() const;
+
+				/// <summary>
 				/// <para>Get information about ping, bytes sent, recv, average and so on.</para>
 				/// </summary>
 				/// <returns>{NetworkMonitor} Const reference to actual network info.</returns>
@@ -427,49 +402,6 @@ namespace LSW {
 				bool has_package() const;
 
 				/// <summary>
-				/// <para>Limit recv buffer to this amount of small packages at once.</para>
-				/// <para>WARN: if host try to send huge file, this may BREAK the file data.</para>
-				/// <para>Value == 0 means infinite.</para>
-				/// </summary>
-				/// <param name="{long long}">Maximum buffer on sending part. 0 means infinite.</param>
-				void set_max_buffering(const long long = connection::default_limit);
-
-				/// <summary>
-				/// <para>How many does it believe it can send before overload?</para>
-				/// </summary>
-				/// <returns>{long long} How many? Less than 0 means infinite.</returns>
-				long long in_memory_can_send() const;
-
-				/// <summary>
-				/// <para>How many does it believe it can receive before overload?</para>
-				/// </summary>
-				/// <returns>{long long} How many? Less than 0 means infinite.</returns>
-				long long in_memory_can_read() const;
-
-				/// <summary>
-				/// <para>Estimated packages that are on their way to the other side.</para>
-				/// <para>The real number can be equal or greater than this.</para>
-				/// <para>PS: This value sometimes might never get to zero!</para>
-				/// </summary>
-				/// <returns>{unsigned} Estimated packages that are in traffic to get there.</returns>
-				unsigned small_packages_on_the_way() const;
-
-				/// <summary>
-				/// <para>Estimated packages that are still coming.</para>
-				/// <para>The real number can be equal or greater than this.</para>
-				/// <para>PS: This value sometimes might never get to zero!</para>
-				/// </summary>
-				/// <returns>{unsigned} Estimated packages that are still coming.</returns>
-				unsigned small_packages_on_my_way() const;
-
-				/// <summary>
-				/// <para>How many packages have come versus how many were reported 'sent' in last sync.</para>
-				/// <para>This should be as low as possible. Big numbers mean bad syncronization.</para>
-				/// </summary>
-				/// <returns>{unsigned} Difference between reported sent by other side versus real received.</returns>
-				unsigned small_packages_received_since_last_sync() const;
-
-				/// <summary>
 				/// <para>Wait some time for a package.</para>
 				/// </summary>
 				/// <param name="{std::chrono::milliseconds}">Timeout. 0 = Infinite.</param>
@@ -478,64 +410,40 @@ namespace LSW {
 
 				/// <summary>
 				/// <para>Get next package.</para>
-				/// <para>Can be an incomplete package (not full) if buffer is full or sender has done it in steps.</para>
 				/// </summary>
-				/// <param name="{bool}">Force wait for full package (a full tagged pack). Can still return non-full, but only if there's no package to get.</param>
-				/// <returns>{combined_data} The package received (or part of, depending on limit configuration).</returns>
-				combined_data get_next(const bool = true);
+				/// <param name="{bool}">Wait for package, if there's none yet?</param>
+				/// <returns>{Package} Full data.</returns>
+				Package get_next(const bool = true);
+
+				/// <summary>
+				/// <para>Send a package of bytes ahead of everyone. This will come as normal package on the other side, but as fast as it can.</para>
+				/// </summary>
+				/// <param name="{std::string}">The bytes you want to send.</param>
+				/// <returns>{size_t} Added successfully?.</returns>
+				size_t send_priority_package(const std::string&);
 
 				/// <summary>
 				/// <para>Send a package of bytes.</para>
-				/// <para>PS: If you're planning on sending huge data (big files), you probably want to "flush".</para>
+				/// <para>PS: If you're planning on sending huge data (big files), you should use SmartFile.</para>
 				/// </summary>
 				/// <param name="{std::string}">The bytes you want to send.</param>
-				/// <param name="{bool}">Wait for the package to get sent? (if there are some, wait flush?)</param>
-				void send_package(const std::string&, const bool = false);
+				/// <returns>{size_t} Current MemoryFile pending size.</returns>
+				size_t send_package(const std::string&);
 
 				/// <summary>
-				/// <para>Send a package of bytes (part of or complete).</para>
-				/// <para>PS: If you want to send multiple files, set .is_full to false.</para>
-				/// <para>All packages with .is_full will be combined in the end when a .is_full true is sent.</para>
+				/// <para>Send a package of bytes moving so no issues with medium sized data.</para>
+				/// <para>PS: If you're planning on sending huge data (big files), you should use SmartFile.</para>
 				/// </summary>
-				/// <param name="{combined_data}">The bytes you want to send.</param>
-				/// <param name="{bool}">Wait for the package to get sent? (if there are some, wait flush?)</param>
-				void send_package(const combined_data&, const bool = false);
+				/// <param name="{std::string}">The bytes you want to send.</param>
+				/// <returns>{size_t} Current MemoryFile pending size.</returns>
+				size_t send_package(std::string&&);
 
 				/// <summary>
-				/// <para>Total small packages sent (not package itself, the small ones).</para>
+				/// <para>Send a package of bytes. May lock if maximum sending buffer has reached.</para>
 				/// </summary>
-				/// <returns>{unsigned long long} Small packages sent.</returns>
-				unsigned long long get_packages_sent() const;
-
-				/// <summary>
-				/// <para>Total all data sent in bytes.</para>
-				/// </summary>
-				/// <returns>{unsigned long long} Sent, in bytes.</returns>
-				unsigned long long get_packages_sent_bytes() const;
-
-				/// <summary>
-				/// <para>Total small packages received (not package itself, the small ones).</para>
-				/// </summary>
-				/// <returns>{unsigned long long} Small packages received.</returns>
-				unsigned long long get_packages_recv() const;
-
-				/// <summary>
-				/// <para>Total all data received in bytes.</para>
-				/// </summary>
-				/// <returns>{unsigned long long} Received, in bytes.</returns>
-				unsigned long long get_packages_recv_bytes() const;
-
-				/// <summary>
-				/// <para>Get last ping information.</para>
-				/// </summary>
-				/// <returns>{size_t} Ping in milliseconds.</returns>
-				size_t get_ping();
-
-				/// <summary>
-				/// <para>Tells if send thread is waiting for the other side to free up some space.</para>
-				/// </summary>
-				/// <returns>{bool} True if limit has reached.</returns>
-				bool is_overloaded() const;
+				/// <param name="{SmartFile}">The data being sent.</param>
+				/// <returns>{size_t} Current SmartFile vector size.</returns>
+				size_t send_package(SmartFile&&);
 
 				/// <summary>
 				/// <para>Set a function to handle RECV RAW data.</para>
@@ -544,16 +452,7 @@ namespace LSW {
 				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
 				/// </summary>
 				/// <param name="{std::function}">The function to handle a complete package reading.</param>
-				void overwrite_reads_to(std::function<void(const uintptr_t, const std::string&)>);
-
-				/// <summary>
-				/// <para>Set a function to handle SEND RAW data.</para>
-				/// <para>WARN: All data has to be SENT by this. This has to be the one generating strings. Send_package won't work.</para>
-				/// <para>OBS: This won't work if overwrite_reads_small_chunk_to is set.</para>
-				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
-				/// </summary>
-				/// <param name="{std::function}">The function to generate strings somehow. This should return empty string if no package yet, so it won't lock stuff.</param>
-				void overwrite_sends_to(std::function<std::string(void)>);
+				void overwrite_reads_to(std::function<void(Connection&, Package&)>);
 
 				/// <summary>
 				/// <para>Resets to default way of handling packages.</para>
@@ -561,9 +460,11 @@ namespace LSW {
 				void reset_overwrite_reads();
 
 				/// <summary>
-				/// <para>Resets to default way of handling packages.</para>
+				/// <para>Set a function that receives errors.</para>
+				/// <para>These errors can help you with bugs!</para>
 				/// </summary>
-				void reset_overwrite_sends();
+				/// <param name="{std::function}">The function to show error somewhere.</param>
+				void debug_error_function(std::function<void(const std::string&)> = std::function<void(const std::string&)>());
 
 				/// <summary>
 				/// <para>Force constant performance mode in connection threads.</para>
@@ -695,15 +596,6 @@ namespace LSW {
 			std::string transform_any_to_package(void*, const size_t);
 
 			/// <summary>
-			/// <para>Transforms anything to std::string directly for you (using memcpy_s).</para>
-			/// </summary>
-			/// <param name="{void*}">Some data.</param>
-			/// <param name="{size_t}">Data's size.</param>
-			/// <param name="{errno_t}">If result is empty, this holds error (if memcpy_s failed).</param>
-			/// <returns>{std::string} This data 'converted' to a string.</returns>
-			std::string transform_any_to_package(void*, const size_t, errno_t&);
-
-			/// <summary>
 			/// <para>Transforms back a package 'converted' via transform_any_to_package.</para>
 			/// </summary>
 			/// <param name="{void*}">Data to be written.</param>
@@ -711,14 +603,6 @@ namespace LSW {
 			/// <param name="{std::string}">The string data to read from.</param>
 			/// <returns>{bool} True on success.</returns>
 			bool transform_any_package_back(void*, const size_t, const std::string&);
-
-			/// <summary>
-			/// <para>Reads from file and sends automatically.</para>
-			/// </summary>
-			/// <param name="{SmartFile}">A opened ready to send SmartFile.</param>
-			/// <param name="{Connection}">Connection that will send this file.</param>
-			/// <param name="{size_t}">Read/send chunk size. 0 is automatic. Less than connection::package_size defaults to connection::package_size.</param>
-			bool transform_and_send_file_auto(SmartFile&, Connection&, size_t = 0);
 		}
 	}
 }

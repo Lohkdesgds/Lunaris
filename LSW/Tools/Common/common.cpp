@@ -237,6 +237,16 @@ namespace LSW {
 				return a.type() == b.type() && memcmp(&a, &b, sizeof(std::any)) == 0;
 			}
 
+			bool exception_tester(const std::function<void(void)> f)
+			{
+				try {
+					f();
+				}
+				catch (...) {
+					return false;
+				}
+				return true;
+			}
 		}
 	}
 }

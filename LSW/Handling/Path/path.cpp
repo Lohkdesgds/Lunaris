@@ -46,32 +46,31 @@ namespace LSW {
 			}
 			bool get_working_path(std::string& res, const std::string& path)
 			{
-				size_t siz = 0;
+				for (int u = 0; u < path::paths_count; u++) {
+					if (path == path::paths_known[u]) {
 
-				for (size_t p = 0; p < path::paths_count; p++) {
-					if (path == path::paths_known[p]) {
+						init_basic();
+						ALLEGRO_PATH* path = al_get_standard_path(u);
+						ALLEGRO_PATH* pathexe = al_get_standard_path(ALLEGRO_EXENAME_PATH);
 
-						getenv_s(&siz, NULL, 0, path::path_known_res[p]);
-						if (siz == 0) return false;
-						res.resize(siz);
-						getenv_s(&siz, res.data(), siz, path::path_known_res[p]);
-						if (res.size()) res.pop_back();
-						for (auto& i : res) i = i == '\\' ? '/' : i;
-						return true;
+						res = (path) ? al_path_cstr(path, '/') : "";
+						al_destroy_path(path);
+
+						std::string filename = al_get_path_filename(pathexe);
+						al_destroy_path(pathexe);
+
+						if (res.rfind(filename + '/') == (res.size() - filename.size() - 1)) 
+							res.erase(res.end() - filename.size() - 1, res.end());
+
+						if (res.rfind(filename) == (res.size() - filename.size())) 
+							res.erase(res.end() - filename.size(), res.end());
+
+						return !res.empty();
 					}
 				}
-
-				if (getenv_s(&siz, NULL, 0, path.c_str()) == 0) {
-
-					if (siz == 0) return false;
-					res.resize(siz);
-					getenv_s(&siz, res.data(), siz, path.c_str());
-					for (auto& i : res) i = i == '\\' ? '/' : i;
-					return true;
-				}
-
 				return false;
 			}
+
 
 			void interpret_path(std::string& cpy)
 			{
@@ -144,18 +143,11 @@ namespace LSW {
 
 			std::string get_app_path()
 			{
-#ifdef _WIN32
-				char myself[1024];
-				GetModuleFileNameA(NULL, myself, 1024);
-				return myself;
-#else
-				char arg1[20];
-				char exepath[PATH_MAX + 1] = { 0 };
-
-				sprintf(arg1, "/proc/%d/exe", getpid());
-				readlink(arg1, exepath, 1024);
-				return std::string(exepath);
-#endif
+				init_basic();
+				ALLEGRO_PATH* path = al_get_standard_path(ALLEGRO_EXENAME_PATH);
+				std::string res = (path) ? al_path_cstr(path, '/') : "";
+				al_destroy_path(path);
+				return res;
 			}
 
 		}

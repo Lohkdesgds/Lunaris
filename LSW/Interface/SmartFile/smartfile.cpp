@@ -33,6 +33,26 @@ namespace LSW {
 			{
 				close();
 			}
+
+			SmartFile::SmartFile(SmartFile&& u)
+			{
+				*this = std::move(u); // operator=
+			}
+
+			void SmartFile::operator=(SmartFile&& u)
+			{
+				fp = u.fp;
+				was_temp_file = u.was_temp_file;
+				eoff = u.eoff;
+				last_path = std::move(u.last_path);
+				latest_mode = u.latest_mode;
+
+				u.fp = nullptr;
+				u.was_temp_file = false;
+				u.eoff = false;
+				u.last_path.clear(); // just to be sure
+				u.latest_mode = {}; // default
+			}
 			
 			bool SmartFile::open(std::string path, const smartfile::file_modes m)
 			{
@@ -41,8 +61,35 @@ namespace LSW {
 				Handling::interpret_path(path);
 
 				latest_mode = m;
+				last_path = path;
 
 				return (fp = al_fopen(path.c_str(), convert(m).c_str()));
+			}
+
+			bool SmartFile::open_temp(const smartfile::file_modes m)
+			{
+				eoff = false;
+				close();
+
+				auto pathtemp = std::unique_ptr<ALLEGRO_PATH, std::function<void(ALLEGRO_PATH*)>>(al_create_path(nullptr), [](ALLEGRO_PATH* t) { al_destroy_path(t); });
+				ALLEGRO_PATH* var = pathtemp.get();
+				if (!(fp = al_make_temp_file("XXXXXXXXXXXXXXX.lsw_temp", &var))) {
+					return false;
+				}
+				last_path = al_path_cstr(var, ALLEGRO_NATIVE_PATH_SEP);
+
+				// reset and guarantee binary write/read
+				al_fclose(fp);
+
+				if (!(fp = al_fopen(last_path.c_str(), convert(m).c_str()))) {
+					::remove(last_path.c_str()); // no junk
+					return false;
+				}
+
+				latest_mode = m;
+				was_temp_file = true;
+				
+				return true;
 			}
 
 			bool SmartFile::is_open() const
@@ -74,6 +121,11 @@ namespace LSW {
 					latest_mode == smartfile::file_modes::WRITE);
 			}
 
+			std::string SmartFile::path() const
+			{
+				return is_open() ? last_path : "";
+			}
+
 			int64_t SmartFile::total_size() const
 			{
 				int64_t size_of_this = 0;
@@ -93,6 +145,12 @@ namespace LSW {
 					eoff = true;
 					fp = nullptr;
 				}
+				if (was_temp_file && !last_path.empty()) {
+					::remove(last_path.c_str());
+					was_temp_file = false;
+					last_path.clear();
+				}
+				last_path.clear();
 			}
 
 			bool SmartFile::eof() const

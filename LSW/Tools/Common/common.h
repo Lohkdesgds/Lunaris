@@ -190,6 +190,13 @@ namespace LSW {
 			/// <returns>{bool} True if equal.</returns>
 			bool operator==(const std::any&, const std::any&);
 
+			/// <summary>
+			/// <para>One line quick and "I don't care" exception skipper. If no exception, true.</para>
+			/// </summary>
+			/// <param name="{function}">Something to run safely.</param>
+			/// <returns>{bool} True if no exception.</returns>
+			bool exception_tester(const std::function<void(void)>);
+
 		}
 	}
 }

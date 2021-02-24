@@ -11,22 +11,27 @@
 #include <string>
 #include <vector>
 #include <sstream>
-
+#include "..\Initialize\initialize.h"
 
 namespace LSW {
 	namespace v5 {
 		namespace Handling {
 
+			/*		
+
+	ALLEGRO_RESOURCES_PATH // 'F:\Cloud Storage\OneDrive\Organized\Programming\Projects\LSW_devtest\x64\Debug\'
+	ALLEGRO_TEMP_PATH // 'C:\Users\ernes\AppData\Local\Temp\'
+	ALLEGRO_USER_DATA_PATH // 'C:\Users\ernes\AppData\Roaming\LSW.exe\'
+	ALLEGRO_USER_HOME_PATH // 'C:\Users\ernes\'
+	ALLEGRO_USER_SETTINGS_PATH // 'C:\Users\ernes\AppData\Roaming\LSW.exe\'
+	ALLEGRO_USER_DOCUMENTS_PATH // 'F:\Cloud Storage\OneDrive\Documentos\'
+	ALLEGRO_EXENAME_PATH); // 'F:\Cloud Storage\OneDrive\Organized\Programming\Projects\LSW_devtest\x64\Debug\LSW.exe'
+			*/
+
 			namespace path {
-				constexpr size_t paths_count = 1;
-				inline const char* paths_known[paths_count] = { "%appdata%"/*, "%fonts%", "%mypictures%", "%mydocuments%", "%mymusic%", "%myvideo%", "%desktop%", "%localdata%"*/ };
-				inline const char* path_known_res[paths_count] = {
-#ifdef _WIN32
-					"APPDATA"
-#else // assuming linux
-					"HOME"
-#endif
-				};
+				constexpr size_t paths_count = ALLEGRO_LAST_PATH;
+				inline const std::string paths_known[paths_count] = { "%resources%", "%temp%", "%appdata%", "%home%", "%settings%", "%documents%", "%exepath%" };
+				// ID is from 0 to ALLEGRO_LAST_PATH-1
 			}
 			/// <summary>
 			/// <para>Creates the path automatically (use /)</para>

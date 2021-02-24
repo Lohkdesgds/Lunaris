@@ -34,14 +34,31 @@ namespace LSW {
 			/// </summary>
 			class SmartFile {
 				ALLEGRO_FILE* fp = nullptr;
-				//long long size_of_this = 0;
+				bool was_temp_file = false; // delete automatically
 				bool eoff = false;
+				std::string last_path;
 				smartfile::file_modes latest_mode{};
 
 				std::string convert(const smartfile::file_modes);
 			public:
 				SmartFile();
 				~SmartFile();
+
+				SmartFile(const SmartFile&) = delete;
+
+				/// <summary>
+				/// <para>Move SmartFile to this.</para>
+				/// </summary>
+				/// <param name="{SmartFile}">From this.</param>
+				SmartFile(SmartFile&&);
+
+				void operator=(const SmartFile&) = delete;
+
+				/// <summary>
+				/// <para>Move SmartFile to this.</para>
+				/// </summary>
+				/// <param name="{SmartFile}">From this.</param>
+				void operator=(SmartFile&&);
 
 				/// <summary>
 				/// <para>Open a file.</para>
@@ -50,6 +67,14 @@ namespace LSW {
 				/// <param name="{file_modes}">File opening mode.</param>
 				/// <returns>{bool} True if successfully opened.</returns>
 				bool open(std::string, const smartfile::file_modes);
+
+				/// <summary>
+				/// <para>Open a temporary file somewhere.</para>
+				/// <para>The file will be gone if this object is killed.</para>
+				/// </summary>
+				/// <param name="{file_modes}">File opening mode.</param>
+				/// <returns>{bool} True if opened successfully.</returns>
+				bool open_temp(const smartfile::file_modes = smartfile::file_modes::READ_WRITE_OVERWRITE);
 
 				/// <summary>
 				/// <para>Have you open()ed once?</para>
@@ -74,6 +99,12 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{bool} Mode allows write?</returns>
 				bool is_writable() const;
+
+				/// <summary>
+				/// <para>Get file path (if open)</para>
+				/// </summary>
+				/// <returns>{std::string} Path.</returns>
+				std::string path() const;
 
 				/// <summary>
 				/// <para>Tells file size right now.</para>

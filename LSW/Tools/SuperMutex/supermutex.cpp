@@ -84,8 +84,8 @@ namespace LSW {
 			void AutoLock::lock()
 			{
 				if (hasunlocked) {
-					hasunlocked = false;
 					you.lock();
+					hasunlocked = false;
 				}
 			}
 

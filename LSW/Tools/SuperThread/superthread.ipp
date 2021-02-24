@@ -112,12 +112,15 @@ namespace LSW {
 					catch (const Handling::Abort& e) { // for now. later: save and get elsewhere
 						std::cout << "Exception at SuperThread #" << Tools::get_thread_id() << ": " << e.what() << std::endl;
 					}
+					catch (const std::exception& e) { // for now. later: save and get elsewhere
+						std::cout << "Exception at SuperThread #" << Tools::get_thread_id() << ": " << e.what() << std::endl;
+					}
 					catch (...) { // for now. later: save and get elsewhere
 						std::cout << "Unknown exception at SuperThread #" << Tools::get_thread_id() << "." << std::endl;
 					}
 					_thread_done_flag = true;
 					return T{};
-					}));
+				}));
 			}
 
 			template<typename T>
