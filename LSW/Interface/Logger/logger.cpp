@@ -324,6 +324,23 @@ namespace LSW {
 
 				return (this->operator<<(buf));
 			}
+#else
+			Logger& Logger::operator<<(const unsigned long long& o)
+			{
+				std::string buf;
+
+				if (latestFormat.has_custom_format()) {
+					buf.resize(1 + static_cast<size_t>(snprintf(nullptr, 0, latestFormat.get_format().c_str(), o)));
+					sprintf_s(buf.data(), buf.size(), latestFormat.get_format().c_str(), o);
+					latestFormat.clear();
+				}
+				else {
+					buf.resize(1 + static_cast<size_t>(snprintf(nullptr, 0, "%llu", o)));
+					sprintf_s(buf.data(), buf.size(), "%llu", o);
+				}
+
+				return (this->operator<<(buf));
+			}
 #endif
 			Logger& Logger::operator<<(const long& o)
 			{

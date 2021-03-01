@@ -247,6 +247,13 @@ namespace LSW {
 				/// <param name="{unsigned}">To be written.</param>
 				/// <returns>{Logger} Itself.</returns>
 				Logger& operator<<(const unsigned&);
+#else
+				/// <summary>
+				/// <para>Operator to write.</para>
+				/// </summary>
+				/// <param name="{unsigned long long}">To be written.</param>
+				/// <returns>{Logger} Itself.</returns>
+				Logger& operator<<(const unsigned long long&);
 #endif
 				/// <summary>
 				/// <para>Operator to write.</para>

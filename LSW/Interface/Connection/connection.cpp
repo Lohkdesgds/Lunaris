@@ -14,7 +14,7 @@ namespace LSW {
 					return false;
 				}
 
-				struct addrinfo hints{};
+				struct addrinfo hints {};
 
 				SecureZeroMemory(&hints, sizeof(hints));
 				if (contype != connection::connection_type::CLIENT) hints.ai_family = contype == connection::connection_type::HOST_IPV6 ? AF_INET6 : AF_INET;
@@ -102,22 +102,22 @@ namespace LSW {
 			{
 				n._bytes_coming += a;
 			}
-			
+
 			unsigned long long NetworkMonitor::any_get_total(const nm_transf& n) const
 			{
 				return n.bytes;
 			}
-			
+
 			unsigned long long NetworkMonitor::any_get_peak(const nm_transf& n) const
 			{
 				return n.peak_bytes_per_second;
 			}
-			
+
 			unsigned long long NetworkMonitor::any_get_current_bytes_per_second(const nm_transf& n) const
 			{
 				return n.current_bytes_per_sec;
 			}
-			
+
 			unsigned long long NetworkMonitor::any_get_average_total(const nm_transf& n) const
 			{
 				const auto diff_t = (n.last_update_ms - n.first_update_ms);
@@ -131,7 +131,7 @@ namespace LSW {
 				per_sec_calc.set_run_autostart([&](const Interface::RawEvent& ev) { _average_thr(ev); });
 				timer_second.start();
 			}
-			
+
 			NetworkMonitor::~NetworkMonitor()
 			{
 				timer_second.stop();
@@ -155,12 +155,12 @@ namespace LSW {
 				ping.adaptative_avg = ((1.0 * ping.adaptative_avg * ping.adaptativeness) + ping.current) / (ping.adaptativeness + 1.0);
 				if (a > ping.peak) ping.peak = a;
 			}
-			
+
 			void NetworkMonitor::ping_set_adaptativeness(const double a)
 			{
 				if (a > 0.0) ping.adaptativeness = a;
 			}
-			
+
 			unsigned NetworkMonitor::ping_now() const
 			{
 				return ping.current;
@@ -170,7 +170,7 @@ namespace LSW {
 			{
 				return ping.peak;
 			}
-			
+
 			double NetworkMonitor::ping_average_now() const
 			{
 				return ping.adaptative_avg;
@@ -181,22 +181,22 @@ namespace LSW {
 			{
 				any_add(sending, a);
 			}
-			
+
 			unsigned long long NetworkMonitor::send_get_total() const
 			{
 				return any_get_total(sending);
 			}
-			
+
 			unsigned long long NetworkMonitor::send_get_peak() const
 			{
 				return any_get_peak(sending);
 			}
-			
+
 			unsigned long long NetworkMonitor::send_get_current_bytes_per_second() const
 			{
 				return any_get_current_bytes_per_second(sending);
 			}
-			
+
 			unsigned long long NetworkMonitor::send_get_average_total() const
 			{
 				return any_get_average_total(sending);
@@ -207,22 +207,22 @@ namespace LSW {
 			{
 				any_add(recving, a);
 			}
-			
+
 			unsigned long long NetworkMonitor::recv_get_total() const
 			{
 				return any_get_total(recving);
 			}
-			
+
 			unsigned long long NetworkMonitor::recv_get_peak() const
 			{
 				return any_get_peak(recving);
 			}
-			
+
 			unsigned long long NetworkMonitor::recv_get_current_bytes_per_second() const
 			{
 				return any_get_current_bytes_per_second(recving);
 			}
-			
+
 			unsigned long long NetworkMonitor::recv_get_average_total() const
 			{
 				return any_get_average_total(recving);
@@ -247,10 +247,10 @@ namespace LSW {
 
 			Connection::__package::__package(const std::string& str, const __package_type t, const bool en)
 			{
-				package_type = static_cast<int>(t);
-				wait_for_more = en;
-				buffer_len = static_cast<int>(str.size() < connection::package_size ? str.size() : connection::package_size);
-				std::copy(str.begin(), str.begin() + buffer_len, buffer);
+				info.type = static_cast<int>(t);
+				info.has_more = en;
+				info.len = static_cast<int>(str.size() < connection::package_size ? str.size() : connection::package_size);
+				std::copy(str.begin(), str.begin() + info.len, data.buffer);
 			}
 
 
@@ -323,19 +323,19 @@ namespace LSW {
 				if (!pkg.small_data.empty()) {
 					auto& easy = pkg.small_data;
 
-					sml.package_type = pkg.type;
-					sml.wait_for_more = easy.size() > connection::package_size;
-					sml.buffer_len = static_cast<int>(easy.size() > connection::package_size ? connection::package_size : easy.size());
-					std::copy(easy.begin(), easy.begin() + sml.buffer_len, sml.buffer);
-					easy.erase(easy.begin(), easy.begin() + sml.buffer_len);
+					sml.info.type = pkg.type;
+					sml.info.has_more = easy.size() > connection::package_size;
+					sml.info.len = static_cast<int>(easy.size() > connection::package_size ? connection::package_size : easy.size());
+					std::copy(easy.begin(), easy.begin() + sml.info.len, sml.data.buffer);
+					easy.erase(easy.begin(), easy.begin() + sml.info.len);
 				}
 				else if (!pkg.big_file.eof()) {
 					std::string buf;
 
-					sml.package_type = pkg.type;
-					sml.buffer_len = static_cast<int>(pkg.big_file.read(buf, connection::package_size));
-					sml.wait_for_more = !pkg.big_file.eof();
-					std::copy(buf.begin(), buf.begin() + sml.buffer_len, sml.buffer);
+					sml.info.type = pkg.type;
+					sml.info.len = static_cast<int>(pkg.big_file.read(buf, connection::package_size));
+					sml.info.has_more = !pkg.big_file.eof();
+					std::copy(buf.begin(), buf.begin() + sml.info.len, sml.data.buffer);
 				}
 
 				return true;
@@ -343,22 +343,22 @@ namespace LSW {
 
 			void Connection::format_ping(__package& pkg)
 			{
-				pkg.wait_for_more = false;
-				pkg.package_type = static_cast<int>(__package_type::PING);
+				pkg.info.has_more = false;
+				pkg.info.type = static_cast<int>(__package_type::PING);
 
 				std::string buf = std::to_string(Tools::now());
-				std::copy(buf.begin(), buf.end(), pkg.buffer); // sure this is not bigger than package size, no doubt
-				pkg.buffer_len = static_cast<int>(buf.size());
+				std::copy(buf.begin(), buf.end(), pkg.data.buffer); // sure this is not bigger than package size, no doubt
+				pkg.info.len = static_cast<int>(buf.size());
 			}
 
 			bool Connection::interpret_ping_recv(const __package& pkg)
 			{
-				if (pkg.package_type != static_cast<int>(__package_type::PONG)) return false;
+				if (pkg.info.type != static_cast<int>(__package_type::PONG)) return false;
 
 				unsigned long long _now = Tools::now();
 
 				unsigned long long here{};
-				if (sscanf_s(pkg.buffer, "%llu", &here) != 1) return false;
+				if (sscanf_s(pkg.data.buffer, "%llu", &here) != 1) return false;
 
 				network_analysis.ping_new(_now - here);
 				return true;
@@ -370,19 +370,32 @@ namespace LSW {
 				return static_cast<__package_type>(i);
 			}
 
-			bool Connection::manage_status_good(const connection::_connection_status& st)
+			bool Connection::manage_status_good(const std::string& socket_identification, const connection::_connection_status& st)
 			{
 				switch (st) {
 				case connection::_connection_status::DISCONNECTED:
+					err_f(socket_identification + "&6Disconnected!");
 					keep_connection = false;
 					closesocket(connected);
 					thr_send.stop();
 					thr_recv.stop();
 					return false;
 				case connection::_connection_status::FAILED:
+					err_f(socket_identification + "&cFAILED ONCE, CORRUPTED DATA!");
 					return false;
 				}
 				return true;
+			}
+
+			void Connection::check_error_disconnect()
+			{
+				int err = WSAGetLastError();
+				if (err == WSAECONNRESET) {
+					keep_connection = false;
+					closesocket(connected);
+					thr_send.stop();
+					thr_recv.stop();
+				}
 			}
 
 			void Connection::err_f(const std::string& str)
@@ -407,7 +420,7 @@ namespace LSW {
 					if (re.timer_event().source == timm) {
 						should_ping = true;
 					}
-				});
+					});
 				timm.start();
 
 				packages_since_sync = 0;
@@ -417,9 +430,11 @@ namespace LSW {
 				}
 
 				std::vector<Package> next_task;
+				bool last_was_task = false;
 
-				while (run() && keep_connection) {					
+				while ((last_was_task || run()) && keep_connection) {
 					try {
+						last_was_task = false;
 
 						if (packages_since_sync >= static_cast<long long>(connection::trigger_sync_send_thread)) // trigger slowdown
 						{
@@ -431,12 +446,12 @@ namespace LSW {
 						__package go;
 						bool good_to_go = false;
 
-						if (packages_received_trigger_sync >= connection::trigger_sync_send_thread) // somewhat important. RECEIVED SOME, SEND UPDATE!
+						if (packages_received_trigger_sync >= connection::trigger_sync_send_thread) // somewhat important. RECEIVED REACHED LIMIT, SEND UPDATE!
 						{
 							packages_received_trigger_sync -= connection::trigger_sync_send_thread;
 
-							go.wait_for_more = false;
-							go.package_type = static_cast<int>(__package_type::SIGNAL);
+							go.info.has_more = false;
+							go.info.type = static_cast<int>(__package_type::SIGNAL);
 
 							good_to_go = true;
 						}
@@ -470,14 +485,14 @@ namespace LSW {
 							continue;
 						}
 
-						while (good_to_go && !manage_status_good(auto_send(go))) {
+						last_was_task = good_to_go;
+
+						while (good_to_go && !manage_status_good(socket_identification, auto_send(go))) {
 							err_f(socket_identification + "&cSEND FAILED!");
 							if (!run() || !keep_connection) break;
 							Tools::sleep_for(std::chrono::milliseconds(200)); // try again.
 						}
 
-						packages_since_sync++;
-						
 					} // try
 
 					catch (const Handling::Abort& e) {
@@ -510,19 +525,17 @@ namespace LSW {
 				}
 
 				while (run() && keep_connection) {
-					try{
+					try {
 						__package go;
-												
-						if (!manage_status_good(auto_recv(go))) continue;
 
-						packages_received_trigger_sync++;
+						if (!manage_status_good(socket_identification, auto_recv(go))) continue;
 
-						auto transl = safer_cast_type(go.package_type);
+						auto transl = safer_cast_type(go.info.type);
 
 						switch (transl) {
 						case __package_type::PING:
-							go.package_type = static_cast<int>(__package_type::PONG);
-							if (!manage_status_good(auto_send(go))) err_f(socket_identification + "&cFAILED TO SEND PONG!");
+							go.info.type = static_cast<int>(__package_type::PONG);
+							if (!manage_status_good(socket_identification, auto_send(go))) err_f(socket_identification + "&cFAILED TO SEND PONG!");
 							break;
 
 						case __package_type::PONG:
@@ -530,34 +543,21 @@ namespace LSW {
 							else debug(socket_identification + "PING GOOD! VALUE=" + std::to_string(network_analysis.ping_now()));
 							break;
 
-						case __package_type::ASK_SIGNAL:
-
-							break;
-
 						case __package_type::SIGNAL:
 							packages_since_sync -= connection::trigger_sync_send_thread;
 							break;
 
-						/*case __package_type::SYNC_SIGNAL:
-							if (!manage_status_good(auto_send(__package{ "", __package_type::SYNC_SIGNAL_BACK, true }))) err_f(socket_identification + "&cFAILED TO SEND SYNC_SIGNAL_BACK!"); // SENDER request, RECVER recast to SENDER, SENDER knows it's good there
-							break;
-
-						case __package_type::SYNC_SIGNAL_BACK:
-							debug(socket_identification + "SYNCED");
-							in_sync = true;
-							break;*/
-
 						case __package_type::PRIORITY_PACKAGE_SMALL:
-							priority.small_data.append(go.buffer, go.buffer_len);
-							if (!go.wait_for_more) {
+							priority.small_data.append(go.data.buffer, go.info.len);
+							if (!go.info.has_more) {
 								debug(socket_identification + "COMPLETELY GOT PRIORITY PACKAGE");
 								submit_next_package_recv(std::move(priority));
 							}
 							break;
 
 						case __package_type::PACKAGE_SMALL:
-							small.small_data.append(go.buffer, go.buffer_len);
-							if (!go.wait_for_more) {
+							small.small_data.append(go.data.buffer, go.info.len);
+							if (!go.info.has_more) {
 								debug(socket_identification + "COMPLETELY GOT SMALL PACKAGE");
 								submit_next_package_recv(std::move(small));
 							}
@@ -571,10 +571,10 @@ namespace LSW {
 							}
 							if (file.big_file.is_writable()) { // everything fine
 								std::string temp;
-								temp.append(go.buffer, go.buffer_len);
+								temp.append(go.data.buffer, go.info.len);
 								file.big_file.write(temp);
 								//debug(socket_identification + "WRITE " + std::to_string(temp.length()) + " BYTE(S) CALL");
-								if (!go.wait_for_more) {
+								if (!go.info.has_more) {
 									debug(socket_identification + "COMPLETELY GOT FILE PACKAGE");
 									submit_next_package_recv(std::move(file));
 								}
@@ -623,21 +623,45 @@ namespace LSW {
 
 			connection::_connection_status Connection::auto_send(const __package& pkg)
 			{
-				return ensure_send((char*)&pkg, sizeof(pkg));
+				Tools::AutoLock l(send_mtx);
+
+				auto _info = ensure_send((char*)&pkg.info, sizeof(pkg.info));			
+				if (_info == connection::_connection_status::DISCONNECTED) return _info;
+				auto _transf = ensure_send((char*)pkg.data.buffer, pkg.info.len);
+				auto _res = combine(_info, _transf);
+
+				keep_connection &= (_res != connection::_connection_status::DISCONNECTED);
+				if (_res == connection::_connection_status::GOOD) packages_since_sync++;
+
+				return _res;
 			}
 
 			connection::_connection_status Connection::auto_recv(__package& pkg)
 			{
-				return ensure_recv((char*)&pkg, sizeof(pkg));
+				Tools::AutoLock l(recv_mtx);
+
+				auto _info = ensure_recv((char*)&pkg.info, sizeof(pkg.info));
+				if (_info == connection::_connection_status::DISCONNECTED) return _info;
+				if (pkg.info.len > connection::package_size) {
+					pkg.info.len = connection::package_size;
+					_info = connection::_connection_status::FAILED; // forced fail
+				}
+				auto _transf = ensure_recv((char*)pkg.data.buffer, pkg.info.len);
+				auto _res = combine(_info, _transf);
+
+				keep_connection &= (_res != connection::_connection_status::DISCONNECTED);
+				if (_res == connection::_connection_status::GOOD) packages_received_trigger_sync++;
+
+				return _res;
 			}
 
 			connection::_connection_status Connection::ensure_send(const char* ptr, const int len)
 			{
 				for (int p = 0; p < len;) {
+					if (!keep_connection) return connection::_connection_status::DISCONNECTED;
 					int _n = ::send(connected, ptr + p, len - p, 0);
-					if (_n == 0) return connection::_connection_status::DISCONNECTED;
-					else if (_n < 0) return connection::_connection_status::FAILED;
-					p += _n;
+					if (_n < 0) check_error_disconnect();
+					if (_n > 0) p += _n;
 				}
 				network_analysis.send_add(len);
 				return connection::_connection_status::GOOD;
@@ -646,13 +670,24 @@ namespace LSW {
 			connection::_connection_status Connection::ensure_recv(char* ptr, const int len)
 			{
 				for (int p = 0; p < len;) {
+					if (!keep_connection) return connection::_connection_status::DISCONNECTED;
 					int _n = ::recv(connected, ptr + p, len - p, 0);
-					if (_n <= 0) return connection::_connection_status::DISCONNECTED;
-					else if (_n < 0) return connection::_connection_status::FAILED;
-					p += _n;
+
+					if (_n == 0) return connection::_connection_status::DISCONNECTED;
+					else if (_n < 0) check_error_disconnect();
+
+					if (_n > 0) p += _n;
 				}
 				network_analysis.recv_add(len);
 				return connection::_connection_status::GOOD;
+			}
+
+			connection::_connection_status Connection::combine(const connection::_connection_status a, const connection::_connection_status b)
+			{
+				using easy = connection::_connection_status;
+				if (a == easy::GOOD && b == easy::GOOD) return a;
+				if (a == easy::DISCONNECTED || b == easy::DISCONNECTED) return easy::DISCONNECTED;
+				return easy::FAILED;
 			}
 
 			void Connection::init()
@@ -689,11 +724,11 @@ namespace LSW {
 			{
 				keep_connection = false;
 				if (connected != INVALID_SOCKET) {
-					::closesocket(connected);
-					connected = INVALID_SOCKET;
-
 					thr_send.stop();
 					thr_recv.stop();
+
+					::closesocket(connected);
+					connected = INVALID_SOCKET;
 
 					thr_send.join();
 					thr_recv.join();

@@ -35,11 +35,11 @@ namespace LSW {
 
 			namespace connection {
 				constexpr int default_port = 42069;
-				constexpr unsigned package_size = 1 << 12; // 4096 bytes
+				constexpr unsigned package_size = 1 << 16; // 64 kB max package size (probably up to 400 Mbit internet, ~50 MByte/s on i9 9900k 4.8 GHz) (can go up to probably 512 kB)
 				constexpr size_t limit_packages_stuck_send = 2; // MemoryFiles
-				constexpr unsigned long long trigger_sync_send_thread = 15; // packages, bigger can cause higher ping. Consider LONG LONG limits!
-				constexpr unsigned long long trigger_sync_multiplier_slowdown = 1; // sleep_for (this * (pack count - trigger_sync_send_thread) );
-				constexpr unsigned long long trigger_max_time_allowed = 250; // oh man 2 seconds
+				constexpr unsigned long long trigger_sync_send_thread = 10; // packages, bigger can cause higher ping. Consider LONG LONG limits!
+				constexpr unsigned long long trigger_sync_multiplier_slowdown = 2; // sleep_for (this * (pack count - trigger_sync_send_thread) );
+				constexpr unsigned long long trigger_max_time_allowed = 500;
 
 				const double pinging_time = 10.0; // seconds
 				//const double timeout_send = 3.0; // seconds
@@ -99,7 +99,7 @@ namespace LSW {
 			/// </summary>
 			class NetworkMonitor {
 			public:
-				struct nm_ping{
+				struct nm_ping {
 					unsigned current = 0;
 					unsigned peak = 0;
 					double adaptative_avg = 0;
@@ -236,7 +236,7 @@ namespace LSW {
 				SmartFile big_file;
 				std::string small_data;
 				int type = 0;
-				
+
 				Package() = default;
 				Package(const Package&) = delete;
 				Package(Package&&);
@@ -250,13 +250,18 @@ namespace LSW {
 			/// <para>A connection itself (one to one).</para>
 			/// </summary>
 			class Connection {
-				enum class __package_type {PING = 1, PONG, SIGNAL, ASK_SIGNAL, PRIORITY_PACKAGE_SMALL, PACKAGE_SMALL, PACKAGE_FILE, _FAILED };
+				enum class __package_type { PING = 1, PONG, SIGNAL, PRIORITY_PACKAGE_SMALL, PACKAGE_SMALL, PACKAGE_FILE, _FAILED };
 
 				struct __package {
-					char buffer[connection::package_size]{};
-					int buffer_len = 0;
-					int package_type = 0;
-					bool wait_for_more = false;
+
+					struct {
+						int type = 0;
+						int len = 0;
+						bool has_more = false;
+					} info;
+					struct {
+						char buffer[connection::package_size]{};
+					} data;
 
 					__package() = default;
 
@@ -281,8 +286,8 @@ namespace LSW {
 
 				// - - - - WORKING - - - - //
 
-				Tools::SuperThread<> thr_send;
-				Tools::SuperThread<> thr_recv;
+				Tools::SuperThread<> thr_send { Tools::superthread::performance_mode::PERFORMANCE };
+				Tools::SuperThread<> thr_recv { Tools::superthread::performance_mode::PERFORMANCE };
 
 				std::atomic<long long> packages_since_sync = 0;
 				std::atomic<unsigned long long> packages_received_trigger_sync = 0;
@@ -305,6 +310,11 @@ namespace LSW {
 				Tools::SuperMutex err_debug_mtx;
 				std::function<void(const std::string&)> err_debug;
 
+
+				Tools::SuperMutex send_mtx;
+				Tools::SuperMutex recv_mtx;
+
+
 				bool has_priority_waiting() const;
 
 				Package get_next_priority_auto();
@@ -318,7 +328,9 @@ namespace LSW {
 				bool interpret_ping_recv(const __package&);
 
 				__package_type safer_cast_type(const int);
-				bool manage_status_good(const connection::_connection_status&);
+				bool manage_status_good(const std::string&, const connection::_connection_status&);
+
+				void check_error_disconnect();
 
 				// also debug()
 				void err_f(const std::string&);
@@ -335,7 +347,7 @@ namespace LSW {
 				connection::_connection_status ensure_send(const char*, const int);
 				connection::_connection_status ensure_recv(char*, const int);
 
-
+				connection::_connection_status combine(const connection::_connection_status, const connection::_connection_status);
 
 				// starts handle's
 				void init();
@@ -357,7 +369,7 @@ namespace LSW {
 				/// <param name="{std::string}">The URL/IP.</param>
 				/// <param name="{int}">Port number.</param>
 				/// <returns>{bool} True if connected successfully.</returns>
-				bool connect(const std::string& = "127.0.0.1", const int = connection::default_port);
+				bool connect(const std::string & = "127.0.0.1", const int = connection::default_port);
 
 				/// <summary>
 				/// <para>Close communication and aux threads.</para>
