@@ -37,11 +37,18 @@ namespace LSW {
 			/// </summary>
 			template<typename T = void>
 			class SuperThread {
-				ALLEGRO_THREAD* thr = nullptr;
-				bool _thread_done_flag = true;
-				bool _die_already = false;
-				Promise<T> promise;
-				superthread::performance_mode perform{ superthread::performance_mode::BALANCED}; // balanced
+
+				struct _static_as_run {
+					ALLEGRO_THREAD* thr = nullptr;
+					bool _thread_done_flag = true;
+					bool _die_already = false;
+					Promise<T> promise;
+					superthread::performance_mode perform{ superthread::performance_mode::BALANCED }; // balanced
+					Handling::Abort latest_abort = Handling::Abort("", "", Handling::abort::abort_level::OTHER);
+					bool had_abort = false;
+				};
+
+				std::unique_ptr<_static_as_run> data = std::make_unique<_static_as_run>();
 
 				void _perf();
 
@@ -61,7 +68,19 @@ namespace LSW {
 				SuperThread();
 
 				SuperThread(const SuperThread&) = delete;
-				SuperThread(SuperThread&&) = delete;
+				void operator=(const SuperThread&) = delete;
+
+				/// <summary>
+				/// <para>Move constructor.</para>
+				/// </summary>
+				/// <param name="{SuperThread}">Move constructor.</param>
+				SuperThread(SuperThread&&);
+
+				/// <summary>
+				/// <para>Move operator.</para>
+				/// </summary>
+				/// <param name="{SuperThread}">Move operator.</param>
+				void operator=(SuperThread&&);
 
 				/// <summary>
 				/// <para>Constructor that sets directly the performance mode.</para>
@@ -124,6 +143,18 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{bool} Running?</returns>
 				bool running() const;
+
+				/// <summary>
+				/// <para>If there was an abort, true.</para>
+				/// </summary>
+				/// <returns>{bool} True if had issues on task.</returns>
+				bool had_abort() const;
+
+				/// <summary>
+				/// <para>If there was an abort, copy abort and reset abort bool, else empty or older abort.</para>
+				/// </summary>
+				/// <returns>{Handling::Abort} Last abort saved.</returns>
+				Handling::Abort get_abort() const;
 			};
 
 		}

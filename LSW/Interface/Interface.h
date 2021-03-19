@@ -8,6 +8,7 @@
 #include "EventCustom/eventcustom.h"
 #include "EventTimer/eventtimer.h"
 #include "Config/config.h"
+#include "DelayedTask/delayedtask.h"
 
 #include "SmartFile/smartfile.h"
 #include "Connection/connection.h"

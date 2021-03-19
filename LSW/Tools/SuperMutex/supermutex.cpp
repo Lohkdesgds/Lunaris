@@ -63,30 +63,31 @@ namespace LSW {
 			{
 				if (autolock) {
 					you.lock();
-					hasunlocked = false;
 				}
-				else hasunlocked = true;
 			}
 
 			AutoLock::~AutoLock()
 			{
-				if (!hasunlocked) you.unlock();
+				if (you.is_locked()) you.unlock();
 			}
 
 			void AutoLock::unlock()
 			{
-				if (!hasunlocked) {
-					hasunlocked = true;
+				if (you.is_locked()) {
 					you.unlock();
 				}
 			}
 
 			void AutoLock::lock()
 			{
-				if (hasunlocked) {
+				if (!you.is_locked()) {
 					you.lock();
-					hasunlocked = false;
 				}
+			}
+
+			bool AutoLock::try_lock()
+			{
+				return you.try_lock();
 			}
 
 			void Waiter::wait_signal(const size_t max_t)

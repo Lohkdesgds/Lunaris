@@ -1,3 +1,4 @@
+#include "future.h"
 #pragma once
 
 namespace LSW {
@@ -297,7 +298,7 @@ namespace LSW {
 			}
 
 			template<typename T>
-			inline bool Promise<T>::has_set()
+			inline bool Promise<T>::has_set() const
 			{
 				return !set_already_skip;
 			}
@@ -340,6 +341,15 @@ namespace LSW {
 				Promise<T> pr;
 				Future<T> fut = pr.get_future();
 				pr.set_value(set);
+				return std::move(fut);
+			}
+
+			template<typename T>
+			Future<T> fake_future()
+			{
+				Promise<T> pr;
+				Future<T> fut = pr.get_future();
+				pr.set_value();
 				return std::move(fut);
 			}
 

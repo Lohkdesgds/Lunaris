@@ -1,3 +1,4 @@
+#include "superthread.h"
 #pragma once
 
 namespace LSW {
@@ -8,22 +9,22 @@ namespace LSW {
 			template<typename Q, std::enable_if_t<!std::is_void_v<Q>, int>>
 			inline void SuperThread<T>::_set_promise_forced()
 			{
-				promise.set_value(T{});
+				data->promise.set_value(T{});
 			}
 
 			template<typename T>
 			template<typename Q, std::enable_if_t<std::is_void_v<Q>, int>>
 			inline void SuperThread<T>::_set_promise_forced()
 			{
-				promise.set_value();
+				data->promise.set_value();
 			}
 
 			template<typename T>
 			inline void SuperThread<T>::_perf()
 			{
-				switch (perform) {
+				switch (data->perform) {
 				case superthread::performance_mode::_COUNT: // NOOOPE
-					perform = superthread::performance_mode::PERFORMANCE;
+					data->perform = superthread::performance_mode::PERFORMANCE;
 					std::this_thread::yield();
 					break;
 
@@ -64,7 +65,9 @@ namespace LSW {
 			template<typename T>
 			inline void* SuperThread<T>::__run_i_al(ALLEGRO_THREAD* thr, void* arg)
 			{
-				if (!arg) throw Handling::Abort(__FUNCSIG__, "Invalid thread argument internally!");
+				if (!arg)
+					throw Handling::Abort(__FUNCSIG__, "Invalid thread argument internally!");
+
 				Promise<T>* f = (Promise<T>*)arg;
 				f->work(); // has !al_get_thread_should_stop(thr) internally
 				return thr;
@@ -74,6 +77,20 @@ namespace LSW {
 			inline SuperThread<T>::SuperThread()
 			{
 				Handling::init_basic();
+			}
+
+			template<typename T>
+			inline SuperThread<T>::SuperThread(SuperThread&& b)
+			{
+				data = std::move(b.data);
+				b.data = std::make_unique<_static_as_run>();
+			}
+
+			template<typename T>
+			inline void SuperThread<T>::operator=(SuperThread&& b)
+			{
+				data = std::move(b.data);
+				b.data = std::make_unique<_static_as_run>();
 			}
 
 			template<typename T>
@@ -101,24 +118,30 @@ namespace LSW {
 			inline void SuperThread<T>::set(const std::function<T(boolThreadF)> f)
 			{
 				join();
-				promise = std::move(Promise<T>([&, f] {
+				data->promise = std::move(Promise<T>([&, dat = data.get(), f] {
 					try {
-						_thread_done_flag = false;
-						_die_already = false;
-						T cpy = f([&] { _perf(); return !_die_already && !al_get_thread_should_stop(thr); });
-						_thread_done_flag = true;
+						dat->_thread_done_flag = false;
+						dat->_die_already = false;
+						T cpy = f([&] { _perf(); return !dat->_die_already && !al_get_thread_should_stop(dat->thr); });
+						dat->_thread_done_flag = true;
 						return std::move(cpy);
 					}
 					catch (const Handling::Abort& e) { // for now. later: save and get elsewhere
+						dat->had_abort = true;
+						dat->latest_abort = e;
 						std::cout << "Exception at SuperThread #" << Tools::get_thread_id() << ": " << e.what() << std::endl;
 					}
 					catch (const std::exception& e) { // for now. later: save and get elsewhere
+						dat->had_abort = true;
+						dat->latest_abort = Handling::Abort(__FUNCSIG__, e.what(), Handling::abort::abort_level::GIVEUP);
 						std::cout << "Exception at SuperThread #" << Tools::get_thread_id() << ": " << e.what() << std::endl;
 					}
 					catch (...) { // for now. later: save and get elsewhere
+						dat->had_abort = true;
+						dat->latest_abort = Handling::Abort(__FUNCSIG__, "Unknown exception at SuperThread", Handling::abort::abort_level::GIVEUP);
 						std::cout << "Unknown exception at SuperThread #" << Tools::get_thread_id() << "." << std::endl;
 					}
-					_thread_done_flag = true;
+					dat->_thread_done_flag = true;
 					return T{};
 				}));
 			}
@@ -128,30 +151,39 @@ namespace LSW {
 			inline void SuperThread<T>::set(const std::function<T(boolThreadF)> f)
 			{
 				join();
-				promise = std::move(Promise<T>([&, f] {
+				data->promise = std::move(Promise<T>([&, dat = data.get(), f] {
 					try {
-						_thread_done_flag = false;
-						_die_already = false;
-						f([&] { _perf(); return !_die_already && !al_get_thread_should_stop(thr); });
-						_thread_done_flag = true;
+						dat->_thread_done_flag = false;
+						dat->_die_already = false;
+						f([&] { _perf(); return !dat->_die_already && !al_get_thread_should_stop(dat->thr); });
+						dat->_thread_done_flag = true;
 					}
 					catch (const Handling::Abort& e) { // for now. later: save and get elsewhere
+						dat->had_abort = true;
+						dat->latest_abort = e;
+						std::cout << "Exception at SuperThread #" << Tools::get_thread_id() << ": " << e.what() << std::endl;
+					}
+					catch (const std::exception& e) { // for now. later: save and get elsewhere
+						dat->had_abort = true;
+						dat->latest_abort = Handling::Abort(__FUNCSIG__, e.what(), Handling::abort::abort_level::GIVEUP);
 						std::cout << "Exception at SuperThread #" << Tools::get_thread_id() << ": " << e.what() << std::endl;
 					}
 					catch (...) { // for now. later: save and get elsewhere
+						dat->had_abort = true;
+						dat->latest_abort = Handling::Abort(__FUNCSIG__, "Unknown exception at SuperThread", Handling::abort::abort_level::GIVEUP);
 						std::cout << "Unknown exception at SuperThread #" << Tools::get_thread_id() << "." << std::endl;
 					}
-					_thread_done_flag = true;
-					}));
+					dat->_thread_done_flag = true;
+				}));
 			}
 
 			template<typename T>
 			inline Future<T> SuperThread<T>::start()
 			{
 				join();
-				Future<T> fut = promise.get_future();
-				thr = al_create_thread(__run_i_al, &promise);
-				al_start_thread(thr);
+				Future<T> fut = data->promise.get_future();
+				data->thr = al_create_thread(__run_i_al, &data->promise);
+				al_start_thread(data->thr);
 
 				return fut;
 			}
@@ -159,45 +191,45 @@ namespace LSW {
 			template<typename T>
 			inline void SuperThread<T>::set_performance_mode(const superthread::performance_mode& mode)
 			{
-				perform = mode;
+				data->perform = mode;
 			}
 
 			template<typename T>
 			inline void SuperThread<T>::stop()
 			{
-				_die_already = true;
-				if (thr) al_set_thread_should_stop(thr);
+				data->_die_already = true;
+				if (data->thr) al_set_thread_should_stop(data->thr);
 			}
 
 			template<typename T>
 			inline void SuperThread<T>::join()
 			{
-				if (thr) {
+				if (data->thr) {
 					stop();
-					al_join_thread(thr, nullptr);
-					while (!_thread_done_flag) std::this_thread::sleep_for(std::chrono::milliseconds(20));
-					al_destroy_thread(thr);
-					if (!promise.has_set()) _set_promise_forced();
-					thr = nullptr;
+					al_join_thread(data->thr, nullptr);
+					while (!data->_thread_done_flag) std::this_thread::sleep_for(std::chrono::milliseconds(20));
+					al_destroy_thread(data->thr);
+					if (!data->promise.has_set()) _set_promise_forced();
+					data->thr = nullptr;
 				}
 			}
 
 			template<typename T>
 			inline void SuperThread<T>::kill()
 			{
-				if (thr) {
+				if (data->thr) {
 					stop();
-					if (_thread_done_flag) {
-						if (!promise.has_set()) _set_promise_forced();
-						al_join_thread(thr, nullptr);
-						al_destroy_thread(thr);
-						thr = nullptr;
+					if (data->_thread_done_flag) {
+						if (!data->promise.has_set()) _set_promise_forced();
+						al_join_thread(data->thr, nullptr);
+						al_destroy_thread(data->thr);
+						data->thr = nullptr;
 					}
 					else { // might be internally blocked or the user is crazy and wants to kill it anyways.
-						al_destroy_thread(thr);
-						thr = nullptr;
-						if (!promise.has_set()) _set_promise_forced();
-						_thread_done_flag = true;
+						al_destroy_thread(data->thr);
+						data->thr = nullptr;
+						if (!data->promise.has_set()) _set_promise_forced();
+						data->_thread_done_flag = true;
 					}
 				}
 			}
@@ -205,7 +237,19 @@ namespace LSW {
 			template<typename T>
 			inline bool SuperThread<T>::running() const
 			{
-				return thr && !_die_already && !_thread_done_flag;
+				return data->thr && !data->_die_already && !data->_thread_done_flag;
+			}
+
+			template<typename T>
+			inline bool SuperThread<T>::had_abort() const
+			{
+				return data->had_abort;
+			}
+
+			template<typename T>
+			inline Handling::Abort SuperThread<T>::get_abort() const
+			{
+				return data->latest_abort;
 			}
 
 		}

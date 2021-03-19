@@ -82,15 +82,14 @@ namespace LSW {
 			};
 
 			/// <summary>
-			/// <para>AutoLock is like a std::unique_lock, but to be used with SuperMutex.</para>
+			/// <para>AutoLock is like a std::unique_lock, but to be used with mutexes from this library.</para>
 			/// <para>You can lock and unlock as you please.</para>
 			/// </summary>
 			class AutoLock {
 				__anyMutex& you;
-				bool hasunlocked = false;
 			public:
 				/// <summary>
-				/// <para>Automatically links a SuperMutex and locks (or not, based on bool).</para>
+				/// <para>Automatically links a Mutex and locks (or not, based on bool).</para>
 				/// </summary>
 				/// <param name="{SuperMutex}">The SuperMutex to link.</param>
 				/// <param name="{bool}">Lock directly?</param>
@@ -98,16 +97,22 @@ namespace LSW {
 				~AutoLock();
 
 				/// <summary>
-				/// <para>Unlocks the linked SuperMutex.</para>
+				/// <para>Unlocks the linked Mutex.</para>
 				/// <para>If already unlocked (by you), it skips.</para>
 				/// </summary>
 				void unlock();
 
 				/// <summary>
-				/// <para>Locks the linked SuperMutex.</para>
+				/// <para>Locks the linked Mutex.</para>
 				/// <para>If already locked (by you), it skips (PS: one unlock() is needed no matter what)</para>
 				/// </summary>
 				void lock();
+
+				/// <summary>
+				/// <para>Tries to lock. True if success.</para>
+				/// </summary>
+				/// <returns>{bool} True if locked.</returns>
+				bool try_lock();
 			};
 
 			/// <summary>

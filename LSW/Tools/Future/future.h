@@ -312,7 +312,7 @@ namespace LSW {
 				/// <para>Has the value been set already?</para>
 				/// </summary>
 				/// <returns>{bool} True if has worked and/or the value has been set.</returns>
-				bool has_set();
+				bool has_set() const;
 
 				/// <summary>
 				/// <para>Sets as done and notifies Future.</para>
@@ -338,6 +338,15 @@ namespace LSW {
 			/// <returns>{Future} The future of type T with the value you've set.</returns>
 			template<typename T>
 			Future<T> fake_future(const T&);
+
+			/// <summary>
+			/// <para>In some weird cases you might need this, but it is not recommended, because this is not multithread.</para>
+			/// <para>This sets a Future like a defined value already if you need to "cast" a value to a Future directly.</para>
+			/// </summary>
+			/// <param name="{T}">The value the Future will hold already.</param>
+			/// <returns>{Future} The future of type T with the value you've set.</returns>
+			template<typename T = void>
+			Future<T> fake_future();
 			
 		}
 	}
