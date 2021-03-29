@@ -125,7 +125,7 @@ namespace LSW {
 
 				void _think_lines();
 				void _draw_text(Interface::Camera&);
-
+			protected:
 				void draw_task(Interface::Camera&) override;
 				void think_task(const int) override;
 			public:

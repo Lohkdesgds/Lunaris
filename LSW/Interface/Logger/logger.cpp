@@ -393,6 +393,27 @@ namespace LSW {
 				return (this->operator<<(buf));
 			}
 
+			Logger& Logger::operator<<(const Handling::abort::abort_level& lvl)
+			{
+				using namespace LSW::v5::Handling::abort;
+
+				std::string transl;
+
+				switch (lvl) {
+				case abort_level::FATAL_ERROR:
+					transl = "FATAL_ERROR";
+					break;
+				case abort_level::GIVEUP:
+					transl = "GIVEUP";
+					break;
+				case abort_level::OTHER:
+					transl = "OTHER";
+					break;
+				}
+
+				return (this->operator<<(transl));
+			}
+
 			const std::string _fsr(const size_t l, const std::string& fp, const std::string& func, const E e)
 			{
 				std::string back_str;

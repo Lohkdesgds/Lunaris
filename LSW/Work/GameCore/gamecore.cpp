@@ -68,7 +68,7 @@ namespace LSW {
 			{
 			}
 
-			GameCore::GameCore(const std::string& logg_p, const std::string& conf_p, const size_t index)
+			void GameCore::_load(const std::string& logg_p, const std::string& conf_p, const size_t index)
 			{
 				share = std::shared_ptr<shared>(new shared{ index });
 
@@ -116,7 +116,10 @@ namespace LSW {
 					share->conf.ensure(gamecore::conf_mouse_memory, "ry", 0.0f, Interface::config::config_section_mode::MEMORY_ONLY);
 					share->conf.ensure(gamecore::conf_mouse_memory, "press_count", 0u, Interface::config::config_section_mode::MEMORY_ONLY);
 					share->conf.ensure(gamecore::conf_mouse_memory, "down_latest", -1, Interface::config::config_section_mode::MEMORY_ONLY);
-					// set "b0" ... as mouse buttons (bool)
+					for (int u = 0; u < 10; u++) { // set "b0" ... as mouse buttons (bool)
+						share->conf.ensure(gamecore::conf_mouse_memory, "b" + std::to_string(u), false, Interface::config::config_section_mode::MEMORY_ONLY);
+					}
+					
 
 
 					share->conf.flush();
@@ -134,9 +137,9 @@ namespace LSW {
 					share->display.hide_mouse(share->conf.get_as<bool>(gamecore::conf_displaying, "hidemouse"));
 					share->display.set_vsync(share->conf.get_as<bool>(gamecore::conf_displaying, "vsync"));
 
-					share->display.init();
+					share->_temp_holder = std::move(share->display.init());
 
-					while (!share->display.display_ready()) std::this_thread::sleep_for(std::chrono::milliseconds(250));
+					while (!share->display.display_ready()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 				
 					{
@@ -194,7 +197,6 @@ namespace LSW {
 							else if (ev.timer_event().source == share->check_sources)
 							{
 								if (share->latest_display_source != share->display.get_event_source()) {
-									Interface::Logger logg;
 
 									debug("Display event registering refresh! Display has changed/updated.");
 
@@ -242,7 +244,6 @@ namespace LSW {
 						{
 							if (ev.display_event().source != share->display) break;
 
-							Interface::Logger logg;
 							debug("Close app called.");
 
 							share->closed = true;
@@ -262,6 +263,17 @@ namespace LSW {
 
 					if (auto k = share->conf.get_as<float>(gamecore::conf_audio, "volume"); k >= 0.0)	share->mixer.set_gain(k);
 				}
+			}
+
+			GameCore::GameCore(const std::string& a, const std::string& b, const size_t c, Tools::Future<bool>& fut)
+			{
+				_load(a, b, c);
+				fut = std::move(share->_temp_holder);
+			}
+
+			GameCore::GameCore(const std::string& a, const std::string& b, const size_t c)
+			{
+				_load(a, b, c);
 			}
 
 			GameCore::GameCore(const GameCore& b)
@@ -327,6 +339,11 @@ namespace LSW {
 				if (!m.share) throw Handling::Abort(__FUNCSIG__, "Something went wrong! Invalid GameCore!");
 				if (share && !share->closed) shutdown();
 				share = std::move(m.share);
+			}
+
+			Tools::Future<bool> GameCore::get_display_future()
+			{
+				return std::move(share->_temp_holder);
 			}
 
 			Interface::Config& GameCore::get_config()

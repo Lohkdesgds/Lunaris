@@ -118,10 +118,14 @@ namespace LSW {
 			inline void SuperThread<T>::set(const std::function<T(boolThreadF)> f)
 			{
 				join();
+				data->_has_started_successfully = false;
+
 				data->promise = std::move(Promise<T>([&, dat = data.get(), f] {
 					try {
+						dat->_has_started_successfully = true;
 						dat->_thread_done_flag = false;
 						dat->_die_already = false;
+						while (!dat->_acknowledge_started_succesfully) std::this_thread::yield();
 						T cpy = f([&] { _perf(); return !dat->_die_already && !al_get_thread_should_stop(dat->thr); });
 						dat->_thread_done_flag = true;
 						return std::move(cpy);
@@ -151,10 +155,14 @@ namespace LSW {
 			inline void SuperThread<T>::set(const std::function<T(boolThreadF)> f)
 			{
 				join();
+				data->_has_started_successfully = false;
+
 				data->promise = std::move(Promise<T>([&, dat = data.get(), f] {
 					try {
+						dat->_has_started_successfully = true;
 						dat->_thread_done_flag = false;
 						dat->_die_already = false;
+						while (!dat->_acknowledge_started_succesfully) std::this_thread::yield();
 						f([&] { _perf(); return !dat->_die_already && !al_get_thread_should_stop(dat->thr); });
 						dat->_thread_done_flag = true;
 					}
@@ -181,9 +189,33 @@ namespace LSW {
 			inline Future<T> SuperThread<T>::start()
 			{
 				join();
+
+				const auto manage_f = [&] {
+					data->_acknowledge_started_succesfully = false;
+					data->thr = al_create_thread(__run_i_al, &data->promise);
+					al_start_thread(data->thr);
+				};
+
 				Future<T> fut = data->promise.get_future();
-				data->thr = al_create_thread(__run_i_al, &data->promise);
-				al_start_thread(data->thr);
+				manage_f();
+				
+				while (!data->_has_started_successfully) {
+					for (size_t ft = 0; ft < 25; ft++) {
+						Tools::sleep_for(std::chrono::milliseconds(4)); // 25 * 4 = 0.1 sec aprox limit, threads normally spawn in less than a millisecond, some say max to be about 10 ms.
+						if (data->_has_started_successfully) break;
+					}
+
+					if (!data->_has_started_successfully) { // try again
+#ifdef _DEBUG
+						std::cout << "__FAIL__ init thread fail, trying again..." << std::endl;
+#endif
+						al_destroy_thread(data->thr);
+						manage_f();
+					}
+					else {
+						data->_acknowledge_started_succesfully = true;
+					}
+				}
 
 				return fut;
 			}

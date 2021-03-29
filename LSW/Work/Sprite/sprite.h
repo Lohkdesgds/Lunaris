@@ -281,6 +281,7 @@ namespace LSW {
 					void setup(const double, const double, const double, const double);
 				} easy_collision;
 
+			protected:
 				/// <summary>
 				/// <para>Set this as your drawing function (Sprite_Base's draw will call this).</para>
 				/// </summary>
@@ -300,7 +301,6 @@ namespace LSW {
 				/// <param name="{Tools::Any}">It depends on the event.</param>
 				virtual void mouse_event(const sprite::e_tie_functional, const Tools::Any&) {}
 
-			protected:
 				/// <summary>
 				/// <para>This is so common that this might help new projects.</para>
 				/// </summary>

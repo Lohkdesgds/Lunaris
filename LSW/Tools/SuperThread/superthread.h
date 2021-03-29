@@ -42,6 +42,8 @@ namespace LSW {
 					ALLEGRO_THREAD* thr = nullptr;
 					bool _thread_done_flag = true;
 					bool _die_already = false;
+					bool _has_started_successfully = false;
+					bool _acknowledge_started_succesfully = false;
 					Promise<T> promise;
 					superthread::performance_mode perform{ superthread::performance_mode::BALANCED }; // balanced
 					Handling::Abort latest_abort = Handling::Abort("", "", Handling::abort::abort_level::OTHER);

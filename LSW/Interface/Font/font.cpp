@@ -99,6 +99,11 @@ namespace LSW {
 				return set(al_load_font(p.c_str(), s, f));
 			}
 
+			bool Font::load_internal()
+			{
+				return set(al_create_builtin_font());
+			}
+
 			Font::operator bool() const
 			{
 				return !(!font);

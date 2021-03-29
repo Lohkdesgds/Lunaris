@@ -6,7 +6,7 @@ namespace LSW {
 
 
 			Abort::Abort(const std::string& fw, const std::string& dt, const abort::abort_level lv)
-				: std::exception(("From: " + s_from_where + ";\nDetails: " + s_details + ";\nLevel: " + std::to_string(static_cast<int>(abort_level))).c_str(), static_cast<int>(abort_level))
+				: std::exception(("From: " + fw + ";\nDetails: " + dt + ";\nLevel: " + std::to_string(static_cast<int>(lv))).c_str(), static_cast<int>(lv))
 			{
 				s_from_where = fw;
 				s_details = dt;

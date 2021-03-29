@@ -275,6 +275,13 @@ namespace LSW {
 				/// <param name="{size_t}">To be written.</param>
 				/// <returns>{Logger} Itself.</returns>
 				Logger& operator<<(const size_t&);
+
+				/// <summary>
+				/// <para>Operator to write.</para>
+				/// </summary>
+				/// <param name="{abort_level}">To be written.</param>
+				/// <returns>{Logger} Itself.</returns>
+				Logger& operator<<(const Handling::abort::abort_level&);
 			};
 
 			/// <summary>

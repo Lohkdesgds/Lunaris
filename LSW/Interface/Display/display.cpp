@@ -80,7 +80,7 @@ namespace LSW {
 					thread_init();
 
 					if (camera_fu) {
-						std::lock_guard<std::mutex> luck(camfu_m);
+						Tools::AutoLock luck(camfu_m);
 						cam_latest = camera_fu();
 					}
 
@@ -118,10 +118,10 @@ namespace LSW {
 						frames++;
 
 						if (refresh_camera) {
-							std::lock_guard<std::mutex> cam_m_luck(camfu_m);
+							Tools::AutoLock cam_m_luck(camfu_m);
 							if (refresh_camera) {
 								if (camera_fu) {
-									std::lock_guard<std::mutex> luck(camfu_m);
+									//std::lock_guard<std::mutex> luck(camfu_m); // what?
 									cam_latest = camera_fu();
 								}
 								if (refresh_camera) refresh_camera = !cam_latest.classic_update(targ.get());
@@ -151,25 +151,19 @@ namespace LSW {
 						try {
 							for (size_t p = 0; p < draw_tasks.size(); p++) draw_tasks.at(p).second(cam_latest);
 						}
-#ifdef _DEBUG
-						catch (const std::out_of_range& e) { // I know sometimes it WILL be out of range if you change the draw_tasks size, but mutex costs A LOT (from 5000+ fps to ~300 fps), so just ignore out of range...
-							std::cout << "__INTERNAL__ __SKIP__ OUT OF RANGE ERROR AT DRAW_TASKS: " << e.what() << std::endl;
-#else
-						catch (const std::out_of_range&) {
-#endif
+						catch (const std::out_of_range& e) {
 							fails_out_of_range++;
+							Handling::Abort ab(__FUNCSIG__, e.what(), Handling::abort::abort_level::GIVEUP);
+							submit_error(ab);
 						}
 						catch (Handling::Abort a) {
-#ifdef _DEBUG
-							std::cout << "__INTERNAL__ __SKIP__ ERROR AT DRAW_TASKS: " << a.what() << std::endl;
-#endif
 							fails_unexpected++;
+							submit_error(a);
 						}
 						catch (...) { // probably can skip (later: add counter by time)
-#ifdef _DEBUG
-							std::cout << "__INTERNAL__ __SKIP__ UNKNOWN ERROR AT DRAW_TASKS" << std::endl;
-#endif
 							fails_unexpected++;
+							Handling::Abort ab(__FUNCSIG__, "Uncaught exception", Handling::abort::abort_level::GIVEUP);
+							submit_error(ab);
 						}
 
 						if (!dbuffer.empty()) {
@@ -186,11 +180,15 @@ namespace LSW {
 
 					}
 				}
-				catch (...) { // enhance later
+				catch (Handling::Abort a) {
 					verynice = false;
+					submit_error(a);
 				}
-
-				if (once_tasks_m.is_locked()) once_tasks_m.unlock(); // this is my safer mutex no worries.
+				catch (...) {
+					verynice = false;
+					Handling::Abort ab(__FUNCSIG__, "Uncaught exception");
+					submit_error(ab);
+				}
 
 				thread_deinit();
 
@@ -279,6 +277,16 @@ namespace LSW {
 					disp = nullptr;
 				}
 			}
+
+			void Display::submit_error(const Handling::Abort& err)
+			{
+				Tools::AutoLock l(error_mu);
+				if (error_f) error_f(err, *this);
+				else {
+					error = err;
+					_had_error = true;
+				}
+			}
 						
 			Display::Display(const size_t nind) : targ(nind)
 			{
@@ -310,6 +318,28 @@ namespace LSW {
 				thr.stop();
 				thr.join();
 			}
+
+			bool Display::had_error() const
+			{
+				return _had_error;
+			}
+
+			const Handling::Abort Display::get_last_error()
+			{
+				Tools::AutoLock l(error_mu);
+				_had_error = false;
+				return error;
+			}
+
+			void Display::on_error(const std::function<void(const Handling::Abort&, Display&)>& f)
+			{
+				Tools::AutoLock l(error_mu);
+				error_f = f;
+				if (_had_error && error_f) {
+					error_f(error, *this);
+					_had_error = false;
+				}
+			}
 						
 			bool Display::move_mouse_to(const double x, const double y)
 			{
@@ -336,14 +366,14 @@ namespace LSW {
 						
 			void Display::set_camera(const Camera& cam)
 			{
-				std::lock_guard<std::mutex> luck(camfu_m);
+				Tools::AutoLock luck(camfu_m);
 				camera_fu = std::function<Camera(void)>();
 				refresh_camera = true;
 			}
 
 			void Display::set_camera(std::function<Camera(void)> f)
 			{
-				std::lock_guard<std::mutex> luck(camfu_m);
+				Tools::AutoLock luck(camfu_m);
 				camera_fu = f;
 				refresh_camera = true;
 			}

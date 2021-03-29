@@ -62,7 +62,6 @@ namespace LSW {
 				Bitmap dbuffer, icon;
 				EventHandler display_events{ Tools::superthread::performance_mode::LOW_POWER };
 
-				//PathManager pathing;
 				Tools::SuperThread<bool> thr{ Tools::superthread::performance_mode::HIGH_PERFORMANCE };
 
 				size_t draw_tasks_count = 0;
@@ -72,11 +71,17 @@ namespace LSW {
 				std::vector<Tools::Promise<DisplayAnySPtr>> once_tasks; // change later to a class that manages ALLEGRO_BITMAP*
 				Tools::SuperMutex once_tasks_m;
 
-				std::mutex camfu_m;
-				//std::shared_ptr<Camera> camera;
+				Tools::SuperMutex camfu_m;
 				std::function<Camera(void)> camera_fu;
 				Camera cam_latest;
 				bool refresh_camera = false;
+
+				// error handling
+				mutable Tools::SuperMutex error_mu;
+				Handling::Abort error{"", "", Handling::abort::abort_level::OTHER}; // last
+				bool _had_error = false;
+				std::function<void(const Handling::Abort&, Display&)> error_f;
+				// endof error handling
 
 				bool thread_run(Tools::boolThreadF);
 
@@ -84,13 +89,14 @@ namespace LSW {
 				void thread_init();
 				void thread_deinit();
 
+				void submit_error(const Handling::Abort&);
 			public:
 				/// <summary>
 				/// <para>Custom index for Target. If you set this different than one, you'll have to set each Sprite_Base based class to target this number. Defaults to 0.</para>
 				/// </summary>
 				/// <param name="{size_t}">Index for Target stuff.</param>
 				Display(const size_t = 0);
-
+								
 				~Display();
 
 				/// <summary>
@@ -98,9 +104,6 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{Future} A Future that you can .wait() or .then() when display is closed.</returns>
 				Tools::Future<bool> init();
-
-				//path is global now. change later to local so this makes sense
-				//void set_path(const PathManager&);
 
 				/// <summary>
 				/// <para>See if an event was from this Display using .source.</para>
@@ -113,6 +116,25 @@ namespace LSW {
 				/// <para>Stops the thread and join.</para>
 				/// </summary>
 				void deinit();
+
+				/// <summary>
+				/// <para>Has error saved and it hasn't been checked yet (get_last_error()).</para>
+				/// <para>PS: A handling error function will always get the error (so there will be none here).</para>
+				/// </summary>
+				/// <returns>{bool} True if there was an error.</returns>
+				bool had_error() const;
+
+				/// <summary>
+				/// <para>Gets last error (check had_error() first).</para>
+				/// </summary>
+				/// <returns>{Abort} Copy of the last error.</returns>
+				const Handling::Abort get_last_error();
+
+				/// <summary>
+				/// <para>If an error occurs, this will be called. This overrides had_error() and get_last_error().</para>
+				/// </summary>
+				/// <param name="{std::function}">A function to get latest error and handle it.</param>
+				void on_error(const std::function<void(const Handling::Abort&, Display&)>&);
 
 				/// <summary>
 				/// <para>Try to warp mouse to a point in screen. Range: [-1.0, 1.0], being -1,-1 the top left corner.</para>

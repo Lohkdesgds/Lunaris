@@ -60,7 +60,7 @@ namespace LSW {
 				std::vector<Interface::Bitmap> bitmaps;
 
 				//Interface::Bitmap reference;
-
+			protected:
 				void draw_task(Interface::Camera&);
 			public:
 				using Sprite_Base::set;

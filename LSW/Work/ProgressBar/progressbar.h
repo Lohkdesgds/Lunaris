@@ -80,6 +80,7 @@ namespace LSW {
 				// return the value beyond a val both - +
 				double beyond(const double, const double);
 
+			protected:
 				void draw_task(Interface::Camera&);
 			public:
 				using Sprite_Base::set;

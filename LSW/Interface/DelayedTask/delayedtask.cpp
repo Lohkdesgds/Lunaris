@@ -101,7 +101,7 @@ namespace LSW {
 				{
 					solo_delayed.push_back({});
 					Tools::SuperThread<>& thr = solo_delayed.back();
-					thr.set([&, func = std::move(f), timee](Tools::boolThreadF){ std::this_thread::sleep_until(timee); run_solo_autoabort(func); });
+					thr.set([&, func = f, timee](Tools::boolThreadF){ std::this_thread::sleep_until(timee); run_solo_autoabort(func); });
 					Tools::Future<void> fut = thr.start();
 					return std::move(fut);
 				}

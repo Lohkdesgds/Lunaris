@@ -65,15 +65,16 @@ namespace LSW {
 				void _rec_string();
 
 				void handle_event(const Interface::RawEvent&);
-
+			protected:
+				//using Button::draw_task;
+				using Button::think_task;
 				void mouse_event(const sprite::e_tie_functional, const Tools::Any&) override;
 			public:
-				using Button::clone;
-				using Block::collide;
+				using Button::collide;
 				using Button::draw;
 				using Button::get_block;
 				using Button::get_text;
-				using Block::update_and_clear;
+				using Button::update_and_clear;
 
 				/// <summary>
 				/// <para>Gets the variable with textinput data.</para>

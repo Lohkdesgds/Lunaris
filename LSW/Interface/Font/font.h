@@ -62,6 +62,13 @@ namespace LSW {
 				bool load(const std::string&, const int = 75, const int = 0);
 
 				/// <summary>
+				/// <para>Load a low resolution internal font.</para>
+				/// <para>This is recommended if you don't have a custom font (yet). You shouldn't use this as a final "product".</para>
+				/// </summary>
+				/// <returns>{bool} True if created builtin font successfully.</returns>
+				bool load_internal();
+
+				/// <summary>
 				/// <para>Operator bool.</para>
 				/// </summary>
 				/// <returns>{bool} True if loaded.</returns>

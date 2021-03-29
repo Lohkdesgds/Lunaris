@@ -55,7 +55,8 @@ namespace LSW {
 
 				void check_internal();
 
-				void draw_task(Interface::Camera&);
+			protected:
+				void draw_task(Interface::Camera&) override;
 			public:
 				using Sprite_Base::set;
 				using Sprite_Base::get;

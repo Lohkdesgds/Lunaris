@@ -18,9 +18,12 @@ namespace LSW {
 			/// <para>- text::e_sprite_ref::FOLLOWING (Text part)</para>
 			/// </summary>
 			class Button : protected Text, protected Block {
+			protected:
+				void think_task(const int) override; // Block has none
+				//void draw_task(Interface::Camera&) override;
 			public:
-				using Block::collide;
-				using Block::update_and_clear;
+				using Sprite_Base::collide;
+				using Sprite_Base::update_and_clear;
 
 				/// <summary>
 				/// <para>Empty default start.</para>
@@ -37,7 +40,7 @@ namespace LSW {
 				/// <para>Constructor to move a Button to this (move).</para>
 				/// </summary>
 				/// <param name="{Button}">The one to move attributes from.</param>
-				Button(Button&&);
+				Button(Button&&) noexcept;
 
 				/// <summary>
 				/// <para>Reference a Button (not a copy).</para>
@@ -49,7 +52,7 @@ namespace LSW {
 				/// <para>Move a Button to this (move).</para>
 				/// </summary>
 				/// <param name="{Button}">The one to move attributes from.</param>
-				void operator=(Button&&);
+				void operator=(Button&&) noexcept;
 
 				/// <summary>
 				/// <para>Clone other Button attributes.</para>
