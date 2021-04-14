@@ -9,6 +9,7 @@
 
 #include "../../Handling/Abort/abort.h" // fails calls throw
 #include "../../Handling/Path/path.h" // handle_path used on init
+#include "../../Tools/Buffer/buffer.h" // Buffer type
 #include "../../Tools/CString/cstring.h" // uses this as string internally to print colored chars
 #include "../../Tools/Common/common.h" // sprintf_a
 #include "../../_Macros/system_work.h" // #ifdefs
@@ -205,6 +206,13 @@ namespace LSW {
 				/// <param name="{std::string}">To be written.</param>
 				/// <returns>{Logger} Itself.</returns>
 				Logger& operator<<(const std::string&);
+
+				/// <summary>
+				/// <para>Operator to write.</para>
+				/// </summary>
+				/// <param name="{Buffer}">To be written.</param>
+				/// <returns>{Logger} Itself.</returns>
+				Logger& operator<<(const Tools::Buffer&);
 
 				/// <summary>
 				/// <para>Operator to write.</para>

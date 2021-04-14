@@ -21,9 +21,11 @@
 #pragma comment (lib, "AdvApi32.lib")
 
 #include "../../Handling/Abort/abort.h"
+#include "../../Tools/Buffer/buffer.h"
 #include "../../Tools/SuperMutex/supermutex.h"
 #include "../../Tools/SuperThread/superthread.h"
 #include "../../Tools/Common/common.h"
+#include "../../Tools/Socket/socket.h"
 #include "../Logger/logger.h"
 #include "../Events/events.h"
 #include "../EventTimer/eventtimer.h"
@@ -35,63 +37,19 @@ namespace LSW {
 
 			namespace connection {
 				constexpr int default_port = 42069;
-				constexpr unsigned package_size = 1 << 16; // 64 kB max package size (probably up to 400 Mbit internet, ~50 MByte/s on i9 9900k 4.8 GHz) (can go up to probably 512 kB)
-				constexpr size_t limit_packages_stuck_send = 2; // MemoryFiles
+				constexpr unsigned package_size_udp = 400; // maximum safe ipv4 is 508, but 300-400 is better. // src= https://stackoverflow.com/questions/1098897/what-is-the-largest-safe-udp-packet-size-on-the-internet#:~:text=The%20maximum%20safe%20UDP%20payload%20is%20508%20bytes.&text=Except%20on%20an%20IPv6-only,bytes%20may%20be%20preferred%20instead.
+				constexpr unsigned maximum_package_size_tcp = Tools::socket::default_max_package; // 32 kbytes // CAN'T BE HIGHER THAN 64kB!
+				constexpr size_t limit_packages_stuck_send = 2; // Packages
 				constexpr unsigned long long trigger_sync_send_thread = 10; // packages, bigger can cause higher ping. Consider LONG LONG limits!
-				constexpr unsigned long long trigger_sync_multiplier_slowdown = 2; // sleep_for (this * (pack count - trigger_sync_send_thread) );
-				constexpr unsigned long long trigger_max_time_allowed = 500;
+				constexpr unsigned long long trigger_sync_multiplier_slowdown = 3; // sleep_for (this * (pack count - trigger_sync_send_thread) );
+				constexpr unsigned long long trigger_max_time_allowed = 400;
 
-				const double pinging_time = 10.0; // seconds
+				const double pinging_time = 20.0; // seconds
 				//const double timeout_send = 3.0; // seconds
-
-				enum class _connection_status {
-					DISCONNECTED = -1, // error, disconnected
-					FAILED = 0,  // nothing has been read/sent
-					GOOD = 1   // has read a full package
-				};
-
-				enum class connection_type {
-					CLIENT = -1,
-					HOST_IPV4,
-					HOST_IPV6
-				};
 
 				//constexpr int automatic_self_point = 3000; // DON'T SET THIS TO less or eq 0.
 				const auto default_performance_connection = Tools::superthread::performance_mode::PERFORMANCE;
 			}
-
-			/// <summary>
-			/// <para>This is the WinSock base.</para>
-			/// <para>You won't use this directly.</para>
-			/// </summary>
-			class ConnectionCore {
-				WSADATA wsaData = WSADATA();
-				addrinfo* result = nullptr;
-				bool failure = false, init = false;
-			public:
-				// ip (can be null for server), port, ipv6? -1 for client
-				/// <summary>
-				/// <para>Initialize basic WinSock stuff.</para>
-				/// </summary>
-				/// <param name="{std::string}">URL to connect to. Set to empty string if you're hosting.</param>
-				/// <param name="{int}">What port?</param>
-				/// <param name="{connection_type}">What type of communication is this?</param>
-				bool initialize(const std::string&, const int = connection::default_port, const connection::connection_type = connection::connection_type::HOST_IPV4);
-
-				/// <summary>
-				/// <para>Complete initialization as client.</para>
-				/// <para>PS: Call initialize FIRST.</para>
-				/// </summary>
-				/// <param name="{SOCKET}">SOCKET to connect.</param>
-				bool as_client(SOCKET&);
-
-				/// <summary>
-				/// <para>Complete initialization as host. This will listen for connections.</para>
-				/// <para>PS: Call initialize FIRST.</para>
-				/// </summary>
-				/// <param name="{SOCKET}">SOCKET to use as listener.</param>
-				bool as_host(SOCKET&);
-			};
 
 			/// <summary>
 			/// <para>NetworkMonitor is used for Connection's performance monitoring.</para>
@@ -117,6 +75,7 @@ namespace LSW {
 				nm_ping ping{};
 				nm_transf sending{};
 				nm_transf recving{};
+				unsigned long long packet_loss_count = 0;
 
 				Interface::EventTimer timer_second;
 				Interface::EventHandler per_sec_calc{ Tools::superthread::performance_mode::EXTREMELY_LOW_POWER };
@@ -139,6 +98,17 @@ namespace LSW {
 				/// <para>Clears all data. Internal thread will continue to run.</para>
 				/// </summary>
 				void clear();
+
+				/// <summary>
+				/// <para>Sad times, one more packet loss to add?</para>
+				/// </summary>
+				void packet_loss_add();
+
+				/// <summary>
+				/// <para>Get packet loss total count.</para>
+				/// </summary>
+				/// <returns>{unsigned long long} Total packet loss so far.</returns>
+				unsigned long long packet_loss_total() const;
 
 				/// <summary>
 				/// <para>Adds a new ping information.</para>
@@ -233,147 +203,161 @@ namespace LSW {
 			};
 
 			struct Package {
-				SmartFile big_file;
-				std::string small_data;
-				int type = 0;
+				// lower, higher priority (0 = highest priority)
+				using priority_level = unsigned char;
+
+				SmartFile file;
+				Tools::Buffer data;
+				priority_level priority = 0;
+
+				Package(const Package&) = delete;
+				void operator=(const Package&) = delete;
 
 				Package() = default;
-				Package(const Package&) = delete;
-				Package(Package&&);
 
-				bool has_data() const;
-				void operator=(const Package&) = delete;
+				Package(Package&&);
 				void operator=(Package&&);
+
+				Package(const char*, const priority_level = 0);
+				Package(const std::string&, const priority_level = 0);
+				Package(const Tools::Buffer&, const priority_level = 0);
+				Package(const char*, SmartFile&&, const priority_level = 0);
+				Package(const std::string&, SmartFile&&, const priority_level = 0);
+				Package(const Tools::Buffer&, SmartFile&&, const priority_level = 0);
+
+				void set(SmartFile&&);
+				void set(const std::string&);
+				void set(const Tools::Buffer&);
+				void set(const priority_level);
+
+				const SmartFile& get_file() const;
+				SmartFile& get_file();
+				SmartFile&& cut_file();
+				const Tools::Buffer& get_data() const;
+				Tools::Buffer& get_data();
+				std::string get_string() const;
+				std::string get_string();
+
+				bool empty() const;
 			};
 
 			/// <summary>
 			/// <para>A connection itself (one to one).</para>
 			/// </summary>
-			class Connection {
-				enum class __package_type { PING = 1, PONG, SIGNAL, PRIORITY_PACKAGE_SMALL, PACKAGE_SMALL, PACKAGE_FILE, _FAILED };
-
-				struct __package {
-
-					struct {
-						int type = 0;
-						int len = 0;
-						bool has_more = false;
-					} info;
-					struct {
-						char buffer[connection::package_size]{};
-					} data;
-
-					__package() = default;
-
-					/// <summary>
-					/// <para>Directly generate a package.</para>
-					/// </summary>
-					/// <param name="{std::string}">Buffer, size equal or less than connection::package_size, or it will cut the data.</param>
-					/// <param name="{__package_type}">The package type.</param>
-					/// <param name="{bool}">Is this complete?</param>
-					__package(const std::string&, const __package_type, const bool);
-				};
-
-				const int __package_size_buffer = sizeof(__package);
+			class Connection : Tools::SocketClient {
+				enum class __package_type { DATA = 1, FILE, SYNC, PING, PONG }; // DATA, then FILE is recommended
 
 				// - - - - ESSENTIAL - - - - //
-				ConnectionCore core;
 				NetworkMonitor network_analysis;
-				Logger logg;
-
-				SOCKET connected = INVALID_SOCKET;
-				bool keep_connection = false;
 
 				// - - - - WORKING - - - - //
+				struct __any_package_info {
+					unsigned long long internal_counter = 0; // set exactly before send()
+					unsigned short size = 0;
+					int checksum = 0;
+					__package_type type = __package_type::DATA;
+					Package::priority_level priority = 0;
+					bool finale = false; // if true, there are more packages to combine
+				};
+				struct _conn_package_udp { // UDP has maximum "payload"
+					__any_package_info info;
+					char data[connection::package_size_udp - sizeof(__any_package_info)]{};
+				};
+				struct _conn_packageinfo_tcp { // this + any data size, because TCP is smort
+					__any_package_info info;
+				};
+				// - - - - This creates an interface for any protocol - - - - //
+				class handle_stuff {
+					const Tools::socket::protocol& mode_copy;
+
+					_conn_packageinfo_tcp tcp;
+					Tools::Buffer tcp_buffer;
+
+					_conn_package_udp udp;
+
+					bool has_set = false;
+				public:
+					handle_stuff(const Tools::socket::protocol&);
+
+					// get some bytes from Package. Returns if it was possible to "absorb" anything from Package. Package is automatically "erased". If package is empty, returns false.
+					bool absorb(Package&);
+					// get some bytes from Buffer. Returns true if size was less than the limit (it depends on protocol, see connection namespace)
+					bool absorb(const __package_type&, const Tools::Buffer&);
+
+					// absorbed data is transformed in raw data to send. unsigned long long is the internal package counter that you should ++ every send.
+					Tools::Buffer transform(const unsigned long long);
+				};
 
 				Tools::SuperThread<> thr_send { Tools::superthread::performance_mode::PERFORMANCE };
 				Tools::SuperThread<> thr_recv { Tools::superthread::performance_mode::PERFORMANCE };
 
-				std::atomic<long long> packages_since_sync = 0;
-				std::atomic<unsigned long long> packages_received_trigger_sync = 0;
+				std::vector<Package> received;
+				std::vector<Package> sending;
 
-				// get_next_package_auto() handles these:
-				Tools::SuperMutex send_pkg_mtx;
-				std::vector<std::string> send_pkg_small_priority;
-				std::vector<std::string> send_pkg_small_normal;
-				std::vector<SmartFile> send_pkg_file;
-				Tools::Waiter send_pkg_signal;
-
-				// submit_next_package_recv() handles these:
-				Tools::SuperMutex recv_pkg_mtx;
-				std::vector<Package> recv_pkg_normal;
-				Tools::Waiter recv_pkg_signal;
-
-				Tools::SuperMutex read_over_mtx;
-				std::function<void(Connection&, Package&)> read_over;
-
-				Tools::SuperMutex err_debug_mtx;
-				std::function<void(const std::string&)> err_debug;
-
+				Tools::Waiter recv_event;
+				Tools::Waiter send_queue_update;
 
 				Tools::SuperMutex send_mtx;
 				Tools::SuperMutex recv_mtx;
 
+				// counting_send = this side's count;
+				// counting_send_other_side = other's side return of what it has received (this counting_send's received in other side); 
+				// counting_recv = received counting (used to send so other side save as ..._other_side;
+				// recvs_since_last_sync = this sum every recv, -= trigger_sync_send_thread when bigger that that
+				std::atomic<unsigned long long> counting_send = 0, counting_send_other_side = 0, counting_recv = 0, recvs_since_last_sync = 0;
+				std::atomic<unsigned long long> ping_calc = 0; // used on ping-pong. On pong, this should have the time when ping'ed. If == 0, can send new ping
+				std::atomic<bool> pong_back_please = false; // on ping, this is set to true. Send thread sends pong and set this to false back.
+				unsigned long long counting_recv_last_sync = 0; // when recvs_since_last_sync counts to 10, this is used to copy counting_recv
 
-				bool has_priority_waiting() const;
+				Tools::SuperMutex recv_auto_mtx;
+				std::function<void(Connection&, Package&)> recv_auto;
 
-				Package get_next_priority_auto();
-				Package get_next_package_auto();
+				bool dont_kill_conn = false;
 
-				void submit_next_package_recv(Package&&);
+				Package _send_package_buffer, _recv_package_buffer;
 
-				bool slice_auto(Package&, __package&);
 
-				void format_ping(__package&);
-				bool interpret_ping_recv(const __package&);
+				// get how many packages ahead this is (package count)
+				unsigned long long how_far_ahead_this_is() const;
 
-				__package_type safer_cast_type(const int);
-				bool manage_status_good(const std::string&, const connection::_connection_status&);
+				// if there's a function override, this will return true. If not handled by any function, false.
+				bool recv_auto_is_function(Package&);
 
-				void check_error_disconnect();
-
-				// also debug()
-				void err_f(const std::string&);
+				// automatic send via SocketClient and network analysis add (if good)
+				bool send_count_auto(const Tools::Buffer&);
+				// automatic recv via SocketClient and network analysis add (if good)
+				bool recv_count_auto(Tools::Buffer&, const size_t);
+				
 
 				void handle_send(Tools::boolThreadF);
 				void handle_recv(Tools::boolThreadF);
 
-				bool setup_socket_buffer_send();
-				bool setup_socket_buffer_recv();
-
-				connection::_connection_status auto_send(const __package&);
-				connection::_connection_status auto_recv(__package&);
-
-				connection::_connection_status ensure_send(const char*, const int);
-				connection::_connection_status ensure_recv(char*, const int);
-
-				connection::_connection_status combine(const connection::_connection_status, const connection::_connection_status);
-
 				// starts handle's
 				void init();
+
+				friend class Hosting; // Hosting has Connection's there
+
+				void force_move_from(Tools::SocketClient&&);
 			public:
 				Connection(const Connection&) = delete;
+				void operator=(const Connection&) = delete;
+				void operator=(Connection&&) = delete;
 				Connection(Connection&&) = delete;
+				Connection() = default;
 
-				/// <summary>
-				/// <para>FOR DIRECT HOST SET ONLY. This is not meant to be used if SOCKET is not valid.</para>
-				/// <para>Use at your own risk.</para>
-				/// </summary>
-				/// <param name="{SOCKET}">The RAW SOCKET (winsock) connection.</param>
-				Connection(SOCKET = INVALID_SOCKET);
 				~Connection();
 
 				/// <summary>
 				/// <para>Connects to a URL/IP.</para>
 				/// </summary>
 				/// <param name="{std::string}">The URL/IP.</param>
-				/// <param name="{int}">Port number.</param>
+				/// <param name="{socket::protocol}">UDP (as fast as it can get, but can fail sometimes) or TCP (reliable, but slower)?</param>
+				/// <param name="{unsigned short}">Port number.</param>
 				/// <returns>{bool} True if connected successfully.</returns>
-				bool connect(const std::string & = "127.0.0.1", const int = connection::default_port);
+				bool connect(const std::string& = "localhost", const Tools::socket::protocol& = Tools::socket::protocol::TCP, const u_short = connection::default_port);
 
 				/// <summary>
 				/// <para>Close communication and aux threads.</para>
-				/// <para>WARN: On close, any remaining data to send or data to read is also CLEARED!</para>
 				/// </summary>
 				void close();
 
@@ -382,6 +366,12 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{bool} True if connected.</returns>
 				bool is_connected() const;
+
+				/// <summary>
+				/// <para>Get information about ping, bytes sent, recv, average and so on.</para>
+				/// </summary>
+				/// <returns>{NetworkMonitor} Const reference to actual network info.</returns>
+				const NetworkMonitor& get_network_info() const;
 
 				/// <summary>
 				/// <para>How many Packages in memory received.</para>
@@ -394,18 +384,6 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{size_t} Buffer size.</returns>
 				size_t packages_sending() const;
-
-				/// <summary>
-				/// <para>Buffer load. It can be higher than 1.0 (100%) if too fast.</para>
-				/// </summary>
-				/// <returns>{double} Buffer usage [0.0,inf?]</returns>
-				double buffer_sending_load() const;
-
-				/// <summary>
-				/// <para>Get information about ping, bytes sent, recv, average and so on.</para>
-				/// </summary>
-				/// <returns>{NetworkMonitor} Const reference to actual network info.</returns>
-				const NetworkMonitor& get_network_info() const;
 
 				/// <summary>
 				/// <para>Is there something for me?</para>
@@ -428,34 +406,12 @@ namespace LSW {
 				Package get_next(const bool = true);
 
 				/// <summary>
-				/// <para>Send a package of bytes ahead of everyone. This will come as normal package on the other side, but as fast as it can.</para>
+				/// <para>Send a package.</para>
 				/// </summary>
-				/// <param name="{std::string}">The bytes you want to send.</param>
-				/// <returns>{size_t} Added successfully?.</returns>
-				size_t send_priority_package(const std::string&);
-
-				/// <summary>
-				/// <para>Send a package of bytes.</para>
-				/// <para>PS: If you're planning on sending huge data (big files), you should use SmartFile.</para>
-				/// </summary>
-				/// <param name="{std::string}">The bytes you want to send.</param>
-				/// <returns>{size_t} Current MemoryFile pending size.</returns>
-				size_t send_package(const std::string&);
-
-				/// <summary>
-				/// <para>Send a package of bytes moving so no issues with medium sized data.</para>
-				/// <para>PS: If you're planning on sending huge data (big files), you should use SmartFile.</para>
-				/// </summary>
-				/// <param name="{std::string}">The bytes you want to send.</param>
-				/// <returns>{size_t} Current MemoryFile pending size.</returns>
-				size_t send_package(std::string&&);
-
-				/// <summary>
-				/// <para>Send a package of bytes. May lock if maximum sending buffer has reached.</para>
-				/// </summary>
-				/// <param name="{SmartFile}">The data being sent.</param>
-				/// <returns>{size_t} Current SmartFile vector size.</returns>
-				size_t send_package(SmartFile&&);
+				/// <param name="{Package}">A package to send</param>
+				/// <param name="{bool}">Wait if limit has reached?</param>
+				/// <returns>{unsigned long long} How many packages are in queue (if no queue, returns 1, because this is one in queue).</returns>
+				unsigned long long send_package(Package&&, const bool = true);
 
 				/// <summary>
 				/// <para>Set a function to handle RECV RAW data.</para>
@@ -472,68 +428,56 @@ namespace LSW {
 				void reset_overwrite_reads();
 
 				/// <summary>
-				/// <para>Set a function that receives errors.</para>
-				/// <para>These errors can help you with bugs!</para>
+				/// <para>Get number of packages that came broken (this doesn't count lost or missing packages)</para>
 				/// </summary>
-				/// <param name="{std::function}">The function to show error somewhere.</param>
-				void debug_error_function(std::function<void(const std::string&)> = std::function<void(const std::string&)>());
-
-				/// <summary>
-				/// <para>Force constant performance mode in connection threads.</para>
-				/// <para>This may affect maximum bandwidth.</para>
-				/// </summary>
-				/// <param name="{performance_mode}">Performance mode.</param>
-				void set_mode(const Tools::superthread::performance_mode);
-
-				/// <summary>
-				/// <para>Reset to default performance mode</para>
-				/// </summary>
-				void reset_mode_default();
+				/// <param name="{bool}">Just read or read and reset internal counter?</param>
+				/// <returns>{unsigned long long} Amount of packages that failed on checksum.</returns>
+				unsigned long long get_packet_loss_count(const bool = false);
 			};
 
 			/// <summary>
 			/// <para>This handles host. It will connect and create Connection smart pointers that you can handle later.</para>
 			/// </summary>
 			class Hosting {
-				ConnectionCore core;
-				Logger logg;
+				struct _hostdata {
+					Tools::SocketServer server;
 
-				SOCKET Listening = INVALID_SOCKET;
-				bool keep_connection = false;
+					std::vector<std::shared_ptr<Connection>> conns;
+					Tools::SuperMutex conns_mu;
 
-				size_t max_connections_allowed = 1;
+					Tools::SuperThread<> conns_listen_auto;
+				};
 
-				Tools::SuperThread<> handle_thread{ Tools::superthread::performance_mode::VERY_LOW_POWER };
-				Tools::SuperThread<> handle_disc_thread{ Tools::superthread::performance_mode::EXTREMELY_LOW_POWER };
+				std::unique_ptr<_hostdata> self = std::make_unique<_hostdata>();
 
-				Tools::Waiter connection_event;
-				std::vector<std::shared_ptr<Connection>> connections;
-				mutable Tools::SuperMutex connections_m;
-
-				std::function<void(std::shared_ptr<Connection>)> new_connection_f; // handle new connection automatically
-				std::function<void(const uintptr_t)> disconnected_f; // handle disconnected event automatically
-
-				void handle_disconnects(Tools::boolThreadF);
-				void handle_queue(Tools::boolThreadF);
-
-				void init();
+				void _listen_auto(Tools::boolThreadF);
 			public:
 				Hosting(const Hosting&) = delete;
 				Hosting(Hosting&&) = delete;
+				void operator=(const Hosting&) = delete;
+				void operator=(Hosting&&) = delete;
+
+				Hosting() = default;
 
 				/// <summary>
 				/// <para>Initialize a Host.</para>
 				/// </summary>
-				/// <param name="{int}">Port.</param>
-				/// <param name="{bool}">IPV6?</param>
-				Hosting(const int, const bool = false);
+				/// <param name="{protocol}">Protocol used.</param>
+				/// <param name="{u_short}">Port.</param>
+				Hosting(const Tools::socket::protocol&, const u_short = connection::default_port);
+
+				~Hosting();
+
+				//using Tools::Socket::recv;
+				//using Tools::Socket::send;
 
 				/// <summary>
-				/// <para>Initialize a Host using default port.</para>
+				/// <para>Initialize a Host.</para>
 				/// </summary>
-				/// <param name="{bool}">IPV6?</param>
-				Hosting(const bool = false);
-				~Hosting();
+				/// <param name="{protocol}">Protocol used.</param>
+				/// <param name="{u_short}">Port.</param>
+				/// <returns>{bool} True if successful.</returns>
+				bool start(const Tools::socket::protocol& = Tools::socket::protocol::TCP, const u_short = connection::default_port);
 
 				/// <summary>
 				/// <para>How many clients are connected?</para>
@@ -550,17 +494,18 @@ namespace LSW {
 				/// <para>Is host online?</para>
 				/// </summary>
 				/// <returns>{bool} True if listening and ready.</returns>
-				bool is_connected() const;
+				bool is_running() const;
 
 				/// <summary>
 				/// <para>Sets a limit of connections (won't disconnect if amount connected right now is bigger than this value).</para>
 				/// <para>New connections will connect and disconnect instantly.</para>
 				/// </summary>
 				/// <param name="{size_t}">Maximum amount of connections allowed.</param>
-				void set_connections_limit(const size_t);
+				//void set_connections_limit(const size_t);
 
 				/// <summary>
 				/// <para>Gets a specific connected client connection [0..size()-1].</para>
+				/// <para>PS: The Connection object is created when this function is called. The actual socket information that is shared.</para>
 				/// </summary>
 				/// <param name="{size_t}">The connection position in vector.</param>
 				/// <returns>{std::shared_ptr} The connection smart pointer.</returns>
@@ -571,50 +516,10 @@ namespace LSW {
 				/// </summary>
 				/// <returns>{std::shared_ptr} The connection smart pointer.</returns>
 				std::shared_ptr<Connection> get_latest_connection();
-
-				/// <summary>
-				/// <para>Set a function to handle new connections directly.</para>
-				/// <para>PS: This received the shared pointer exactly before adding into the vector!</para>
-				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
-				/// </summary>
-				/// <param name="{std::function}">The function to handle new connections.</param>
-				void on_new_connection(std::function<void(std::shared_ptr<Connection>)>);
-
-				/// <summary>
-				/// <para>Erase current new connection custom function.</para>
-				/// </summary>
-				void reset_on_new_connection();
-
-				/// <summary>
-				/// <para>Set a function to handle disconnections directly.</para>
-				/// <para>PS: This received the uintptr_t exactly before deleting from vector!</para>
-				/// <para>PS: DO NOT SET A FUNCTION THAT CAN POTENTIALLY LOCK!</para>
-				/// </summary>
-				/// <param name="{std::function}">The function to handle disconnections.</param>
-				void on_connection_close(std::function<void(const uintptr_t)>);
-
-				/// <summary>
-				/// <para>Erase current connection close custom function.</para>
-				/// </summary>
-				void reset_on_connection_close();
 			};
 
-			/// <summary>
-			/// <para>Transforms anything to std::string directly for you (using memcpy_s).</para>
-			/// </summary>
-			/// <param name="{void*}">Some data.</param>
-			/// <param name="{size_t}">Data's size.</param>
-			/// <returns>{std::string} This data 'converted' to a string.</returns>
-			std::string transform_any_to_package(void*, const size_t);
+			int checksum_fast(const char*, const size_t, const unsigned short = 100);
 
-			/// <summary>
-			/// <para>Transforms back a package 'converted' via transform_any_to_package.</para>
-			/// </summary>
-			/// <param name="{void*}">Data to be written.</param>
-			/// <param name="{size_t}">Data size.</param>
-			/// <param name="{std::string}">The string data to read from.</param>
-			/// <returns>{bool} True on success.</returns>
-			bool transform_any_package_back(void*, const size_t, const std::string&);
 		}
 	}
 }

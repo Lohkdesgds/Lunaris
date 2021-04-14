@@ -4,6 +4,7 @@
 Some might depend on Handling-classified headers.
 */
 
+#include "Buffer/buffer.h"
 #include "Common/common.h"
 #include "Stopwatch/stopwatch.h"
 #include "FastFunction/fastfunction.h"
@@ -11,6 +12,7 @@ Some might depend on Handling-classified headers.
 #include "Any/any.h"
 #include "Future/future.h"
 #include "AdvancedShared/advancedshared.h"
+#include "Socket/socket.h"
 
 #include "SuperMutex/supermutex.h"
 #include "SuperPair/superpair.h"

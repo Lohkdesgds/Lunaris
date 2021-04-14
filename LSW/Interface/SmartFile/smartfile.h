@@ -5,6 +5,7 @@
 // Others
 #include "../../Handling/Initialize/initialize.h"
 #include "../../Handling/Path/path.h"
+#include "../../Tools/Buffer/buffer.h"
 #include "../../Tools/Common/common.h"
 
 
@@ -133,26 +134,26 @@ namespace LSW {
 				/// <summary>
 				/// <para>Read some bytes from file.</para>
 				/// </summary>
-				/// <param name="{std::string}">Buffer to write.</param>
+				/// <param name="{Buffer}">Buffer to write.</param>
 				/// <param name="{size_t}">Bytes.</param>
 				/// <returns>{size_t} Bytes read.</returns>
-				size_t read(std::string&, const size_t);
+				size_t read(Tools::Buffer&, const size_t);
 
 				/// <summary>
 				/// <para>Read until reaches a character (included in copy) (slower).</para>
 				/// </summary>
-				/// <param name="{std::string}">Buffer to write.</param>
+				/// <param name="{Buffer}">Buffer to write.</param>
 				/// <param name="{char}">The stop character.</param>
 				/// <returns>{size_t} Bytes read.</returns>
-				size_t read_until(std::string&, const char);
+				size_t read_until(Tools::Buffer&, const char);
 
 				/// <summary>
 				/// <para>Writes some data to the file.</para>
 				/// </summary>
-				/// <param name="{std::string}">Data.</param>
+				/// <param name="{Buffer}">Data.</param>
 				/// <param name="{size_t}">Max bytes (0 = all).</param>
 				/// <returns>{size_t} Bytes written.</returns>
-				size_t write(const std::string&, const size_t = 0);
+				size_t write(const Tools::Buffer&, const size_t = 0);
 			};
 
 			/// <summary>

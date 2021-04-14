@@ -202,8 +202,10 @@ namespace LSW {
 				const auto scale_g = get_direct<double>(sprite::e_double::SCALE_G);
 				const auto scale_x = get_direct<double>(sprite::e_double::SCALE_X);
 				const auto scale_y = get_direct<double>(sprite::e_double::SCALE_Y);
-				const auto posx = get_direct<double>(sprite::e_double_readonly::POSX);
-				const auto posy = get_direct<double>(sprite::e_double_readonly::POSY);
+				const auto spot_x = get_direct<double>(sprite::e_double::CENTER_X); // spot where this is set to draw and rotate on
+				const auto spot_y = get_direct<double>(sprite::e_double::CENTER_Y); // spot where this is set to draw and rotate on
+				const auto offset_x = get_direct<double>(sprite::e_double_readonly::POSX); // offset of that point (center)
+				const auto offset_y = get_direct<double>(sprite::e_double_readonly::POSY); // offset of that point (center)
 				const auto font_siz = fontt.get_line_height();
 				const auto lineadj = get_direct<double>(text::e_double::LINE_ADJUST);
 				const auto force_color = get_direct<bool>(text::e_boolean::USE_COLOR_INSTEAD_OF_AUTO);
@@ -211,35 +213,55 @@ namespace LSW {
 				const double t_rotation_rad = get_direct<double>(sprite::e_double_readonly::ROTATION) * ALLEGRO_PI / 180.0;
 				double p_rotation_rad = 0.0;
 
+				auto& ruler_camera_classic = ruler.get_classic();
+
 				if (font_siz <= 0) throw Handling::Abort(__FUNCSIG__, "Invalid font size! Please fix text::e_integer::FONT_SIZE.", Handling::abort::abort_level::GIVEUP);
 
 				{
 					auto fl = get_direct<Sprite_Base>(text::e_sprite_ref::FOLLOWING); // safer
-					if (get_direct<bool>(sprite::e_boolean::AFFECTED_BY_CAM) && !fl.is_eq_s<bool>(sprite::e_boolean::AFFECTED_BY_CAM, *this)) {
+					/*if (get_direct<bool>(sprite::e_boolean::AFFECTED_BY_CAM) && fl.is_eq_s<bool>(sprite::e_boolean::AFFECTED_BY_CAM, *this)) {
 						fl.get(sprite::e_double_readonly::REALISTIC_RESULT_POSX, off_x);
 						fl.get(sprite::e_double_readonly::REALISTIC_RESULT_POSY, off_y);
 					}
 					else {
 						fl.get(sprite::e_double_readonly::POSX, off_x);
 						fl.get(sprite::e_double_readonly::POSY, off_y);
+					}*/
+
+					fl.get(sprite::e_double_readonly::POSX, off_x);
+					fl.get(sprite::e_double_readonly::POSY, off_y);
+
+					if (fl.is_eq_s<bool>(sprite::e_boolean::AFFECTED_BY_CAM, *this)) {
+						double c_off_x = (off_x * cos(ruler_camera_classic.rot)) - (off_y * sin(ruler_camera_classic.rot));
+						double c_off_y = (off_y * cos(ruler_camera_classic.rot)) + (off_x * sin(ruler_camera_classic.rot));
+
+						off_x = c_off_x; // copy because affects y calc
+						off_y = c_off_y; // copy because affects y calc
 					}
+
 					fl.get(sprite::e_double_readonly::ROTATION, p_rotation_rad);
 					//set(sprite::e_boolean::AFFECTED_BY_CAM, fl.get_direct<bool>(sprite::e_boolean::AFFECTED_BY_CAM));
 					p_rotation_rad *= ALLEGRO_PI / 180.0;
 				}
 
-				const double rotation_rad = t_rotation_rad + p_rotation_rad;
-
 				const bool should_care_about_shadow = (s_dist_x != 0.0 || s_dist_y != 0.0);
+
+				const double rotation_rad = t_rotation_rad + p_rotation_rad;
+				//const double total_rotation_rad = ruler_camera_classic.rot + rotation_rad;
+
+
 
 				double pos_now[2]{};
 
-				pos_now[0] = (((posx)*cos(p_rotation_rad)) - ((posy)*sin(p_rotation_rad)) + off_x); // transformed to sprite's coords
-				pos_now[1] = (((posy)*cos(p_rotation_rad)) + ((posx)*sin(p_rotation_rad)) + off_y); // transformed to sprite's coords
+				pos_now[0] = (((spot_x)*cos(p_rotation_rad)) - ((spot_y)*sin(p_rotation_rad)) + off_x); // transformed to sprite's coords
+				pos_now[1] = (((spot_y)*cos(p_rotation_rad)) + ((spot_x)*sin(p_rotation_rad)) + off_y); // transformed to sprite's coords
 
+				//pos_now[0] = spot_x + (off_x); // transformed to sprite's coords
+				//pos_now[1] = spot_y + (off_y); // transformed to sprite's coords
 
+				//pos_now[0] = ((pos_now[0])*cos(total_rotation_rad)) + ((pos_now[1])*sin(total_rotation_rad));
+				//pos_now[1] = ((pos_now[1])*cos(total_rotation_rad)) + ((pos_now[0])*sin(total_rotation_rad));
 
-				auto& cls = ruler.get_classic();
 				double csx, csy;
 
 				csx = scale_g * scale_x / font_siz;
@@ -252,12 +274,14 @@ namespace LSW {
 
 				if (should_care_about_shadow) {
 					shadow_cam = ruler;
-					shadow_cam.classic_transform((cls.x - pos_now[0] - s_dist_x) / csx, (cls.y - pos_now[1] - s_dist_y) / csy, cls.sx * csx, cls.sy * csy, cls.rot + rotation_rad);
+					shadow_cam.classic_transform((ruler_camera_classic.x - pos_now[0] - s_dist_x) / csx, (ruler_camera_classic.y - pos_now[1] - s_dist_y) / csy, ruler_camera_classic.sx * csx, ruler_camera_classic.sy * csy, ruler_camera_classic.rot + rotation_rad);
 				}
-				ruler.classic_transform((cls.x - pos_now[0]) / csx, (cls.y - pos_now[1]) / csy, cls.sx * csx, cls.sy * csy, cls.rot + rotation_rad);
+				ruler.classic_transform((ruler_camera_classic.x - pos_now[0]) / csx, (ruler_camera_classic.y - pos_now[1]) / csy, ruler_camera_classic.sx * csx, ruler_camera_classic.sy * csy, ruler_camera_classic.rot + rotation_rad);
 
 				ruler.apply();
 
+				const double curr_offset_x = offset_x * 1.0 / csx;
+				const double curr_offset_y = offset_y * 1.0 / csy;
 
 				const double compensate = 0.5 * fontt.get_line_height();
 				const double height = lineadj * fontt.get_line_height();
@@ -268,14 +292,14 @@ namespace LSW {
 
 					if (should_care_about_shadow) {
 						shadow_cam.apply();
-						fontt.draw(s_col, 0.0, -compensate + height * o - y_offset, mode, i.s_str());
+						fontt.draw(s_col, curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i.s_str());
 						ruler.apply();
 					}
 					if (force_color) {
-						fontt.draw(n_col, 0.0, -compensate + height * o - y_offset, mode, i.s_str());
+						fontt.draw(n_col, curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i.s_str());
 					}
 					else {
-						fontt.draw(0.0, -compensate + height * o - y_offset, mode, i);
+						fontt.draw(curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i);
 					}
 				}
 

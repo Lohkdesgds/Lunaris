@@ -11,7 +11,8 @@
 
 #pragma comment (lib, "wininet.lib")
 
-// + future
+#include "../../Tools/Buffer/buffer.h"
+#include "../../Tools/Future/future.h"
 #include "../../Tools/SuperThread/superthread.h"
 
 
@@ -24,8 +25,8 @@ namespace LSW {
 			}
 
 			class Downloader {
-				std::shared_ptr<std::string> buf = std::make_shared<std::string>();
-				Tools::SuperThread<std::shared_ptr<std::string>> thr{ Tools::superthread::performance_mode::HIGH_PERFORMANCE };
+				std::shared_ptr<Tools::Buffer> buf = std::make_shared<Tools::Buffer>();
+				Tools::SuperThread<std::shared_ptr<Tools::Buffer>> thr{ Tools::superthread::performance_mode::HIGH_PERFORMANCE };
 				size_t TotalBytesRead = 0;
 
 				bool _get(const std::string&, std::function<bool(void)>);
@@ -33,7 +34,7 @@ namespace LSW {
 				~Downloader();
 
 				/// <summary>
-				/// <para>Download content from this URL and stores in a internal buffer.</para>
+				/// <para>Download content from this URL and stores in a internal Buffer.</para>
 				/// </summary>
 				/// <param name="{std::string}">The URL.</param>
 				/// <returns>{bool} True if succeess.</returns>
@@ -44,7 +45,7 @@ namespace LSW {
 				/// </summary>
 				/// <param name="{std::string}">The URL.</param>
 				/// <returns>{Future} The data downloaded.</returns>
-				Tools::Future<std::shared_ptr<std::string>> get_async(const std::string&);
+				Tools::Future<std::shared_ptr<Tools::Buffer>> get_async(const std::string&);
 
 				/// <summary>
 				/// <para>Total bytes in memory right now (might not be 100% accurate).</para>
@@ -53,10 +54,10 @@ namespace LSW {
 				size_t bytes_read() const;
 
 				/// <summary>
-				/// <para>Reads data from buffer.</para>
+				/// <para>Reads data from Buffer.</para>
 				/// </summary>
-				/// <returns>{std::string} Constant reference to buffer.</returns>
-				const std::string& read() const;
+				/// <returns>{Buffer} Constant reference to Buffer.</returns>
+				const Tools::Buffer& read() const;
 			};
 		}
 	}

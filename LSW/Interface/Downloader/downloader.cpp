@@ -47,9 +47,9 @@ namespace LSW {
 				return _get(url, [] {return true; });
 			}
 			
-			Tools::Future<std::shared_ptr<std::string>> Downloader::get_async(const std::string& url)
+			Tools::Future<std::shared_ptr<Tools::Buffer>> Downloader::get_async(const std::string& url)
 			{
-				if (thr.running()) return Tools::fake_future<std::shared_ptr<std::string>>(std::shared_ptr<std::string>());
+				if (thr.running()) return Tools::fake_future<std::shared_ptr<Tools::Buffer>>(std::shared_ptr<Tools::Buffer>());
 				thr.join();
 				thr.set([&, url](Tools::boolThreadF f) { _get(url, f); return buf; });
 				return thr.start();
@@ -60,7 +60,7 @@ namespace LSW {
 				return TotalBytesRead;
 			}
 			
-			const std::string& Downloader::read() const
+			const Tools::Buffer& Downloader::read() const
 			{
 				return *buf.get();
 			}

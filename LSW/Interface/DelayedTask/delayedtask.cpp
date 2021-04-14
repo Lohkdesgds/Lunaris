@@ -46,7 +46,7 @@ namespace LSW {
 						// cleanup solo threads
 						for (size_t p = 0; p < solo_delayed.size(); p++) {
 							const auto& i = solo_delayed[p];
-							if (!i.running()) {
+							if (!i.running()) {								
 								solo_delayed.erase(solo_delayed.begin() + p--);
 							}
 						}

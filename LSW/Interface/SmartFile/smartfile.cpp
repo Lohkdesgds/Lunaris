@@ -155,7 +155,7 @@ namespace LSW {
 
 			bool SmartFile::eof() const
 			{
-				return eoff;
+				return !fp || eoff;
 			}
 
 			void SmartFile::seek(const int64_t off, const smartfile::file_seek point)
@@ -164,7 +164,7 @@ namespace LSW {
 				eoff = al_feof(fp);
 			}
 
-			size_t SmartFile::read(std::string& buf, const size_t siz)
+			size_t SmartFile::read(Tools::Buffer& buf, const size_t siz)
 			{
 				if (!fp) { return 0; }
 				if (al_feof(fp)) { eoff = true; return 0; }
@@ -182,7 +182,7 @@ namespace LSW {
 				return readd;
 			}
 
-			size_t SmartFile::read_until(std::string& buf, const char stop)
+			size_t SmartFile::read_until(Tools::Buffer& buf, const char stop)
 			{
 				if (!fp) { return 0; }
 				if (al_feof(fp)) { eoff = true; return 0; }
@@ -198,14 +198,14 @@ namespace LSW {
 						break;
 					}
 					ch = static_cast<char>(cc);
-					buf += ch;
+					buf.push_back(ch);
 					readd++;
 				}
 
 				return readd;
 			}
 
-			size_t SmartFile::write(const std::string& buf, const size_t s)
+			size_t SmartFile::write(const Tools::Buffer& buf, const size_t s)
 			{
 				if (!fp) return 0;
 				return al_fwrite(fp, buf.data(), s ? s : buf.size());

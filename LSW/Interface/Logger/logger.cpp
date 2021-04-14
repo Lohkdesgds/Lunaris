@@ -246,6 +246,11 @@ namespace LSW {
 				cstr = (format + o).c_str();
 				return (this->operator<<(cstr));
 			}
+
+			Logger& Logger::operator<<(const Tools::Buffer& o)
+			{				
+				return (this->operator<<(o.cast_as_string())); // cast to std::string and go
+			}
 			
 			Logger& Logger::operator<<(const char o[])
 			{

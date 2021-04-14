@@ -4,81 +4,6 @@ namespace LSW {
 	namespace v5 {
 		namespace Interface {
 
-			bool ConnectionCore::initialize(const std::string& ip_str, const int port, const connection::connection_type contype)
-			{
-				if (init) return true;
-
-				if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-				{
-					failure = true;
-					return false;
-				}
-
-				struct addrinfo hints {};
-
-				SecureZeroMemory(&hints, sizeof(hints));
-				if (contype != connection::connection_type::CLIENT) hints.ai_family = contype == connection::connection_type::HOST_IPV6 ? AF_INET6 : AF_INET;
-				else hints.ai_family = AF_UNSPEC;
-				hints.ai_socktype = SOCK_STREAM;
-				hints.ai_protocol = IPPROTO_TCP;
-				if (contype != connection::connection_type::CLIENT) hints.ai_flags = AI_PASSIVE;
-
-				// Resolve the server address and port
-				if (getaddrinfo(ip_str.empty() ? nullptr : ip_str.c_str(), Tools::sprintf_a("%d", port).c_str(), &hints, &result) != 0) return [&] {failure = true; return false; }();
-
-				init = true;
-				return true;
-			}
-
-			bool ConnectionCore::as_client(SOCKET& ConnectSocket)
-			{
-				if (failure || !init) return false;
-
-				struct addrinfo* ptr = NULL;
-
-				// Attempt to connect to an address until one succeeds
-				for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-
-					// Create a SOCKET for connecting to server
-					ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-						ptr->ai_protocol);
-					if (ConnectSocket == INVALID_SOCKET) return false;
-
-					// Connect to server.
-					if (connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen) == SOCKET_ERROR) {
-						closesocket(ConnectSocket);
-						ConnectSocket = INVALID_SOCKET;
-						continue;
-					}
-					break;
-				}
-
-				freeaddrinfo(result);
-
-				if (ConnectSocket == INVALID_SOCKET) return false;
-				// connected
-				return true;
-			}
-
-			bool ConnectionCore::as_host(SOCKET& ListenSocket)
-			{
-				if (failure || !init) return false;
-
-				ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-				if (ListenSocket == INVALID_SOCKET) return false;
-
-				// Setup the TCP listening socket
-				if (bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR) {
-					freeaddrinfo(result);
-					closesocket(ListenSocket);
-					return false;
-				}
-
-				freeaddrinfo(result);
-				// ready to listen
-				return true;
-			}
-
 			void NetworkMonitor::__avg_task(nm_transf& n)
 			{
 				// this function is called once a sec, so current_added is how many bytes were added in the last sec
@@ -145,6 +70,17 @@ namespace LSW {
 				sending._bytes_coming = 0;
 				recving.first_update_ms = recving.last_update_ms = recving.peak_bytes_per_second = recving.bytes = recving.current_bytes_per_sec = 0;
 				recving._bytes_coming = 0;
+				packet_loss_count = 0;
+			}
+
+			void NetworkMonitor::packet_loss_add()
+			{
+				packet_loss_count++;
+			}
+
+			unsigned long long NetworkMonitor::packet_loss_total() const
+			{
+				return packet_loss_count;
 			}
 
 			// ping stuff
@@ -228,188 +164,129 @@ namespace LSW {
 				return any_get_average_total(recving);
 			}
 
-			Package::Package(Package&& pkg)
+
+			Package::Package(Package&& oth)
 			{
-				*this = std::move(pkg);
+				(*this) = std::move(oth);
 			}
 
-			bool Package::has_data() const
+			void Package::operator=(Package&& oth)
 			{
-				return small_data.size() || big_file.is_open();
+				file = std::move(oth.file);
+				data = std::move(oth.data);
+				priority = oth.priority;
 			}
 
-			void Package::operator=(Package&& pkg)
+			Package::Package(const char* str, const priority_level pri)
 			{
-				big_file = std::move(pkg.big_file);
-				small_data = std::move(pkg.small_data);
-				type = pkg.type;
+				data = str;
+				priority = pri;
 			}
 
-			Connection::__package::__package(const std::string& str, const __package_type t, const bool en)
+			Package::Package(const std::string& str, const priority_level pri)
 			{
-				info.type = static_cast<int>(t);
-				info.has_more = en;
-				info.len = static_cast<int>(str.size() < connection::package_size ? str.size() : connection::package_size);
-				std::copy(str.begin(), str.begin() + info.len, data.buffer);
+				priority = pri;
+				data = str;
 			}
 
-
-			bool Connection::has_priority_waiting() const
+			Package::Package(const Tools::Buffer& vec, const priority_level pri)
 			{
-				return send_pkg_small_priority.size();
+				priority = pri;
+				data = vec;
 			}
 
-			Package Connection::get_next_priority_auto()
+			Package::Package(const char* str, SmartFile&& fp, const priority_level pri)
 			{
-				Package pkg;
-
-				Tools::AutoLock l(send_pkg_mtx);
-
-				if (send_pkg_small_priority.size()) {
-					pkg.small_data = std::move(send_pkg_small_priority.front());
-					send_pkg_small_priority.erase(send_pkg_small_priority.begin());
-					pkg.type = static_cast<int>(__package_type::PRIORITY_PACKAGE_SMALL);
-				}
-
-				return pkg;
+				data = str;
+				priority = pri;
+				file = std::move(fp);
 			}
 
-			Package Connection::get_next_package_auto()
+			Package::Package(const std::string& str, SmartFile&& fp, const priority_level pri)
 			{
-				Package pkg;
-
-				Tools::AutoLock l(send_pkg_mtx);
-
-				/*if (send_pkg_small_priority.size()) { // handled by get_next_priority_auto()
-					pkg.small_data = std::move(send_pkg_small_priority.front());
-					send_pkg_small_priority.erase(send_pkg_small_priority.begin());
-					pkg.type = static_cast<int>(__package_type::PRIORITY_PACKAGE_SMALL);
-				}
-				else */
-				if (send_pkg_small_normal.size()) {
-					pkg.small_data = std::move(send_pkg_small_normal.front());
-					send_pkg_small_normal.erase(send_pkg_small_normal.begin());
-					pkg.type = static_cast<int>(__package_type::PACKAGE_SMALL);
-				}
-				else if (send_pkg_file.size()) {
-					pkg.big_file = std::move(send_pkg_file.front());
-					send_pkg_file.erase(send_pkg_file.begin());
-					pkg.type = static_cast<int>(__package_type::PACKAGE_FILE);
-				}
-
-				return pkg;
+				data = str;
+				priority = pri;
+				file = std::move(fp);
 			}
 
-			void Connection::submit_next_package_recv(Package&& pkg)
+			Package::Package(const Tools::Buffer& vec, SmartFile&& fp, const priority_level pri)
 			{
-				if (read_over) {
-					Tools::AutoLock lr(read_over_mtx);
-					if (read_over) {
-						read_over(*this, pkg); // this hadles now
-						pkg = Package{}; // reset
-						return;
-					}
-				}
-
-				Tools::AutoLock l(recv_pkg_mtx);
-				recv_pkg_normal.push_back(std::move(pkg));
-				recv_pkg_signal.signal_one();
+				priority = pri;
+				data = vec;
+				file = std::move(fp);
 			}
 
-			bool Connection::slice_auto(Package& pkg, __package& sml)
+			void Package::set(SmartFile&& fp)
 			{
-				if (!pkg.has_data()) return false;
-
-				if (!pkg.small_data.empty()) {
-					auto& easy = pkg.small_data;
-
-					sml.info.type = pkg.type;
-					sml.info.has_more = easy.size() > connection::package_size;
-					sml.info.len = static_cast<int>(easy.size() > connection::package_size ? connection::package_size : easy.size());
-					std::copy(easy.begin(), easy.begin() + sml.info.len, sml.data.buffer);
-					easy.erase(easy.begin(), easy.begin() + sml.info.len);
-				}
-				else if (!pkg.big_file.eof()) {
-					std::string buf;
-
-					sml.info.type = pkg.type;
-					sml.info.len = static_cast<int>(pkg.big_file.read(buf, connection::package_size));
-					sml.info.has_more = !pkg.big_file.eof();
-					std::copy(buf.begin(), buf.begin() + sml.info.len, sml.data.buffer);
-				}
-
-				return true;
+				file = std::move(fp);
 			}
 
-			void Connection::format_ping(__package& pkg)
+			void Package::set(const std::string& str)
 			{
-				pkg.info.has_more = false;
-				pkg.info.type = static_cast<int>(__package_type::PING);
-
-				std::string buf = std::to_string(Tools::now());
-				std::copy(buf.begin(), buf.end(), pkg.data.buffer); // sure this is not bigger than package size, no doubt
-				pkg.info.len = static_cast<int>(buf.size());
+				std::copy(str.begin(), str.end(), data.begin());
 			}
 
-			bool Connection::interpret_ping_recv(const __package& pkg)
+			void Package::set(const Tools::Buffer& vec)
 			{
-				if (pkg.info.type != static_cast<int>(__package_type::PONG)) return false;
-
-				unsigned long long _now = Tools::now();
-
-				unsigned long long here{};
-				if (sscanf_s(pkg.data.buffer, "%llu", &here) != 1) return false;
-
-				network_analysis.ping_new(_now - here);
-				return true;
+				data = vec;
 			}
 
-			Connection::__package_type Connection::safer_cast_type(const int i)
+			void Package::set(const priority_level pri)
 			{
-				if (i < 1 || i > static_cast<int>(__package_type::_FAILED)) return __package_type::_FAILED;
-				return static_cast<__package_type>(i);
+				priority = pri;
 			}
 
-			bool Connection::manage_status_good(const std::string& socket_identification, const connection::_connection_status& st)
+			const SmartFile& Package::get_file() const
 			{
-				switch (st) {
-				case connection::_connection_status::DISCONNECTED:
-					err_f(socket_identification + "&6Disconnected!");
-					keep_connection = false;
-					closesocket(connected);
-					thr_send.stop();
-					thr_recv.stop();
-					return false;
-				case connection::_connection_status::FAILED:
-					err_f(socket_identification + "&cFAILED ONCE, CORRUPTED DATA!");
-					return false;
-				}
-				return true;
+				return file;
 			}
 
-			void Connection::check_error_disconnect()
+			SmartFile& Package::get_file()
 			{
-				int err = WSAGetLastError();
-				if (err == WSAECONNRESET) {
-					keep_connection = false;
-					closesocket(connected);
-					thr_send.stop();
-					thr_recv.stop();
-				}
+				return file;
+			}
+			
+			SmartFile&& Package::cut_file()
+			{
+				return std::move(file);
+			}
+			
+			const Tools::Buffer& Package::get_data() const
+			{
+				return data;
+			}
+			
+			Tools::Buffer& Package::get_data()
+			{
+				return data;
+			}
+			
+			std::string Package::get_string() const
+			{
+				std::string str;
+				str.resize(data.size());
+				std::copy(data.begin(), data.end(), str.begin());
+				return str;
 			}
 
-			void Connection::err_f(const std::string& str)
+			std::string Package::get_string()
 			{
-				debug(str);
-				if (!err_debug) return;
-				Tools::AutoLock l(err_debug_mtx);
-				if (err_debug) err_debug(str);
+				std::string str;
+				str.resize(data.size());
+				std::copy(data.begin(), data.end(), str.begin());
+				return str;
 			}
+
+			bool Package::empty() const
+			{
+				return data.empty() && !file.is_open();
+			}
+
 
 			void Connection::handle_send(Tools::boolThreadF run)
 			{
-				const std::string socket_identification = "&1" + Tools::sprintf_a("%05" PRIu64, Tools::get_thread_id()) + "&9SOCKET&8#&6" + Tools::sprintf_a("%05" PRIx64, connected) + " &d - SEND -> &b";
-				debug(socket_identification + "&aHANDLE CONNECTION STARTED SEND");
+				Logger logg;
+				_send_package_buffer = {};
 
 				bool should_ping = true;
 				EventTimer timm(connection::pinging_time);
@@ -420,291 +297,679 @@ namespace LSW {
 					if (re.timer_event().source == timm) {
 						should_ping = true;
 					}
-					});
+				});
 				timm.start();
 
-				packages_since_sync = 0;
+				handle_stuff handling{ this->get_protocol() };
 
-				if (!setup_socket_buffer_send()) {
-					debug(socket_identification + "Can't set buffer size");
-				}
-
-				std::vector<Package> next_task;
-				bool last_was_task = false;
-
-				while ((last_was_task || run()) && keep_connection) {
+				while (run())
+				{
 					try {
-						last_was_task = false;
+						const auto far_ahead = how_far_ahead_this_is();
 
-						if (packages_since_sync >= static_cast<long long>(connection::trigger_sync_send_thread)) // trigger slowdown
-						{
-							auto diff = connection::trigger_sync_multiplier_slowdown * packages_since_sync - connection::trigger_sync_send_thread;
+						// slow down if not in sync
+						if (far_ahead > connection::trigger_sync_send_thread) {
+							//std::cout << "slowdown" << std::endl;
+							auto diff = connection::trigger_sync_multiplier_slowdown * far_ahead - connection::trigger_sync_send_thread;
 							if (diff > connection::trigger_max_time_allowed) diff = connection::trigger_max_time_allowed;
 							Tools::sleep_for(std::chrono::milliseconds(diff));
 						}
 
-						__package go;
-						bool good_to_go = false;
+						__any_package_info info;
+						bool good_to_send = false;
 
-						if (packages_received_trigger_sync >= connection::trigger_sync_send_thread) // somewhat important. RECEIVED REACHED LIMIT, SEND UPDATE!
+						if (recvs_since_last_sync >= connection::trigger_sync_send_thread && counting_recv_last_sync != counting_recv)
 						{
-							packages_received_trigger_sync -= connection::trigger_sync_send_thread;
+							recvs_since_last_sync -= connection::trigger_sync_send_thread;
+							counting_recv_last_sync = counting_recv; // update that on other side, "I'm at XXX"
 
-							go.info.has_more = false;
-							go.info.type = static_cast<int>(__package_type::SIGNAL);
-
-							good_to_go = true;
+							good_to_send = handling.absorb(__package_type::SYNC, { (const char*)&counting_recv_last_sync, sizeof(counting_recv_last_sync) });
 						}
-						else if (should_ping) // somewhat important
+						else if (pong_back_please)
+						{
+							pong_back_please = false;
+
+							good_to_send = handling.absorb(__package_type::PONG, {});
+						}
+						else if (should_ping && ping_calc == 0) // 0 == did pong
 						{
 							should_ping = false;
-							format_ping(go);
-							good_to_go = true;
-						}
-						else if (has_priority_waiting() && next_task.size() < connection::limit_packages_stuck_send) // can't be too big!
-						{
-							next_task.insert(next_task.begin() + (next_task.size() ? (next_task.size() - 1) : 0), std::move(get_next_priority_auto())); // automatic insert
-							debug(socket_identification + "PRIORITY GOT AHEAD OF CURRENT TASK. TASKING PRIORITY NOW.");
-							send_pkg_signal.signal_one();
-						}
-						else if (next_task.size() && next_task.front().has_data()) // still has data
-						{
-							good_to_go = slice_auto(next_task.front(), go);
+							ping_calc = Tools::now();
 
-							if (!next_task.front().has_data()) debug(socket_identification + "ABOUT TO COMPLETE ONE MORE SEND TYPE #" + std::to_string(next_task.front().type));
-							//else debug(socket_identification + "SENDING FILE SLICE #" + std::to_string(next_pkg_ready.type));
+							good_to_send = handling.absorb(__package_type::PING, {});
 						}
-						else // get next important task
+						else if (_send_package_buffer.empty()) // if no package, get one or continue
 						{
-							if (next_task.size()) next_task.erase(next_task.begin());
-
-							if (next_task.empty()) {
-								next_task.push_back(std::move(get_next_package_auto()));
-								send_pkg_signal.signal_one();
+							if (sending.size() == 0) {
+								std::this_thread::yield();
+								send_queue_update.wait_signal(50);
+								continue; // nothing to do
 							}
+
+							Tools::AutoLock l(send_mtx);
+
+							_send_package_buffer = std::move(sending.front());
+							sending.erase(sending.begin());
+							continue;
+						}
+						else if (!_send_package_buffer.empty())
+						{
+							good_to_send = handling.absorb(_send_package_buffer);
+						}
+
+
+
+						/*_conn_package_udp small;
+
+
+						if (recvs_since_last_sync >= connection::trigger_sync_send_thread)
+						{
+							recvs_since_last_sync -= connection::trigger_sync_send_thread;
+							unsigned long long res = counting_recv; // update that on other side, "I'm at XXX"
+							//std::cout << "sync #" << res << std::endl;
+
+							std::copy((char*)&res, (char*)&res + sizeof(res), (char*)small.data);
+							small.info.finale = true;
+							small.info.size = sizeof(res);
+							small.info.type = __package_type::SYNC;
+						}
+						else if (pong_back_please) 
+						{
+							pong_back_please = false;
+
+							small.info.finale = true;
+							small.info.size = 0;
+							small.info.type = __package_type::PONG;
+						}
+						else if (should_ping && ping_calc == 0) // 0 == did pong
+						{
+							should_ping = false;
+							ping_calc = Tools::now();
+
+							small.info.finale = true;
+							small.info.size = 0;
+							small.info.type = __package_type::PING;
+						}
+						else if (_send_package_buffer.empty()) // if no package, get one or continue
+						{
+							if (sending.size() == 0) {
+								std::this_thread::yield();
+								continue; // nothing to do
+							}
+
+							Tools::AutoLock l(send_mtx);
+
+							_send_package_buffer = std::move(sending.front());
+							sending.erase(sending.begin());
+							continue;
+						}
+						else // has package to send.
+						{
+
+
+							small.info.priority = _send_package_buffer.priority; // priority
+
+							if (_send_package_buffer.data.size()) {
+								small.info.type = __package_type::DATA; // type
+
+								size_t len_copying = _send_package_buffer.data.size();
+								if (len_copying > sizeof(small.data)) len_copying = sizeof(small.data);
+								small.info.size = static_cast<unsigned short>(len_copying); // size
+
+								std::copy(_send_package_buffer.data.begin(), _send_package_buffer.data.begin() + len_copying, (char*)small.data); // data
+								_send_package_buffer.data.erase(_send_package_buffer.data.begin(), _send_package_buffer.data.begin() + len_copying);
+
+								small.info.finale = _send_package_buffer.data.size() == 0 && _send_package_buffer.file.eof(); // has more? // BIG OBSERVATION: FILE EOF BECAUSE IF THERE'S FILE, THIS IS NOT THE END!!!!!!!!! <<<<<<<<< LOOK, DON'T FORGET!!!!
+							}
+							else if (!_send_package_buffer.file.eof()) {
+								small.info.type = __package_type::FILE; // type
+
+								Tools::Buffer _temp;
+								small.info.size = static_cast<unsigned short>(_send_package_buffer.file.read(_temp, sizeof(small.data))); // size
+
+								std::copy(_temp.begin(), _temp.end(), (char*)small.data); // data
+
+								small.info.finale = _send_package_buffer.file.eof(); // has more?
+							}
+							else {
+								_send_package_buffer = {};
+								logg << L::SLF << fsr(E::ERRR) << "Exception: invalid internal package state." << L::ELF;
+								continue; // what?
+							}
+						}*/
+
+						// HERE THERE BE PACKAGES TO SEND! (take a look at continue;s!)
+
+						// ordering package
+						//small.info.internal_counter = ++counting_send;
+						//small.info.checksum = checksum_fast(small.data, sizeof(small.data));
+						// transform package
+						//Tools::Buffer _transf;
+						//_transf.resize(sizeof(small));
+						//std::copy((char*)&small, (char*)&small + sizeof(small), _transf.begin());
+
+						if (!good_to_send) continue;
+
+						auto response = handling.transform(++counting_send);
+						if (response.empty()) {
+							--counting_send; // failed count
+							logg << L::SLF << fsr(E::WARN) << "Exception: Unexpected empty data in final send code." << L::ELF;
 							continue;
 						}
 
-						last_was_task = good_to_go;
-
-						while (good_to_go && !manage_status_good(socket_identification, auto_send(go))) {
-							err_f(socket_identification + "&cSEND FAILED!");
-							if (!run() || !keep_connection) break;
-							Tools::sleep_for(std::chrono::milliseconds(200)); // try again.
+						if (!send_count_auto(response))
+						{
+							logg << L::SLF << fsr(E::ERRR) << "Exception: can't send data." << L::ELF;
 						}
-
-					} // try
-
-					catch (const Handling::Abort& e) {
-						//err_broadcast(std::string("SEND Exception: ") + e.what() + "{vals=[count=" + std::to_string(_sending_packages_count_raw) + ";lastsync=" + std::to_string(_sending_packages_confirmed_last) + "]}");
-						err_f(socket_identification + "&cException: " + e.what());
 					}
-
-					catch (const std::exception& e) {
-						//err_broadcast(std::string("SEND Exception: ") + e.what() + "{vals=[count=" + std::to_string(_sending_packages_count_raw) + ";lastsync=" + std::to_string(_sending_packages_confirmed_last) + "]}");
-						err_f(socket_identification + "&cException: " + e.what());
+					catch (const Handling::Abort& ab)
+					{
+						logg << L::SLF << fsr(E::ERRR) << "Something aborted in Connection's send thread: " << +ab << L::ELF;
 					}
-
-					catch (...) {
-						//err_broadcast(std::string("SEND Unknown exception: ") + "{vals=[count=" + std::to_string(_sending_packages_count_raw) + ";lastsync=" + std::to_string(_sending_packages_confirmed_last) + "]}");
-						err_f(socket_identification + "&cUnknown exception!");
+					catch (const std::exception& e)
+					{
+						logg << L::SLF << fsr(E::ERRR) << "Something aborted in Connection's send thread: " << e.what() << L::ELF;
+					}
+					catch (...) 
+					{
+						logg << L::SLF << fsr(E::ERRR) << "Something aborted in Connection's send thread! Uncaught!" << L::ELF;
 					}
 				}
-
 			}
 
 			void Connection::handle_recv(Tools::boolThreadF run)
 			{
-				const std::string socket_identification = "&1" + Tools::sprintf_a("%05" PRIu64, Tools::get_thread_id()) + "&9SOCKET&8#&6" + Tools::sprintf_a("%05" PRIx64, connected) + " &d<- RECV -  &3";
-				debug(socket_identification + "&aHANDLE CONNECTION STARTED RECV");
+				Logger logg;
+				_recv_package_buffer = {};
 
-				Package priority, small, file;
-
-				if (!setup_socket_buffer_recv()) {
-					debug(socket_identification + "Can't set buffer size");
-				}
-
-				while (run() && keep_connection) {
+				while (run())
+				{
 					try {
-						__package go;
 
-						if (!manage_status_good(socket_identification, auto_recv(go))) continue;
+						Tools::Buffer tempbuf;
 
-						auto transl = safer_cast_type(go.info.type);
-
-						switch (transl) {
-						case __package_type::PING:
-							go.info.type = static_cast<int>(__package_type::PONG);
-							if (!manage_status_good(socket_identification, auto_send(go))) err_f(socket_identification + "&cFAILED TO SEND PONG!");
-							break;
-
-						case __package_type::PONG:
-							if (!interpret_ping_recv(go)) err_f(socket_identification + "&cFAILED TO TASK PING CALCULATION!");
-							else debug(socket_identification + "PING GOOD! VALUE=" + std::to_string(network_analysis.ping_now()));
-							break;
-
-						case __package_type::SIGNAL:
-							packages_since_sync -= connection::trigger_sync_send_thread;
-							break;
-
-						case __package_type::PRIORITY_PACKAGE_SMALL:
-							priority.small_data.append(go.data.buffer, go.info.len);
-							if (!go.info.has_more) {
-								debug(socket_identification + "COMPLETELY GOT PRIORITY PACKAGE");
-								submit_next_package_recv(std::move(priority));
-							}
-							break;
-
-						case __package_type::PACKAGE_SMALL:
-							small.small_data.append(go.data.buffer, go.info.len);
-							if (!go.info.has_more) {
-								debug(socket_identification + "COMPLETELY GOT SMALL PACKAGE");
-								submit_next_package_recv(std::move(small));
-							}
-							break;
-
-						case __package_type::PACKAGE_FILE:
-							if (!file.big_file.is_open()) {
-								if (!file.big_file.open_temp(smartfile::file_modes::WRITE)) {
-									err_f(socket_identification + "&cCANNOT CREATE TEPORARY FILE FOR FILE TRANSFER!");
-								}
-							}
-							if (file.big_file.is_writable()) { // everything fine
-								std::string temp;
-								temp.append(go.data.buffer, go.info.len);
-								file.big_file.write(temp);
-								//debug(socket_identification + "WRITE " + std::to_string(temp.length()) + " BYTE(S) CALL");
-								if (!go.info.has_more) {
-									debug(socket_identification + "COMPLETELY GOT FILE PACKAGE");
-									submit_next_package_recv(std::move(file));
-								}
-							}
-							else {
-								err_f(socket_identification + "&cWEIRD BROKEN FILE CREATED INTERNALLY. WHAT?!");
-								file.big_file.close(); // reset lol wtf
-							}
-							break;
+						auto good = this->recv_count_auto(tempbuf, get_protocol() == Tools::socket::protocol::TCP ? sizeof(_conn_packageinfo_tcp) : sizeof(_conn_package_udp));
+						if (!good) {
+							std::this_thread::yield();
+							continue;
+						}
+						if (tempbuf.size() < sizeof(__any_package_info)) {
+							logg << L::SLF << fsr(E::ERRR) << "Exception: invalid package size! Skipped." << L::ELF;
 						}
 
-					} // try
+						network_analysis.recv_add(tempbuf.size());
 
-					catch (const Handling::Abort& e) {
-						//err_broadcast(std::string("RECV Exception: ") + e.what() + "{vals=[count=" + std::to_string(_sending_packages_count_raw) + ";lastsync=" + std::to_string(_sending_packages_confirmed_last) + "]}");
-						err_f(socket_identification + "&cException: " + e.what());
+						__any_package_info& info = *(__any_package_info*)tempbuf.data();
+						Tools::Buffer buffer;
+						if (tempbuf.size() > sizeof(__any_package_info)) {
+							buffer = Tools::Buffer{ tempbuf.data() + sizeof(__any_package_info), tempbuf.size() - sizeof(__any_package_info) };
+						}
+						else if (info.size > 0 && get_protocol() == Tools::socket::protocol::TCP) {
+							while (!this->recv_count_auto(buffer, info.size)) {
+								logg << L::SLF << fsr(E::ERRR) << "Exception: can't download file data! Can't continue if can't download data!" << L::ELF;
+								Tools::sleep_for(std::chrono::milliseconds(30));
+							}
+						}
+
+						if (!_recv_package_buffer.empty()) {
+							if (info.checksum != checksum_fast(buffer.data(), buffer.size()))
+							{
+								logg << L::SLF << fsr(E::ERRR) << "Exception: checksum failed. Saving what came right." << L::ELF;
+								network_analysis.packet_loss_add();
+
+								Tools::AutoLock l(recv_mtx);
+								received.push_back(std::move(_recv_package_buffer)); // clean up
+								recv_event.signal_one();
+							}
+							else if (info.internal_counter != (counting_recv + 1))
+							{
+								if (info.internal_counter == counting_recv)
+								{
+									logg << L::SLF << fsr(E::WARN) << "Exception: duplicated package received. Skipping duplicated." << L::ELF;
+									continue;
+								}
+								else
+								{
+									if (info.internal_counter >= counting_recv)
+										network_analysis.packet_loss_add();
+
+									logg << L::SLF << fsr(E::ERRR) << "Exception: ordering messed up." << L::ELF;
+
+									Tools::AutoLock l(recv_mtx);
+									received.push_back(std::move(_recv_package_buffer)); // clean up
+									recv_event.signal_one();
+								}
+							}
+							else if (info.priority != _recv_package_buffer.priority)
+							{
+								logg << L::SLF << fsr(E::ERRR) << "Exception: priority don't match before end." << L::ELF;
+
+								Tools::AutoLock l(recv_mtx);
+								received.push_back(std::move(_recv_package_buffer)); // clean up
+								recv_event.signal_one();
+							}
+						}
+
+						_recv_package_buffer.priority = info.priority; // priority
+						if (info.internal_counter > counting_recv) counting_recv = info.internal_counter; // only further.
+
+						switch (info.type)
+						{
+						case __package_type::SYNC:
+						{
+							// other side's recv count, save on counting_send_other_side
+							unsigned long long temp = 0;
+
+							if (buffer.size() < sizeof(temp)) {
+								logg << L::SLF << fsr(E::ERRR) << "Exception: sync data size is smaller than expected." << L::ELF;
+								continue;
+							}
+
+							std::copy(buffer.begin(), buffer.begin() + sizeof(temp), (char*)&temp);
+
+							/*if (temp <= counting_send_other_side) {
+								logg << L::SLF << fsr(E::ERRR) << "Exception: sync counting other side's recv is behind what they said they were before." << L::ELF;
+							}
+							else counting_send_other_side = temp;*/
+							if (temp > counting_send_other_side) counting_send_other_side = temp;
+						}
+						continue; // no data to save
+						case __package_type::PING:
+						{
+							pong_back_please = true;
+						}
+						continue; // no data to save
+						case __package_type::PONG:
+						{
+							const auto diff = (Tools::now() - ping_calc) / 2;
+							ping_calc = 0; // can call new ping
+							network_analysis.ping_new(static_cast<unsigned int>(diff));
+						}
+						continue; // no data to save
+						case __package_type::DATA:
+						{
+							size_t siz = _recv_package_buffer.data.size();
+							_recv_package_buffer.data.resize(siz + info.size); // size
+							std::copy(buffer.begin(), buffer.begin() + info.size, _recv_package_buffer.data.begin() + siz);
+						}
+						break;
+						case __package_type::FILE:
+						{
+							if (!_recv_package_buffer.file.is_open()) {
+								if (!_recv_package_buffer.file.open_temp()) {
+									logg << L::SLF << fsr(E::ERRR) << "Exception: can't open temporary file. Data was lost!" << L::ELF;
+									continue;
+								}
+							}
+
+							/*std::string _temp;
+							_temp.resize(info.size); // size
+							std::copy((char*)pkg.data, (char*)pkg.data + pkg.info.size, _temp.begin()); // be sure*/
+
+							_recv_package_buffer.file.write(buffer, info.size);
+						}
+						break;
+						}
+
+						if (info.finale) {
+							if (!recv_auto_is_function(_recv_package_buffer)) {
+								Tools::AutoLock l(recv_mtx);
+								received.push_back(std::move(_recv_package_buffer));
+								recv_event.signal_one();
+							}
+							_recv_package_buffer = {};
+						}
+
+						/*_conn_package_udp pkg;
+
+						Tools::Buffer _transf;
+
+						auto good = this->recv_count_auto(_transf, sizeof(_conn_package_udp));
+
+						if (!good) {
+							std::this_thread::yield();
+							continue;
+						}
+
+						network_analysis.recv_add(_transf.size());
+
+						_transf.copy_to((void*)&pkg, sizeof(pkg));
+						//std::copy(_transf.begin(), _transf.end(), (char*)&pkg);
+
+						if (!_recv_package_buffer.empty()) {
+							if (pkg.info.checksum != checksum_fast(pkg.data, sizeof(pkg.data)))
+							{
+								logg << L::SLF << fsr(E::ERRR) << "Exception: checksum failed. Saving what came right." << L::ELF;
+								network_analysis.packet_loss_add();
+
+								Tools::AutoLock l(recv_mtx);
+								received.push_back(std::move(_recv_package_buffer)); // clean up
+								recv_event.signal_one();
+							}
+							else if (pkg.info.internal_counter != (counting_recv + 1))
+							{
+								if (pkg.info.internal_counter == counting_recv)
+								{
+									logg << L::SLF << fsr(E::WARN) << "Exception: duplicated package received. Skipping duplicated." << L::ELF;
+									continue;
+								}
+								else
+								{
+									logg << L::SLF << fsr(E::ERRR) << "Exception: ordering messed up." << L::ELF;
+
+									Tools::AutoLock l(recv_mtx);
+									received.push_back(std::move(_recv_package_buffer)); // clean up
+									recv_event.signal_one();
+								}
+							}
+							else if (pkg.info.priority != _recv_package_buffer.priority)
+							{
+								logg << L::SLF << fsr(E::ERRR) << "Exception: priority don't match before end." << L::ELF;
+
+								Tools::AutoLock l(recv_mtx);
+								received.push_back(std::move(_recv_package_buffer)); // clean up
+								recv_event.signal_one();
+							}
+						}
+
+						_recv_package_buffer.priority = pkg.info.priority; // priority
+						if (pkg.info.internal_counter > counting_recv) counting_recv = pkg.info.internal_counter; // only further.
+
+						switch (pkg.info.type)
+						{
+						case __package_type::SYNC:
+						{
+							// other side's recv count, save on counting_send_other_side
+							unsigned long long temp = 0;
+							std::copy((char*)pkg.data, (char*)pkg.data + sizeof(temp), (char*)&temp);
+							if (temp <= counting_send_other_side) {
+								logg << L::SLF << fsr(E::ERRR) << "Exception: sync counting other side's recv is behind what they said they were before." << L::ELF;
+							}
+							else counting_send_other_side = temp;
+						}
+						continue; // no data to save
+						case __package_type::PING:
+						{
+							pong_back_please = true;
+						}
+						continue; // no data to save
+						case __package_type::PONG:
+						{
+							const auto diff = (Tools::now() - ping_calc) / 2;
+							ping_calc = 0; // can call new ping
+							network_analysis.ping_new(static_cast<unsigned int>(diff));
+						}
+						continue; // no data to save
+						case __package_type::DATA:
+						{
+							size_t siz = _recv_package_buffer.data.size();
+							_recv_package_buffer.data.resize(siz + pkg.info.size); // size
+							std::copy((char*)pkg.data, (char*)pkg.data + pkg.info.size, _recv_package_buffer.data.begin() + siz);
+						}
+						break;
+						case __package_type::FILE:
+						{
+							if (!_recv_package_buffer.file.is_open()) {
+								if (!_recv_package_buffer.file.open_temp()) {
+									logg << L::SLF << fsr(E::ERRR) << "Exception: can't open temporary file. Data was lost!" << L::ELF;
+									continue;
+								}
+							}
+
+							std::string _temp;
+							_temp.resize(pkg.info.size); // size
+							std::copy((char*)pkg.data, (char*)pkg.data + pkg.info.size, _temp.begin()); // be sure
+
+							_recv_package_buffer.file.write(_temp, pkg.info.size);
+						}
+						break;
+						}
+
+						if (pkg.info.finale) {
+							if (!recv_auto_is_function(_recv_package_buffer)) {
+								Tools::AutoLock l(recv_mtx);
+								received.push_back(std::move(_recv_package_buffer));
+								recv_event.signal_one();
+							}
+							_recv_package_buffer = {};
+						}*/
 					}
-
-					catch (const std::exception& e) {
-						//err_broadcast(std::string("RECV Exception: ") + e.what() + "{vals=[count=" + std::to_string(_sending_packages_count_raw) + ";lastsync=" + std::to_string(_sending_packages_confirmed_last) + "]}");
-						err_f(socket_identification + "&cException: " + e.what());
+					catch (const Handling::Abort& ab)
+					{
+						logg << L::SLF << fsr(E::ERRR) << "Something aborted in Connection's recv thread: " << +ab << L::ELF;
 					}
-
-					catch (...) {
-						//err_broadcast(std::string("RECV Unknown exception: ") + "{vals=[count=" + std::to_string(_sending_packages_count_raw) + ";lastsync=" + std::to_string(_sending_packages_confirmed_last) + "]}");
-						err_f(socket_identification + "&cUnknown exception!");
+					catch (const std::exception& e)
+					{
+						logg << L::SLF << fsr(E::ERRR) << "Something aborted in Connection's recv thread: " << e.what() << L::ELF;
 					}
-
+					catch (...)
+					{
+						logg << L::SLF << fsr(E::ERRR) << "Something aborted in Connection's recv thread! Uncaught!" << L::ELF;
+					}
 				}
-
-			}
-
-			bool Connection::setup_socket_buffer_send()
-			{
-				socklen_t optlen = sizeof(__package_size_buffer);
-				auto res1 = setsockopt(connected, SOL_SOCKET, SO_SNDBUF, (char*)&__package_size_buffer, optlen);
-				return res1 != -1;
-			}
-
-			bool Connection::setup_socket_buffer_recv()
-			{
-				socklen_t optlen = sizeof(__package_size_buffer);
-				auto res2 = setsockopt(connected, SOL_SOCKET, SO_RCVBUF, (char*)&__package_size_buffer, optlen);
-				return res2 != -1;
-			}
-
-			connection::_connection_status Connection::auto_send(const __package& pkg)
-			{
-				Tools::AutoLock l(send_mtx);
-
-				auto _info = ensure_send((char*)&pkg.info, sizeof(pkg.info));			
-				if (_info == connection::_connection_status::DISCONNECTED) return _info;
-				auto _transf = ensure_send((char*)pkg.data.buffer, pkg.info.len);
-				auto _res = combine(_info, _transf);
-
-				keep_connection &= (_res != connection::_connection_status::DISCONNECTED);
-				if (_res == connection::_connection_status::GOOD) packages_since_sync++;
-
-				return _res;
-			}
-
-			connection::_connection_status Connection::auto_recv(__package& pkg)
-			{
-				Tools::AutoLock l(recv_mtx);
-
-				auto _info = ensure_recv((char*)&pkg.info, sizeof(pkg.info));
-				if (_info == connection::_connection_status::DISCONNECTED) return _info;
-				if (pkg.info.len > connection::package_size) {
-					pkg.info.len = connection::package_size;
-					_info = connection::_connection_status::FAILED; // forced fail
-				}
-				auto _transf = ensure_recv((char*)pkg.data.buffer, pkg.info.len);
-				auto _res = combine(_info, _transf);
-
-				keep_connection &= (_res != connection::_connection_status::DISCONNECTED);
-				if (_res == connection::_connection_status::GOOD) packages_received_trigger_sync++;
-
-				return _res;
-			}
-
-			connection::_connection_status Connection::ensure_send(const char* ptr, const int len)
-			{
-				for (int p = 0; p < len;) {
-					if (!keep_connection) return connection::_connection_status::DISCONNECTED;
-					int _n = ::send(connected, ptr + p, len - p, 0);
-					if (_n < 0) check_error_disconnect();
-					if (_n > 0) p += _n;
-				}
-				network_analysis.send_add(len);
-				return connection::_connection_status::GOOD;
-			}
-
-			connection::_connection_status Connection::ensure_recv(char* ptr, const int len)
-			{
-				for (int p = 0; p < len;) {
-					if (!keep_connection) return connection::_connection_status::DISCONNECTED;
-					int _n = ::recv(connected, ptr + p, len - p, 0);
-
-					if (_n == 0) return connection::_connection_status::DISCONNECTED;
-					else if (_n < 0) check_error_disconnect();
-
-					if (_n > 0) p += _n;
-				}
-				network_analysis.recv_add(len);
-				return connection::_connection_status::GOOD;
-			}
-
-			connection::_connection_status Connection::combine(const connection::_connection_status a, const connection::_connection_status b)
-			{
-				using easy = connection::_connection_status;
-				if (a == easy::GOOD && b == easy::GOOD) return a;
-				if (a == easy::DISCONNECTED || b == easy::DISCONNECTED) return easy::DISCONNECTED;
-				return easy::FAILED;
 			}
 
 			void Connection::init()
 			{
-				keep_connection = true;
-				thr_send.set([&](Tools::boolThreadF f) { handle_send(f); });
-				thr_recv.set([&](Tools::boolThreadF f) { handle_recv(f); });
+				thr_send.stop();
+				thr_recv.stop();
+
+				//network_analysis.clear();
+
+				thr_send.set([&](auto b) {handle_send(b); });
+				thr_recv.set([&](auto b) {handle_recv(b); });
+
 				thr_send.start();
 				thr_recv.start();
 			}
 
-			Connection::Connection(SOCKET socket)
+
+
+			Connection::handle_stuff::handle_stuff(const Tools::socket::protocol& prot)
+				: mode_copy(prot)
 			{
-				if (socket != INVALID_SOCKET) {
-					connected = socket;
-					init();
+			}
+
+			bool Connection::handle_stuff::absorb(Package& pkg)
+			{
+				switch (mode_copy) {
+				case Tools::socket::protocol::UDP:
+				{
+					if (!pkg.empty()) {
+						// - - - - - - - - - - - - - PACKAGE DATA/FILE - - - - - - - - - - - - - //
+						udp.info.priority = pkg.priority; // priority
+
+						if (pkg.data.size()) {
+							udp.info.type = __package_type::DATA; // type
+
+							size_t len_copying = pkg.data.size();
+							if (len_copying > sizeof(udp.data)) len_copying = sizeof(udp.data);
+							udp.info.size = static_cast<unsigned short>(len_copying); // size
+
+							std::copy(pkg.data.begin(), pkg.data.begin() + len_copying, (char*)udp.data); // data
+							pkg.data.erase(pkg.data.begin(), pkg.data.begin() + len_copying);
+
+							udp.info.finale = pkg.data.size() == 0 && pkg.file.eof(); // has more? // BIG OBSERVATION: FILE EOF BECAUSE IF THERE'S FILE, THIS IS NOT THE END!!!!!!!!! <<<<<<<<< LOOK, DON'T FORGET!!!!
+						}
+						else if (!pkg.file.eof()) {
+							udp.info.type = __package_type::FILE; // type
+
+							Tools::Buffer _temp;
+							udp.info.size = static_cast<unsigned short>(pkg.file.read(_temp, sizeof(udp.data))); // size
+
+							std::copy(_temp.begin(), _temp.end(), (char*)udp.data); // data
+
+							udp.info.finale = pkg.file.eof(); // has more?
+						}
+						// - - - - - - - - - - - - - PACKAGE DATA/FILE - - - - - - - - - - - - - //
+					}
+					else return false;
+
+					udp.info.checksum = checksum_fast(udp.data, udp.info.size);
+					has_set = true;
 				}
+					break;
+				case Tools::socket::protocol::TCP:
+				{
+					tcp_buffer.resize(0); // reset, but it may not shrink by itself. No problem.
+
+					if (!pkg.empty()) {
+						// - - - - - - - - - - - - - PACKAGE DATA/FILE - - - - - - - - - - - - - //
+						tcp.info.priority = pkg.priority; // priority
+
+						if (pkg.data.size()) {
+							tcp.info.type = __package_type::DATA; // type
+
+							size_t len_copying = pkg.data.size();
+							if (len_copying > (connection::maximum_package_size_tcp - sizeof(__any_package_info))) len_copying = (connection::maximum_package_size_tcp - sizeof(__any_package_info));
+							tcp.info.size = static_cast<unsigned short>(len_copying); // size
+							tcp_buffer.resize(len_copying);
+
+							std::copy(pkg.data.begin(), pkg.data.begin() + len_copying, tcp_buffer.begin()); // data
+							pkg.data.erase(pkg.data.begin(), pkg.data.begin() + len_copying);
+
+							tcp.info.finale = pkg.data.size() == 0 && pkg.file.eof(); // has more? // BIG OBSERVATION: FILE EOF BECAUSE IF THERE'S FILE, THIS IS NOT THE END!!!!!!!!! <<<<<<<<< LOOK, DON'T FORGET!!!!
+						}
+						else if (!pkg.file.eof()) {
+							tcp.info.type = __package_type::FILE; // type
+
+							Tools::Buffer _temp;
+							tcp.info.size = static_cast<unsigned short>(pkg.file.read(_temp, (connection::maximum_package_size_tcp - sizeof(__any_package_info)))); // size
+							tcp_buffer.resize(tcp.info.size);
+
+							std::copy(_temp.begin(), _temp.end(), tcp_buffer.begin()); // data
+
+							tcp.info.finale = pkg.file.eof(); // has more?
+						}
+						// - - - - - - - - - - - - - PACKAGE DATA/FILE - - - - - - - - - - - - - //
+					}
+					else return false;
+
+					tcp.info.checksum = checksum_fast(tcp_buffer.data(), tcp_buffer.size());
+					has_set = true;
+				}
+					break;
+				}
+				return true;
+			}
+
+			bool Connection::handle_stuff::absorb(const Connection::__package_type& info, const Tools::Buffer& if_no_pkg)
+			{
+				switch (mode_copy) {
+				case Tools::socket::protocol::UDP:
+				{
+					udp.info.type = info;
+										
+					if (if_no_pkg.size() > sizeof(udp.data)) return false; // can't
+
+					std::copy(if_no_pkg.begin(), if_no_pkg.end(), udp.data);
+					udp.info.size = static_cast<unsigned short>(if_no_pkg.size());
+					udp.info.finale = true;
+
+					udp.info.checksum = checksum_fast(udp.data, udp.info.size);
+					has_set = true;
+				}
+					break;
+				case Tools::socket::protocol::TCP:
+				{
+					tcp_buffer.resize(0); // reset, but it may not shrink by itself. No problem.
+					tcp.info.type = info;
+										
+					if (if_no_pkg.size() > (connection::maximum_package_size_tcp - sizeof(__any_package_info))) return false; // can't
+
+					tcp_buffer.resize(if_no_pkg.size());
+
+					std::copy(if_no_pkg.begin(), if_no_pkg.end(), tcp_buffer.begin());
+					tcp.info.size = static_cast<unsigned short>(if_no_pkg.size());
+					tcp.info.finale = true;
+
+					tcp.info.checksum = checksum_fast(tcp_buffer.data(), tcp_buffer.size());
+					has_set = true;
+				}
+					break;
+				}
+				return true;
+			}
+
+			Tools::Buffer Connection::handle_stuff::transform(const unsigned long long finale_count)
+			{
+				if (!has_set) return {};
+
+				Tools::Buffer buf;
+
+				switch (mode_copy) {
+				case Tools::socket::protocol::UDP:
+				{
+					udp.info.internal_counter = finale_count;
+					buf.resize(sizeof(udp));
+
+					std::copy((char*)&udp, (char*)&udp + sizeof(udp), buf.begin());
+				}
+					break;
+				case Tools::socket::protocol::TCP:
+				{
+					tcp.info.internal_counter = finale_count;
+					buf.resize(sizeof(tcp) + tcp_buffer.size());
+
+					std::copy((char*)&tcp, (char*)&tcp + sizeof(tcp), buf.begin());
+					std::copy(tcp_buffer.begin(), tcp_buffer.end(), buf.begin() + sizeof(tcp));
+				}
+					break;
+				}
+
+				return std::move(buf);
+			}
+
+
+
+			unsigned long long Connection::how_far_ahead_this_is() const
+			{
+				return counting_send - counting_send_other_side;
+			}
+
+			bool Connection::recv_auto_is_function(Package& pkg)
+			{
+				if (recv_auto) {
+					Tools::AutoLock l(recv_auto_mtx);
+					if (recv_auto) {
+						recv_auto(*this, pkg);
+						return true;
+					}
+				}
+				return false;
+			}
+
+			bool Connection::send_count_auto(const Tools::Buffer& vec)
+			{
+				if (this->SocketClient::send(vec)) {
+					network_analysis.send_add(vec.size());
+					//send_calls++;
+					return true;
+				}
+				return false;
+			}
+
+			bool Connection::recv_count_auto(Tools::Buffer& vec, const size_t lim)
+			{
+				if (this->SocketClient::recv(vec, lim)) {
+					network_analysis.recv_add(vec.size());
+					recvs_since_last_sync++;
+					return true;
+				}
+				return false;
+			}
+
+			// only accessible via friend or internally.
+			void Connection::force_move_from(Tools::SocketClient&& oth)
+			{
+				close();
+				/*oth.thr_send.stop();
+				oth.thr_recv.stop();
+				oth.thr_send.join();
+				oth.thr_recv.join();*/
+				dont_kill_conn = true; // shared
+				(*(SocketClient*)this) = std::move(oth); // what else?
+				init(); // init again
 			}
 
 			Connection::~Connection()
@@ -712,60 +977,35 @@ namespace LSW {
 				close();
 			}
 
-			bool Connection::connect(const std::string& a, const int b)
+			bool Connection::connect(const std::string& url, const Tools::socket::protocol& protocol, const u_short port)
 			{
-				if (!core.initialize(a, b, connection::connection_type::CLIENT)) return false;
-				if (!core.as_client(connected)) return false;
+				using namespace LSW::v5::Tools;
+				if (!this->SocketClient::connect(url, port, protocol, socket::family::ANY)) return false;
+				//if (res != Tools::socket::result_type::NO_ERROR) return false;
 				init();
 				return true;
 			}
 
 			void Connection::close()
 			{
-				keep_connection = false;
-				if (connected != INVALID_SOCKET) {
-					thr_send.stop();
-					thr_recv.stop();
-
-					::closesocket(connected);
-					connected = INVALID_SOCKET;
-
-					thr_send.join();
-					thr_recv.join();
-
-					{
-						Tools::AutoLock l(send_pkg_mtx);
-						send_pkg_small_priority.clear();
-						send_pkg_small_normal.clear();
-						send_pkg_file.clear();
-					}
-
-					{
-						Tools::AutoLock l(recv_pkg_mtx);
-						recv_pkg_normal.clear();
-					}
-
-				}
+				//if (core) core->printlog(Tools::socket::log_event_type::INFO, "Connection::close() has been called.");
+				thr_send.stop();
+				thr_recv.stop();
+				//if (dont_kill_conn && this->core->client.self.get()) this->core->client.self = std::make_shared<Tools::Socket::_data::_conn_info::referenceable>();
+				this->Tools::SocketClient::close();
 			}
 
 			bool Connection::is_connected() const
 			{
-				return connected != INVALID_SOCKET && keep_connection;
-			}
-
-			size_t Connection::packages_received() const
-			{
-				return recv_pkg_normal.size();
-			}
-
-			size_t Connection::packages_sending() const
-			{
-				return send_pkg_file.size() + send_pkg_small_normal.size() + send_pkg_small_priority.size();
-			}
-
-			double Connection::buffer_sending_load() const
-			{
-				return packages_since_sync * 1.0 / connection::trigger_sync_send_thread;
+				if (get_protocol() == Tools::socket::protocol::TCP) {
+					Tools::Buffer buf;
+					const auto res = this->Tools::SocketClient::peek(buf); // can get err code here
+					return res > 0;
+				}
+				else { // UDP is connectionless.
+					return valid();
+				}
+				//return this->Tools::Socket::is_connected() != Tools::socket::connection_status::DISCONNECTED && (thr_send.running() && thr_recv.running());
 			}
 
 			const NetworkMonitor& Connection::get_network_info() const
@@ -773,168 +1013,116 @@ namespace LSW {
 				return network_analysis;
 			}
 
+			size_t Connection::packages_received() const
+			{
+				return received.size();
+			}
+
 			bool Connection::has_package() const
 			{
-				return recv_pkg_normal.size();
+				return received.size();
+			}
+
+			size_t Connection::packages_sending() const
+			{
+				return sending.size();
 			}
 
 			bool Connection::wait_for_package(const std::chrono::milliseconds t)
 			{
 				if (has_package()) return true;
-				if (read_over) return false; // read_over override this
-
 				if (t.count() == 0) { // UNLIMITED TIME
-					while (!has_package()) recv_pkg_signal.wait_signal(200);
+					while (!has_package()) recv_event.wait_signal(200);
 				}
 				else { // ONE TRY
-					if (!has_package()) recv_pkg_signal.wait_signal(t.count());
+					if (!has_package()) recv_event.wait_signal(t.count());
 				}
 				return has_package();
 			}
 
 			Package Connection::get_next(const bool wait)
 			{
-				if (wait) wait_for_package();
-				else if (!has_package()) return Package{};
+				while (wait && !wait_for_package(std::chrono::milliseconds(50))) std::this_thread::yield();
+				if (!has_package()) return Package{};
 
-				Tools::AutoLock l(recv_pkg_mtx);
+				Tools::AutoLock l(recv_mtx);
 
-				Package got = std::move(recv_pkg_normal.front());
-				recv_pkg_normal.erase(recv_pkg_normal.begin());
-				return std::move(got);
+				Package mov = std::move(received.front());
+				received.erase(received.begin());
+				return std::move(mov);
 			}
 
-			size_t Connection::send_priority_package(const std::string& str)
+			unsigned long long Connection::send_package(Package&& pkg, const bool wait_if_limit)
 			{
-				Tools::AutoLock l(send_pkg_mtx);
-				send_pkg_small_priority.push_back(str);
-				return send_pkg_small_priority.size();
-			}
+				if (wait_if_limit) {
+					while (sending.size() >= connection::limit_packages_stuck_send) {
+						Tools::sleep_for(std::chrono::milliseconds(50));
+						std::this_thread::yield();
+					}
+				}
 
-			size_t Connection::send_package(const std::string& str)
-			{
-				while (packages_sending() >= connection::limit_packages_stuck_send) send_pkg_signal.wait_signal(100);
-				Tools::AutoLock l(send_pkg_mtx);
-				send_pkg_small_normal.push_back(str);
-				return send_pkg_small_normal.size();
-			}
-
-			size_t Connection::send_package(std::string&& str)
-			{
-				while (packages_sending() >= connection::limit_packages_stuck_send) send_pkg_signal.wait_signal(100);
-				Tools::AutoLock l(send_pkg_mtx);
-				send_pkg_small_normal.push_back(std::move(str));
-				return send_pkg_small_normal.size();
-			}
-
-			size_t Connection::send_package(SmartFile&& data)
-			{
-				while (packages_sending() >= connection::limit_packages_stuck_send) send_pkg_signal.wait_signal(100);
-				Tools::AutoLock l(send_pkg_mtx);
-				data.seek(0, smartfile::file_seek::BEGIN);
-				send_pkg_file.push_back(std::move(data));
-				return send_pkg_file.size();
+				Tools::AutoLock l(send_mtx);
+				// organize
+				for (size_t p = 0; p < sending.size(); p++)
+				{
+					if (sending[p].priority > pkg.priority)
+					{
+						sending.insert(sending.begin() + p, std::move(pkg));
+						return static_cast<unsigned long long>(sending.size());
+					}
+				}
+				sending.push_back(std::move(pkg));
+				send_queue_update.signal_one();
+				return static_cast<unsigned long long>(sending.size());
 			}
 
 			void Connection::overwrite_reads_to(std::function<void(Connection&, Package&)> f)
 			{
-				Tools::AutoLock l(read_over_mtx);
-				read_over = f;
+				Tools::AutoLock l(recv_auto_mtx);
+				recv_auto = f;
+				if (!recv_auto) return;
+				while (has_package()) {
+					auto pkg = get_next();
+					recv_auto(*this, pkg);
+				}
 			}
 
 			void Connection::reset_overwrite_reads()
 			{
-				Tools::AutoLock l(read_over_mtx);
-				read_over = std::function<void(Connection&, Package&)>();
+				Tools::AutoLock l(recv_auto_mtx);
+				recv_auto = std::function<void(Connection&, Package&)>();
 			}
 
-			void Connection::debug_error_function(std::function<void(const std::string&)> f)
+
+
+
+
+
+			void Hosting::_listen_auto(Tools::boolThreadF run)
 			{
-				Tools::AutoLock l(err_debug_mtx);
-				err_debug = f;
-			}
+				auto* const interf = self.get();
 
-			void Connection::set_mode(const Tools::superthread::performance_mode m)
-			{
-				if (m == Tools::superthread::performance_mode::_COUNT) return;
-				thr_send.set_performance_mode(m);
-				thr_recv.set_performance_mode(m);
-			}
-
-			void Connection::reset_mode_default()
-			{
-				thr_send.set_performance_mode(connection::default_performance_connection);
-				thr_recv.set_performance_mode(connection::default_performance_connection);
-			}
-
-			void Hosting::handle_disconnects(Tools::boolThreadF run)
-			{
-				while (run() && keep_connection) {
-					Tools::AutoLock safe(connections_m);
-
-					for (size_t p = 0; p < connections.size(); p++) {
-						if (!connections[p]->is_connected()) {
-							//printf_s("\nSomeone has disconnected!");
-
-							if (disconnected_f) disconnected_f((uintptr_t)connections[p].get());
-							connections.erase(connections.begin() + p--);
-						}
+				while (run())
+				{
+					std::shared_ptr<Connection> newclient = std::make_shared<Connection>();
+					try {
+						newclient->force_move_from(std::move(interf->server.listen()));
 					}
-				}
-			}
-
-			void Hosting::handle_queue(Tools::boolThreadF run)
-			{
-				while (run() && keep_connection) {
-					if (listen(Listening, SOMAXCONN) == SOCKET_ERROR) continue;
-
-					// Accept a client socket
-					SOCKET ClientSocket = ::accept(Listening, NULL, NULL);
-					if (ClientSocket == INVALID_SOCKET) continue;
-
-					std::shared_ptr<Connection> dis = std::make_shared<Connection>(ClientSocket);
-
-					if (max_connections_allowed > 0 && connections.size() >= max_connections_allowed) {
-						dis->close();
+					catch (...) { // enhance later
 						continue;
 					}
 
-					//dis->start_internally_as_host(); // cause sended last time, so should receive so there's no error
-					Tools::AutoLock safe(connections_m);
+					Tools::AutoLock l(interf->conns_mu);
 
-					if (new_connection_f) new_connection_f(dis);
-
-					connections.emplace_back(std::move(dis));
-
-					//printf_s("\nSomeone has connected!");
-
-					connection_event.signal_one();
+					if (newclient->valid()) {
+						interf->conns.push_back(std::move(newclient));
+					}
 				}
-				closesocket(Listening);
-				Listening = INVALID_SOCKET;
 			}
 
-			void Hosting::init()
+			Hosting::Hosting(const Tools::socket::protocol& protocol, const u_short port)
 			{
-				keep_connection = true;
-				handle_thread.set([&](Tools::boolThreadF f) { handle_queue(f); });
-				handle_thread.start();
-				handle_disc_thread.set([&](Tools::boolThreadF f) { handle_disconnects(f); });
-				handle_disc_thread.start();
-			}
-
-			Hosting::Hosting(const int port, const bool ipv6)
-			{
-				core.initialize("", port, ipv6 ? connection::connection_type::HOST_IPV6 : connection::connection_type::HOST_IPV4);
-				core.as_host(Listening);
-				init();
-			}
-
-			Hosting::Hosting(const bool ipv6)
-			{
-				core.initialize("", connection::default_port, ipv6 ? connection::connection_type::HOST_IPV6 : connection::connection_type::HOST_IPV4);
-				core.as_host(Listening);
-				init();
+				if (!start(protocol, port)) throw Handling::Abort(__FUNCSIG__, "Failed to start Hosting.", Handling::abort::abort_level::GIVEUP);
 			}
 
 			Hosting::~Hosting()
@@ -942,98 +1130,72 @@ namespace LSW {
 				close();
 			}
 
+			bool Hosting::start(const Tools::socket::protocol& protocol, const u_short port)
+			{
+				close();
+				Tools::AutoLock l(self->conns_mu);
+				if (self->server.start(port, protocol, Tools::socket::family::ANY)) {
+					self->conns_listen_auto.set([&](auto f) {_listen_auto(f); });
+					self->conns_listen_auto.start();
+					return true;
+				}
+				return false;
+			}
+
 			size_t Hosting::size() const
 			{
-				Tools::AutoLock safe(connections_m);
-				return connections.size();
+				return self->conns.size();
 			}
 
 			void Hosting::close()
 			{
-				keep_connection = false;
-				if (Listening != INVALID_SOCKET) {
-					::closesocket(Listening);
-					Listening = INVALID_SOCKET;
-					handle_thread.join();
-					handle_disc_thread.join();
-					Tools::AutoLock luck(connections_m);
+				self->conns_listen_auto.stop();
+				self->server.close();
+				self->conns_listen_auto.join();
 
-					for (size_t p = 0; p < connections.size(); p++) {
-						if (disconnected_f) disconnected_f((uintptr_t)connections[p].get());
-					}
-
-					connections.clear();
-				}
+				Tools::AutoLock l(self->conns_mu);
+				for (auto& i : self->conns) i->close();
+				self->conns.clear();
 			}
 
-			bool Hosting::is_connected() const
+			bool Hosting::is_running() const
 			{
-				return keep_connection && Listening != INVALID_SOCKET;
-			}
-
-			void Hosting::set_connections_limit(const size_t nl)
-			{
-				max_connections_allowed = nl;
+				return self->server.has_servers() && self->conns_listen_auto.running();
 			}
 
 			std::shared_ptr<Connection> Hosting::get_connection(const size_t p)
 			{
-				Tools::AutoLock luck(connections_m);
-				if (connections.size() <= p) return std::shared_ptr<Connection>();
-				return connections[p];
+				Tools::AutoLock l(self->conns_mu);
+				if (p >= self->conns.size()) return {};
+				return self->conns[p];
+				/*Connection conn;
+				conn.core->_mode = Tools::socket::mode::CLIENT;
+				conn.core->client.self = core->connected[p].self;
+				return conn;*/
 			}
 
 			std::shared_ptr<Connection> Hosting::get_latest_connection()
 			{
-				Tools::AutoLock luck(connections_m);
-				while (connections.size() == 0) {
-					luck.unlock();
-					connection_event.wait_signal(1000);
-					luck.lock();
+				Tools::AutoLock l(self->conns_mu);
+				if (self->conns.size() == 0) return {};
+				return self->conns.back();
+				/*Connection conn;
+				conn.core->_mode = Tools::socket::mode::CLIENT;
+				conn.core->client.self = core->connected.back().self;
+				return std::move(conn);*/
+			}
+
+
+			int checksum_fast(const char* ptr, const size_t len, const unsigned short max)
+			{
+				int checksum = 0;
+				for (size_t p = 0; p < len; p++)
+				{
+					checksum += static_cast<int>(ptr[p] + std::numeric_limits<char>::max());
+					checksum %= max;
 				}
-				return connections.back();
+				return (checksum + 1) % max; // empty string returns 1 then
 			}
-
-			void Hosting::on_new_connection(std::function<void(std::shared_ptr<Connection>)> f)
-			{
-				Tools::AutoLock safe(connections_m);
-				new_connection_f = f;
-			}
-
-			void Hosting::reset_on_new_connection()
-			{
-				Tools::AutoLock safe(connections_m);
-				new_connection_f = std::function<void(std::shared_ptr<Connection>)>();
-			}
-
-			void Hosting::on_connection_close(std::function<void(const uintptr_t)> f)
-			{
-				Tools::AutoLock safe(connections_m);
-				disconnected_f = f;
-			}
-
-			void Hosting::reset_on_connection_close()
-			{
-				Tools::AutoLock safe(connections_m);
-				disconnected_f = std::function<void(const uintptr_t)>();
-			}
-
-			std::string transform_any_to_package(void* data, const size_t size)
-			{
-				if (!data || !size) return "";
-				std::string buf;
-				buf.resize(size);
-				std::copy((char*)data, (char*)data + size, buf.begin());
-				return std::move(buf);
-			}
-
-			bool transform_any_package_back(void* data, const size_t size, const std::string& src)
-			{
-				if (src.size() != size) return false;
-				std::copy(src.begin(), src.begin() + size, (char*)data);
-				return true;
-			}
-
 		}
 	}
 }

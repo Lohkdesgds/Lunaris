@@ -82,14 +82,14 @@ namespace LSW {
 			template<typename T>
 			inline SuperThread<T>::SuperThread(SuperThread&& b)
 			{
-				data = std::move(b.data);
+				if (b.data.get()) data = std::move(b.data);
 				b.data = std::make_unique<_static_as_run>();
 			}
 
 			template<typename T>
 			inline void SuperThread<T>::operator=(SuperThread&& b)
 			{
-				data = std::move(b.data);
+				if (b.data.get()) data = std::move(b.data);
 				b.data = std::make_unique<_static_as_run>();
 			}
 
@@ -269,7 +269,7 @@ namespace LSW {
 			template<typename T>
 			inline bool SuperThread<T>::running() const
 			{
-				return data->thr && !data->_die_already && !data->_thread_done_flag;
+				return data->thr && /*!data->_die_already &&*/ !data->_thread_done_flag;
 			}
 
 			template<typename T>
