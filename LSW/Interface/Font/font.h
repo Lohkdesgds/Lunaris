@@ -69,6 +69,11 @@ namespace LSW {
 				bool load_internal();
 
 				/// <summary>
+				/// <para>Unloads font texture (if there are other references, just reset this one).</para>
+				/// </summary>
+				void reset();
+
+				/// <summary>
 				/// <para>Operator bool.</para>
 				/// </summary>
 				/// <returns>{bool} True if loaded.</returns>

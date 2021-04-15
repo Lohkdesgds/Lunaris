@@ -104,6 +104,11 @@ namespace LSW {
 				return set(al_create_builtin_font());
 			}
 
+			void Font::reset()
+			{
+				if (font) font.reset_this();
+			}
+
 			Font::operator bool() const
 			{
 				return !(!font);
