@@ -39,7 +39,7 @@ namespace LSW {
 				}
 				if (frame >= bitmaps.size()) frame = static_cast<size_t>(bitmaps.size() - 1);
 
-				Interface::Bitmap& rnn = bitmaps[frame];
+				Interface::Bitmap rnn = bitmaps[frame];
 				if (!rnn) throw Handling::Abort(__FUNCSIG__, "Unexpected NULL on draw!");
 
 				// P.S.: Text copied this
@@ -126,7 +126,7 @@ namespace LSW {
 					auto& i = bitmaps[p];
 					if (remf(i)) {
 						match++;
-						bitmaps.erase(bitmaps.begin() + p);
+						bitmaps.erase(bitmaps.begin() + p--);
 					}
 				}
 				return match;

@@ -6,7 +6,8 @@ namespace LSW {
 
 			void Text::_think_lines()
 			{
-				if (!fontt) return;
+				const Interface::Font ref_font = fontt;
+				if (!ref_font) return;
 
 				const auto delta_t = get_direct<std::chrono::milliseconds>(text::e_chronomillis_readonly::LAST_UPDATE_STRING);
 				const auto ups_val = get_direct<double>(text::e_double::UPDATES_PER_SECOND);
@@ -68,9 +69,9 @@ namespace LSW {
 							pos = line.size();
 							if (pos) pos--; // last char is erased if not because of + 1 later there
 						}
-						if (max_length_line_size > 0.0 && !scroll_on_line_limit && fontt.get_width(line.s_str()) > max_length_line_size) {
+						if (max_length_line_size > 0.0 && !scroll_on_line_limit && ref_font.get_width(line.s_str()) > max_length_line_size) {
 							if (scroll_movement == 0.0) {
-								while (fontt.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
+								while (ref_font.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
 							}
 							else {
 								size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (line.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
@@ -86,8 +87,8 @@ namespace LSW {
 								//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
 								//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
 
-								for (size_t k = 0; k < cut && fontt.get_width(line.s_str()) > max_length_line_size; k++) line.pop_front_utf8();
-								while (fontt.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
+								for (size_t k = 0; k < cut && ref_font.get_width(line.s_str()) > max_length_line_size; k++) line.pop_front_utf8();
+								while (ref_font.get_width(line.s_str()) > max_length_line_size) line.pop_utf8();
 							}
 							pos = line.size();
 							if (pos) pos--; // last char is erased if not because of + 1 later there
@@ -130,7 +131,7 @@ namespace LSW {
 
 					if (max_length_line_size > 0.0 && scroll_on_line_limit) {
 						for (auto& i : _buf_lines) {
-							//while (fontt.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_front_utf8();
+							//while (ref_font.get_width(i.s_str().c_str()) > max_length_line_size) i.pop_front_utf8();
 
 							if (max_length_line && i.size_utf8() > static_cast<size_t>(max_length_line)) {
 								if (scroll_movement == 0.0) {
@@ -154,9 +155,9 @@ namespace LSW {
 									while (i.size_utf8() > static_cast<size_t>(max_length_line)) i.pop_utf8();
 								}
 							}
-							if (max_length_line_size > 0.0 && fontt.get_width(i.s_str()) > max_length_line_size) {
+							if (max_length_line_size > 0.0 && ref_font.get_width(i.s_str()) > max_length_line_size) {
 								if (scroll_movement == 0.0) {
-									while (fontt.get_width(i.s_str()) > max_length_line_size) i.pop_utf8();
+									while (ref_font.get_width(i.s_str()) > max_length_line_size) i.pop_utf8();
 								}
 								else {
 									size_t cut = (static_cast<size_t>((al_get_time()) * 3.0)) % (i.size() + static_cast<size_t>(scroll_offset) * 2) - static_cast<size_t>(scroll_offset);
@@ -172,8 +173,8 @@ namespace LSW {
 									//double curr_sx = title.get_direct<double>(sprite::e_double::SCALE_G) * title.get_direct<double>(sprite::e_double::SCALE_X);
 									//while (extra_font_ref.get_width(cpy.c_str() + cut) / (extra_font_ref.get_line_height() / curr_sx) > targ_siz) cpy.pop_back();
 
-									for (size_t k = 0; k < cut && fontt.get_width(i.s_str()) > max_length_line_size; k++) i.pop_front_utf8();
-									while (fontt.get_width(i.s_str()) > max_length_line_size) i.pop_utf8();
+									for (size_t k = 0; k < cut && ref_font.get_width(i.s_str()) > max_length_line_size; k++) i.pop_front_utf8();
+									while (ref_font.get_width(i.s_str()) > max_length_line_size) i.pop_utf8();
 								}
 							}
 
@@ -187,7 +188,8 @@ namespace LSW {
 			
 			void Text::_draw_text(Interface::Camera& ruler)
 			{
-				if (!_buf_lines.size() || !fontt) return; // nothing to draw
+				const Interface::Font ref_font = fontt;
+				if (!_buf_lines.size() || !ref_font) return; // nothing to draw
 
 				double off_x = 0.0;
 				double off_y = 0.0;
@@ -206,7 +208,7 @@ namespace LSW {
 				const auto spot_y = get_direct<double>(sprite::e_double::CENTER_Y); // spot where this is set to draw and rotate on
 				const auto offset_x = get_direct<double>(sprite::e_double_readonly::POSX); // offset of that point (center)
 				const auto offset_y = get_direct<double>(sprite::e_double_readonly::POSY); // offset of that point (center)
-				const auto font_siz = fontt.get_line_height();
+				const auto font_siz = ref_font.get_line_height();
 				const auto lineadj = get_direct<double>(text::e_double::LINE_ADJUST);
 				const auto force_color = get_direct<bool>(text::e_boolean::USE_COLOR_INSTEAD_OF_AUTO);
 
@@ -283,8 +285,8 @@ namespace LSW {
 				const double curr_offset_x = offset_x * 1.0 / csx;
 				const double curr_offset_y = offset_y * 1.0 / csy;
 
-				const double compensate = 0.5 * fontt.get_line_height();
-				const double height = lineadj * fontt.get_line_height();
+				const double compensate = 0.5 * ref_font.get_line_height();
+				const double height = lineadj * ref_font.get_line_height();
 				const double y_offset = mode_y == 0 ? 0 : (mode_y == static_cast<int>(text::e_text_y_modes::CENTER) ? (0.5 * height * (_buf_lines.size() - 1)) : (height * (_buf_lines.size() - 1)));
 
 				for (size_t o = 0; o < _buf_lines.size(); o++) {
@@ -292,14 +294,14 @@ namespace LSW {
 
 					if (should_care_about_shadow) {
 						shadow_cam.apply();
-						fontt.draw(s_col, curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i.s_str());
+						ref_font.draw(s_col, curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i.s_str());
 						ruler.apply();
 					}
 					if (force_color) {
-						fontt.draw(n_col, curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i.s_str());
+						ref_font.draw(n_col, curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i.s_str());
 					}
 					else {
-						fontt.draw(curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i);
+						ref_font.draw(curr_offset_x, curr_offset_y - compensate + height * o - y_offset, mode, i);
 					}
 				}
 
@@ -315,7 +317,8 @@ namespace LSW {
 			
 			void Text::draw_task(Interface::Camera& ruler)
 			{
-				if (!fontt) throw Handling::Abort(__FUNCSIG__, "No Font texture!", Handling::abort::abort_level::GIVEUP);
+				const Interface::Font ref_font = fontt;
+				if (!ref_font) throw Handling::Abort(__FUNCSIG__, "No Font texture!", Handling::abort::abort_level::GIVEUP);
 
 				const auto delta_t = get_direct<std::chrono::milliseconds>(text::e_chronomillis_readonly::LAST_UPDATE_BITMAP);
 				const auto use_buffer = get_direct<bool>(text::e_boolean::USE_BITMAP_BUFFER);
