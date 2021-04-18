@@ -174,6 +174,10 @@ namespace LSW {
 				}
 			}
 
+			void BubbleFX::unload_internal_bitmap()
+			{
+				if (buffer) buffer.reset();
+			}
 
 		}
 	}

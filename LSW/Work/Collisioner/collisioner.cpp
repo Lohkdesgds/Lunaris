@@ -54,6 +54,12 @@ namespace LSW {
 				}
 			}
 
+			void Collisioner::remove_all()
+			{
+				Tools::AutoLock luck(sprites_m);
+				sprites.clear();
+			}
+
 			void Collisioner::start(const double dt)
 			{
 				if (evhdl.running()) throw Handling::Abort(__FUNCSIG__, "Already running!", Handling::abort::abort_level::GIVEUP);

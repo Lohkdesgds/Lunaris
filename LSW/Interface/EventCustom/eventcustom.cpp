@@ -15,18 +15,19 @@ namespace LSW {
 			EventCustom::EventCustom() : Event()
 			{
 				Handling::init_basic();
+				start_as_custom();
 			}
 
 			EventCustom::EventCustom(const EventCustom& e) : Event(e)
 			{
 				Handling::init_basic();
-				start_as_custom();
+				if (!core) start_as_custom();
 			}
 
 			EventCustom::EventCustom(EventCustom&& e) : Event(std::move(e))
 			{
 				Handling::init_basic();
-				start_as_custom();
+				if (!core) start_as_custom();
 			}
 
 			void EventCustom::send_custom_event(const int at, const intptr_t a, const intptr_t b, const intptr_t c, const intptr_t d)

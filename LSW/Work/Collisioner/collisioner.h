@@ -48,11 +48,17 @@ namespace LSW {
 				/// </summary>
 				/// <param name="{Sprite_Base}">A Sprite_Base class type.</param>
 				void insert(Sprite_Base&);
+
 				/// <summary>
 				/// <para>Remove a object based on its sprite::e_uintptrt::DATA_FROM.</para>
 				/// </summary>
 				/// <param name="{Sprite_Base}">A Sprite_Base class type.</param>
 				void remove(const Sprite_Base&);
+
+				/// <summary>
+				/// <para>Remove all objects from list.</para>
+				/// </summary>
+				void remove_all();
 
 				/// <summary>
 				/// <para>Start the collision thread with this amount of Ticks Per Second.</para>

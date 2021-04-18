@@ -116,6 +116,11 @@ namespace LSW {
 				/// <para>Resets/initialize positions (again) with given amount of positions (dots).</para>
 				/// </summary>
 				void reset_positions(const size_t&);
+
+				/// <summary>
+				/// <para>Destroy internal bitmap.</para>
+				/// </summary>
+				void unload_internal_bitmap();
 			};
 		}
 	}
