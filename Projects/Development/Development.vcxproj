@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{6a87755b-4c28-4212-bab2-4de7fef1f063}</ProjectGuid>
+    <RootNamespace>Lunaris</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Lunaris</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+    <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+    <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\include\Lunaris\Audio\mixer\mixer.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Audio\sample\sample.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Audio\track\track.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Audio\voice\voice.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\keyboard\keyboard.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\keys\keys.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\mouse\mouse.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\shared_start\shared_start.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\block\block.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\color\color.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\display\display.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\font\font.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\sprite\sprite.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\transform\transform.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
+    <ClCompile Include="main_verificator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\Lunaris\audio.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\mixer.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\mixer\mixer.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\sample.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\sample\sample.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\track.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\track\track.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\voice.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\voice\voice.h" />
+    <ClInclude Include="..\..\include\Lunaris\events.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keyboard.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keyboard\keyboard.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keys\keys.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\mouse.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\mouse\mouse.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keys.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\shared_start.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\shared_start\shared_start.h" />
+    <ClInclude Include="..\..\include\Lunaris\graphics.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\block.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\block\block.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\color.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\color\color.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\display.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\display\display.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\font.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\font\font.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\sprite.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\sprite\sprite.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\text.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\texture.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\texture\texture.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\text\text.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\transform.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\transform\transform.h" />
+    <ClInclude Include="..\..\include\Lunaris\utility.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\console.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\console\console.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\console\console.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\downloader.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\downloader\downloader.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\file.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\file\file.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\future.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\future\future.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\future\future.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\package.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\package\package.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\package\package.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\process.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.ipp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets" Condition="Exists('..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets')" />
+    <Import Project="..\..\packages\Allegro.5.2.7\build\native\Allegro.targets" Condition="Exists('..\..\packages\Allegro.5.2.7\build\native\Allegro.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Allegro.5.2.7\build\native\Allegro.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Allegro.5.2.7\build\native\Allegro.targets'))" />
+  </Target>
+</Project>

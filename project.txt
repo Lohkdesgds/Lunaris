@@ -1,0 +1,16 @@
+# Lunaris Modules
+
+# Utility
+X# console (safe multithread cout)
+X# file (safe multithread file interface?)
+X# package (combo data)
+X# threads (full control over threads)
+X# memory -> hybrid_memory (shared of unique ptr)
+X# future (with then())
+X# sockets \
+X## tcp -> host and clients
+X## udp -> listener (hub) and connectionless clients
+X## package (easy adaptative block of memory)
+X# launcher -> (launch executables and manage them maybe?)
+## hash (file & data)
+X# multimap (multiple key, single key map)
