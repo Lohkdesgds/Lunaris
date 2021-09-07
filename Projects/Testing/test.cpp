@@ -3,6 +3,7 @@
 #include <Lunaris/utility.h>
 #include <Lunaris/graphics.h>
 #include <Lunaris/events.h>
+#include <Lunaris/audio.h>
 
 using namespace Lunaris;
 
@@ -18,6 +19,26 @@ const std::string random_img_url =  "https://picsum.photos/1024"; // "https://ww
 
 int main()
 {
+	voice audio;
+	audio.create();
+
+	mixer mixing;
+	mixing.create();
+	mixing.attach_to(audio);
+
+	track mytrack;
+	sample mysample;
+
+	if (!mysample.load("audios/music_01.ogg")) {
+		cout << console::color::RED << "Cannot load track sample example.";
+		return 0;
+	}
+
+	mytrack.load(mysample);
+	mytrack.attach_to(mixing);
+	mytrack.set_gain(0.3f);
+	mytrack.play();
+
 	display mywindow;
 	//std::vector<hybrid_memory<texture>> mytextures;
 

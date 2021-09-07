@@ -5,7 +5,7 @@ namespace Lunaris {
 	void __audio_allegro_start()
 	{
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
-		if (!al_is_audio_installed() && !al_install_audio() && !al_is_acodec_addon_initialized() && !al_init_acodec_addon() && !al_reserve_samples(voice_audio_samples))
+		if ((!al_is_audio_installed() && !al_install_audio()) || (!al_is_acodec_addon_initialized() && !al_init_acodec_addon()) || !al_reserve_samples(voice_audio_samples))
 			throw std::runtime_error("Can't start Audio or Audio Codec!");
 	}
 

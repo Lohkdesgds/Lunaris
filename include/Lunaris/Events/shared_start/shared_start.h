@@ -20,10 +20,10 @@ namespace Lunaris {
 		bool thread_working = false;
 		ALLEGRO_EVENT_QUEUE* ev_qu = nullptr;
 
-		void start();
-		void stop();
 		void running_thread();
 	protected:
+		void start();
+		void stop();
 		virtual void handle_events(const ALLEGRO_EVENT&) = 0;
 
 		std::unique_lock<std::recursive_mutex> get_lock();

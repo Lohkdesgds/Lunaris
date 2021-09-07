@@ -101,8 +101,7 @@ namespace Lunaris {
     mouse::~mouse()
     {
         if (timer) {
-            al_stop_timer(timer);
-            al_unregister_event_source(get_event_queue(), al_get_timer_event_source(timer));
+            this->stop(); // stop before destroying timer
             al_destroy_timer(timer);
             timer = nullptr;
         }

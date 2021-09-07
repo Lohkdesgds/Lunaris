@@ -26,30 +26,6 @@ namespace Lunaris {
 		if (!al_is_touch_input_installed() && !al_install_touch_input()) throw std::runtime_error("Can't start Touch!");
 	}
 
-	void __common_event::start()
-	{
-		if (ev_qu) return;// throw std::runtime_error("Tried to start twice?");
-
-		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
-
-		keep_running = true;
-
-		if (!(ev_qu = al_create_event_queue())) throw std::bad_alloc();
-
-		thr = std::thread([&] {running_thread(); });
-	}
-
-	void __common_event::stop()
-	{
-		if (ev_qu) {
-			keep_running = false;
-			while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
-			if (thr.joinable()) thr.join();
-			al_destroy_event_queue(ev_qu);
-			ev_qu = nullptr;
-		}
-	}
-
 	void __common_event::running_thread()
 	{
 		thread_working = true;
@@ -74,6 +50,30 @@ namespace Lunaris {
 			}
 		}
 		thread_working = false;
+	}
+
+	void __common_event::start()
+	{
+		if (ev_qu) return;// throw std::runtime_error("Tried to start twice?");
+
+		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
+
+		keep_running = true;
+
+		if (!(ev_qu = al_create_event_queue())) throw std::bad_alloc();
+
+		thr = std::thread([&] {running_thread(); });
+	}
+
+	void __common_event::stop()
+	{
+		if (ev_qu) {
+			keep_running = false;
+			while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			if (thr.joinable()) thr.join();
+			al_destroy_event_queue(ev_qu);
+			ev_qu = nullptr;
+		}
 	}
 
 	std::unique_lock<std::recursive_mutex> __common_event::get_lock()
