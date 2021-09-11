@@ -7,7 +7,9 @@
 #include <iostream>
 #include <mutex>
 #include <type_traits>
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 
 namespace Lunaris {
 
@@ -19,7 +21,11 @@ namespace Lunaris {
 		/// <summary>
 		/// <para>These are the colors supported on console (cmd).</para>
 		/// </summary>
+#ifdef _WIN32
 		enum class color { BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE };
+#else
+		enum class color { BLACK, DARK_RED, DARK_GREEN, GOLD, DARK_BLUE, DARK_PURPLE, DARK_AQUA, GRAY, DARK_GRAY, RED, GREEN, YELLOW, BLUE, LIGHT_PURPLE, AQUA, WHITE };
+#endif
 	private:
 		std::mutex m_safe;
 

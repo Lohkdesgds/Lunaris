@@ -26,8 +26,12 @@ namespace Lunaris {
 
 	inline console::_block_control& console::_block_control::operator<<(const color& color)
 	{
+#ifdef _WIN32
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		SetConsoleTextAttribute(hConsole, static_cast<int>(color));
+#else
+		std::cout << "\033[" << (static_cast<uint8_t>(color) >= 8 ? (static_cast<uint8_t>(color) + 90 - 8) : (static_cast<uint8_t>(color) + 30)) << "m";
+#endif
 		return *this;
 	}
 
