@@ -88,6 +88,12 @@ namespace Lunaris {
 		ALLEGRO_AUDIO_DEPTH get_depth() const;
 
 		/// <summary>
+		/// <para>What is the depth/resolution of this track?</para>
+		/// </summary>
+		/// <returns>{int} The depth in bits.</returns>
+		int get_depth_bits() const;
+
+		/// <summary>
 		/// <para>What frequency is this track?</para>
 		/// </summary>
 		/// <returns>{unsigned} Frequency, in hertz.</returns>

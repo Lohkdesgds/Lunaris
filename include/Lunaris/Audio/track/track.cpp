@@ -119,6 +119,26 @@ namespace Lunaris {
 		return al_get_sample_instance_depth(playing);
 	}
 
+	int track::get_depth_bits() const
+	{
+		if (!exists()) return {};
+		switch (al_get_sample_instance_depth(playing)) {
+		case ALLEGRO_AUDIO_DEPTH_INT8:
+		case ALLEGRO_AUDIO_DEPTH_UINT8:
+			return 8;
+		case ALLEGRO_AUDIO_DEPTH_INT16:
+		case ALLEGRO_AUDIO_DEPTH_UINT16:
+			return 16;
+		case ALLEGRO_AUDIO_DEPTH_INT24:
+		case ALLEGRO_AUDIO_DEPTH_UINT24:
+			return 24;
+		case ALLEGRO_AUDIO_DEPTH_FLOAT32:
+			return 32;
+		default:
+			return 0;
+		}
+	}
+
 	unsigned track::get_frequency() const
 	{
 		if (!exists()) return 0;

@@ -37,7 +37,22 @@ int main()
 	mytrack.load(mysample);
 	mytrack.attach_to(mixing);
 	mytrack.set_gain(0.3f);
+
+	cout << "Loaded fancy music. Detailed info:";
+	cout << "Channels: " << mytrack.get_channels_num();
+	cout << "Bit depth: " << mytrack.get_depth_bits();
+	cout << "Frequency: " << static_cast<int>(mytrack.get_frequency() / 1000) << (mytrack.get_frequency() % 1000 != 0 ? ("." + std::to_string((mytrack.get_frequency() / 100) % 10)) : "") << " kHz";
+	cout << "Length: " << mytrack.get_time_s() << " second(s)";
+	cout << "Starting track...";
+
 	mytrack.play();
+
+	//while (mytrack.is_playing()) {
+	//	cout << "[" << static_cast<int>(mytrack.get_position_ms() * 0.001f) << " of " << mytrack.get_time_s() << " sec]";
+	//	std::this_thread::sleep_for(std::chrono::seconds(1));
+	//}
+
+	//cout << "Ended playing track!";
 
 	display mywindow;
 	//std::vector<hybrid_memory<texture>> mytextures;
