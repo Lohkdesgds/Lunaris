@@ -17,6 +17,20 @@ namespace Lunaris {
 		void operator=(hybrid_memory&&) noexcept;
 
 		/// <summary>
+		/// <para>Compare if both share same unique_ptr</para>
+		/// </summary>
+		/// <param name="{hybrid_memory}">Another hybrid_memory.</param>
+		/// <returns>{bool} True if they are copies of each other (reference same memory).</returns>
+		bool operator==(const hybrid_memory&) const;
+
+		/// <summary>
+		/// <para>Compare if both don't share same unique_ptr</para>
+		/// </summary>
+		/// <param name="{hybrid_memory}">Another hybrid_memory.</param>
+		/// <returns>{bool} True if they are NOT copies of each other (reference same memory).</returns>
+		bool operator!=(const hybrid_memory&) const;
+
+		/// <summary>
 		/// <para>Get pointer stored and handled inside this object (don't ever delete this).</para>
 		/// </summary>
 		/// <returns>{T*} Pointer to stored value.</returns>

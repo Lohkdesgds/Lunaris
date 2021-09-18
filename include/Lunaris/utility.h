@@ -10,3 +10,5 @@
 #include "Utility/process.h"
 #include "Utility/downloader.h"
 #include "Utility/file.h"
+#include "Utility/hash.h"
+#include "Utility/random.h"

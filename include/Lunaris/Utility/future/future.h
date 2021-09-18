@@ -64,8 +64,8 @@ namespace Lunaris {
 		future(const future&) = delete;
 		void operator=(const future&) = delete;
 
-		future(future&&);
-		void operator=(future&&);
+		future(future&&) noexcept;
+		void operator=(future&&) noexcept;
 
 		/// <summary>
 		/// <para>Get the value directly (if ready, else wait).</para>

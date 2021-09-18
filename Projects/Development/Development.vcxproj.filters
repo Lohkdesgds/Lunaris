@@ -59,6 +59,12 @@
     <ClCompile Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.cpp">
       <Filter>include\Lunaris\Events\__impl\generic_event_handler</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp">
+      <Filter>include\Lunaris\Utility\__impl\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp">
+      <Filter>include\Lunaris\Utility\__impl\random</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">
@@ -186,6 +192,12 @@
     </Filter>
     <Filter Include="include\Lunaris\Events\__impl\generic_event_handler">
       <UniqueIdentifier>{d82753df-2486-4c96-a4d9-7c998db9c25e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\hash">
+      <UniqueIdentifier>{4bdf087e-241e-4523-8dce-7011662342c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\random">
+      <UniqueIdentifier>{56b17146-68b7-4881-9f22-d3d52885bf56}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -386,6 +398,19 @@
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.h">
       <Filter>include\Lunaris\Events\__impl\generic_event_handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__shared\supertest.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash\hash.h">
+      <Filter>include\Lunaris\Utility\__impl\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\random.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\random\random.h">
+      <Filter>include\Lunaris\Utility\__impl\random</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

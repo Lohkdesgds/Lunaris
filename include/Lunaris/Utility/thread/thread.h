@@ -9,9 +9,10 @@ namespace Lunaris {
 	class thread {
 	public:
 		enum class speed {
-			UNLEACHED,				// no control
+			UNLEASHED,				// no control
 			HIGH_PERFORMANCE,		// yield() each loop for sync (may affect performance a little bit, but very responsive)
-			INTERVAL				// follow a fixed time interval
+			INTERVAL,				// follow a fixed time interval
+			ONCE					// only once
 		};
 	private:
 		struct _data {
@@ -31,6 +32,9 @@ namespace Lunaris {
 		std::shared_ptr<_data> data = std::make_shared<_data>();
 	public:
 		thread() = default;
+
+		// same as task_async
+		thread(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60);
 		~thread();
 
 		thread(const thread&) = delete;

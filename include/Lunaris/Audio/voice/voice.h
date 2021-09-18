@@ -24,7 +24,7 @@ namespace Lunaris {
 		*/
 		friend class mixer;
 
-		ALLEGRO_VOICE* device;
+		ALLEGRO_VOICE* device = nullptr;
 
 		bool set(ALLEGRO_VOICE*);
 	public:
@@ -54,7 +54,8 @@ namespace Lunaris {
 		/// <para>Mute sound.</para>
 		/// </summary>
 		/// <param name="{bool}">If true, mute, else unmute.</param>
-		void mute(const bool);
+		/// <returns>{bool} True if success.</returns>
+		bool mute(const bool);
 
 		/// <summary>
 		/// <para>Is this voice loaded and ready?</para>

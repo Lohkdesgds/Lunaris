@@ -24,13 +24,17 @@ namespace Lunaris {
 
 	struct socket_config {
 		//enum class protocol { TCP = SOCK_STREAM, UDP = SOCK_DGRAM };
-		enum class family { IPV4 = PF_INET, IPV6 = PF_INET6, ANY = PF_UNSPEC };
+		enum class e_family { IPV4 = PF_INET, IPV6 = PF_INET6, ANY = PF_UNSPEC };
 
-		family family			= family::ANY;
+		e_family family			= e_family::ANY;
 		std::string ip_address; // defaults empty
 		u_short port			= 50420;
 
 		std::string format() const;
+
+		socket_config& set_family(const e_family&);
+		socket_config& set_port(const u_short&);
+		socket_config& set_ip_address(const std::string&);
 	};
 
 	// start WSA / stop WSA
@@ -109,6 +113,7 @@ namespace Lunaris {
 	class TCP_client : public socket_client<SOCK_STREAM, false> {
 	public:
 		using socket_client<SOCK_STREAM, false>::socket_client;
+		using socket_client<SOCK_STREAM, false>::has_socket;
 
 		bool send(const std::vector<char>&);
 		std::vector<char> recv(const size_t = static_cast<size_t>(-1), const bool = true);
@@ -125,6 +130,7 @@ namespace Lunaris {
 		socket_config conf;
 	public:
 		using socket_client<SOCK_DGRAM, false>::socket_client;
+		using socket_client<SOCK_DGRAM, false>::has_socket;
 
 		bool send(const std::vector<char>&);
 		std::vector<char> recv(const size_t = static_cast<size_t>(-1), const bool = true);

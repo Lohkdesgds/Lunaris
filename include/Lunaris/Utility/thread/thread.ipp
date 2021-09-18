@@ -7,7 +7,7 @@ namespace Lunaris {
 		if (should_quit) return false; // quit fast
 
 		switch (mode) {
-		case speed::UNLEACHED:			// no control
+		case speed::UNLEASHED:			// no control
 			break;
 		case speed::HIGH_PERFORMANCE:	// sync threads
 			std::this_thread::yield();
@@ -17,7 +17,13 @@ namespace Lunaris {
 			std::this_thread::sleep_until(_wait_until);
 			_wait_until = std::chrono::high_resolution_clock::now() + std::chrono::duration<double, std::ratio<1>>(interval_seconds);
 		}
-		break;
+			break;
+		case speed::ONCE:
+			if (!should_quit) {
+				should_quit = true;
+				return true;
+			}
+			break;
 		}
 
 		return !should_quit;
@@ -38,6 +44,11 @@ namespace Lunaris {
 		}
 
 		_ended_gracefully = true;
+	}
+
+	thread::thread(std::function<void(void)> fun, const speed mode, const double interv)
+	{
+		task_async(fun, mode, interv);
 	}
 
 	thread::~thread()
@@ -76,8 +87,8 @@ namespace Lunaris {
 
 	void thread::join(const bool skip_any_exception)
 	{
+		data->should_quit = true;
 		if (data->thr.joinable()) {
-			data->should_quit = true;
 			data->thr.join();
 			if (!skip_any_exception && data->_exception) std::rethrow_exception(data->_exception);
 		}

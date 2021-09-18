@@ -7,11 +7,29 @@ namespace Lunaris {
 	std::string socket_config::format() const
 	{
 		switch (family) {
-		case socket_config::family::IPV4:
+		case socket_config::e_family::IPV4:
 			return ip_address + ":" + std::to_string(port);
 		default:
 			return "[" + ip_address + "]:" + std::to_string(port);
 		}
+	}
+
+	socket_config& socket_config::set_family(const e_family& var)
+	{
+		family = var;
+		return *this;
+	}
+
+	socket_config& socket_config::set_port(const u_short& var)
+	{
+		port = var;
+		return *this;
+	}
+
+	socket_config& socket_config::set_ip_address(const std::string& var)
+	{
+		ip_address = var;
+		return *this;
 	}
 
 	socket_core::_data::_data()
@@ -147,6 +165,8 @@ namespace Lunaris {
 			}
 		}
 
+		if (i >= servers.size()) return INVALID_SOCKET;
+
 		return servers[i];
 	}
 
@@ -197,7 +217,7 @@ namespace Lunaris {
 		if (inet_ntop(sockaddr->sa_family, fun_get_in_addr(), name, INET6_ADDRSTRLEN * sizeof(char)) == NULL) return false;
 
 		conf.ip_address = name;
-		conf.family = sockaddr->sa_family == AF_INET ? socket_config::family::IPV4 : socket_config::family::IPV6;
+		conf.family = sockaddr->sa_family == AF_INET ? socket_config::e_family::IPV4 : socket_config::e_family::IPV6;
 		conf.port = ntohs(fun_get_in_port());
 
 		return true;
@@ -381,6 +401,7 @@ namespace Lunaris {
 			}
 			else if (res == 0) { // disconnect
 				this->close_sockets();
+				raw.clear();
 				return raw;
 			}
 			/*else if (std::memcmp(&_temp, &data->info_host, _temp_len) != 0) {

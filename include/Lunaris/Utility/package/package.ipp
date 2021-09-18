@@ -2,8 +2,59 @@
 
 namespace Lunaris {
 
+	inline package::package(const package& pack)
+		: buf(pack.buf), read_index_pos(pack.read_index_pos)
+	{
+	}
+
+	inline package::package(package&& pack) noexcept
+		: buf(std::move(pack.buf)), read_index_pos(pack.read_index_pos)
+	{
+		pack.read_index_pos = 0;
+	}
+
+	inline package::package(const std::vector<char>& pack)
+		: buf(pack), read_index_pos(0)
+	{
+	}
+
+	inline package::package(std::vector<char>&& pack) noexcept
+		: buf(std::move(pack)), read_index_pos(0)
+	{
+	}
+
+	inline void package::operator=(const package& pack)
+	{
+		buf = pack.buf;
+		read_index_pos = pack.read_index_pos;
+	}
+
+	inline void package::operator=(package&& pack) noexcept
+	{
+		buf = std::move(pack.buf);
+		read_index_pos = pack.read_index_pos;
+		pack.read_index_pos = 0;
+	}
+
+	inline void package::operator=(const std::vector<char>& pack)
+	{
+		buf = pack;
+		read_index_pos = 0;
+	}
+
+	inline void package::operator=(std::vector<char>&& pack) noexcept
+	{
+		buf = std::move(pack);
+		read_index_pos = 0;
+	}
+
+	inline bool package::operator==(const package& oth) const 
+	{
+		return oth.buf == buf;
+	}
+
 	template<typename T, std::enable_if_t<std::is_pod_v<T> && !std::is_array_v<T> && !std::is_pointer_v<T>, int>>
-	package& package::operator>>(T& val)
+	inline package& package::operator>>(T& val)
 	{
 		if (read_index_pos + sizeof(val) > buf.size()) throw std::runtime_error("Out of range");
 		auto pos = buf.begin() + read_index_pos;
@@ -12,7 +63,7 @@ namespace Lunaris {
 		return *this;
 	}
 
-	package& package::operator>>(std::string& val)
+	inline package& package::operator>>(std::string& val)
 	{
 		measure_siz sizer = 0;
 		*this >> sizer;
@@ -24,7 +75,7 @@ namespace Lunaris {
 		return *this;
 	}
 
-	package& package::operator>>(std::vector<char>& val)
+	inline package& package::operator>>(std::vector<char>& val)
 	{
 		measure_siz sizer = 0;
 		*this >> sizer;
@@ -38,7 +89,7 @@ namespace Lunaris {
 
 
 	template<typename T, std::enable_if_t<std::is_pod_v<T> && !std::is_array_v<T> && !std::is_pointer_v<T>, int>>
-	package& package::operator<<(const T& val)
+	inline package& package::operator<<(const T& val)
 	{
 		buf.resize(buf.size() + sizeof(val));
 		auto pos = buf.end() - sizeof(val);
@@ -47,7 +98,7 @@ namespace Lunaris {
 		return *this;
 	}
 
-	package& package::operator<<(const std::string& val)
+	inline package& package::operator<<(const std::string& val)
 	{
 		if (val.empty()) throw std::runtime_error("Invalid data to write: it was null!");
 		measure_siz sizer = val.size();
@@ -57,7 +108,7 @@ namespace Lunaris {
 		return *this;
 	}
 
-	package& package::operator<<(const std::vector<char>& val)
+	inline package& package::operator<<(const std::vector<char>& val)
 	{
 		if (val.empty()) throw std::runtime_error("Invalid data to write: it was null!");
 		measure_siz sizer = val.size();
@@ -67,22 +118,22 @@ namespace Lunaris {
 		return *this;
 	}
 
-	void package::reset_internal_iterator()
+	inline void package::reset_internal_iterator()
 	{
 		read_index_pos = 0;
 	}
 
-	std::vector<char> package::export_as_array() const
+	inline const std::vector<char>& package::read_as_array() const
 	{
 		return buf;
 	}
 
-	void package::import_as_array(std::vector<char>&& oth)
+	inline void package::import_as_array(std::vector<char>&& oth)
 	{
 		buf = std::move(oth);
 	}
 
-	inline package::operator std::vector<char>() const
+	inline package::operator const std::vector<char>&() const
 	{
 		return buf;
 	}

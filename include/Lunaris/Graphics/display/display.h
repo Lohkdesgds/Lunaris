@@ -22,15 +22,20 @@ namespace Lunaris {
 	void __display_allegro_start();
 
 	struct display_options {
-		int display_index = 0;
 		int width = 0;
 		int height = 0;
 		int freq = 0;
+		int display_index = 0;
+
+		display_options& set_width(const int);
+		display_options& set_height(const int);
+		display_options& set_frequency(const int);
+		display_options& set_display_index(const int);
 	};
 
 	struct display_config {
 		display_options mode;
-		std::string window_name;
+		std::string window_title = "Lunaris App";
 		int extra_flags = ALLEGRO_DIRECT3D_INTERNAL; // flags_combine()
 		int samples = 4; // ALLEGRO_SAMPLE_BUFFERS = samples > 0, ALLEGRO_SAMPLES = samples.
 		bool fullscreen = true; // flags_combine()
@@ -39,6 +44,15 @@ namespace Lunaris {
 		bool use_basic_internal_event_system = true; // automatically "acknowledge" events like resizing. If you want close events, you should register the display in a Event handler.
 
 		int flags_combine() const;
+
+		display_config& set_display_mode(const display_options&);
+		display_config& set_extra_flags(const int);
+		display_config& set_samples(const int);
+		display_config& set_fullscreen(const bool);
+		display_config& set_vsync(const bool);
+		display_config& set_single_buffer(const bool);
+		display_config& set_use_basic_internal_event_system(const bool);
+		display_config& set_window_title(const std::string&);
 	};
 
 	std::vector<display_options> get_current_modes(const int = 0);
@@ -65,6 +79,8 @@ namespace Lunaris {
 		bool create(const display_config& = {});
 		bool create(const int, const int, const int = 0);
 		bool create(const std::string&, const int, const int, const int = 0);
+
+		void set_window_title(const std::string&);
 
 		// hook reset on re-create or destroy
 		void hook_event_handler(std::function<void(const ALLEGRO_EVENT&)>);

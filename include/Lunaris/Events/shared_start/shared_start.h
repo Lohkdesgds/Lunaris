@@ -26,7 +26,8 @@ namespace Lunaris {
 		void stop();
 		virtual void handle_events(const ALLEGRO_EVENT&) = 0;
 
-		std::unique_lock<std::recursive_mutex> get_lock();
+		// deferred (no locking)?
+		std::unique_lock<std::recursive_mutex> get_lock(const bool = false);
 		ALLEGRO_EVENT_QUEUE* get_event_queue() const;
 	public:
 		__common_event();

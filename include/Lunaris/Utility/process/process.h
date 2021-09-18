@@ -19,13 +19,14 @@ namespace Lunaris {
 		std::thread thr_read;
 		bool keep_running = false;
 		bool is_running = false;
+		bool has_run_once = false;
 
 		struct thr_data {
 			COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 			std::string block;
-			DWORD dwRead;
-			char buffer[512];
-			size_t p_ar;
+			DWORD dwRead = 0;
+			char buffer[512]{};
+			size_t p_ar = 0;
 		} td;
 
 #ifdef UNICODE

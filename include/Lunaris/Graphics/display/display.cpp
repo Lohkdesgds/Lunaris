@@ -8,6 +8,30 @@ namespace Lunaris {
 		if (!al_is_primitives_addon_initialized() && !al_init_primitives_addon()) throw std::runtime_error("Can't start Primitives!");
 	}
 
+	display_options& display_options::set_width(const int var)
+	{
+		width = var;
+		return *this;
+	}
+	
+	display_options& display_options::set_height(const int var)
+	{
+		height = var;
+		return *this;
+	}
+
+	display_options& display_options::set_frequency(const int var)
+	{
+		freq = var;
+		return *this;
+	}
+
+	display_options& display_options::set_display_index(const int var)
+	{
+		display_index = var;
+		return *this;
+	}
+
 	int display_config::flags_combine() const
 	{
 		int res = extra_flags
@@ -16,6 +40,54 @@ namespace Lunaris {
 			& ~ALLEGRO_WINDOWED;
 
 		return res | ((fullscreen || (mode.width == 0 && mode.height == 0)) ? ALLEGRO_FULLSCREEN_WINDOW : 0);
+	}
+
+	display_config& display_config::set_display_mode(const display_options& var)
+	{
+		mode = var;
+		return *this;
+	}
+
+	display_config& display_config::set_extra_flags(const int var)
+	{
+		extra_flags = var;
+		return *this;
+	}
+
+	display_config& display_config::set_samples(const int var)
+	{
+		samples = var;
+		return *this;
+	}
+
+	display_config& display_config::set_fullscreen(const bool var)
+	{
+		fullscreen = var;
+		return *this;
+	}
+
+	display_config& display_config::set_vsync(const bool var)
+	{
+		vsync = var;
+		return *this;
+	}
+
+	display_config& display_config::set_single_buffer(const bool var)
+	{
+		single_buffer = var;
+		return *this;
+	}
+
+	display_config& display_config::set_use_basic_internal_event_system(const bool var)
+	{
+		use_basic_internal_event_system = var;
+		return *this;
+	}
+
+	display_config& display_config::set_window_title(const std::string& var)
+	{
+		window_title = var;
+		return *this;
 	}
 
 	std::vector<display_options> get_current_modes(const int index)
@@ -28,9 +100,9 @@ namespace Lunaris {
 		al_set_new_display_adapter(index);
 
 		for (int j = 0; j < al_get_num_display_modes(); j++) {
-			ALLEGRO_DISPLAY_MODE mode;
+			ALLEGRO_DISPLAY_MODE mode{};
 			al_get_display_mode(j, &mode);
-			display_options conv;
+			display_options conv{};
 			conv.display_index = index;
 			conv.width = mode.width;
 			conv.height = mode.height;
@@ -88,8 +160,8 @@ namespace Lunaris {
 		al_set_new_display_option(ALLEGRO_SINGLE_BUFFER, conf.single_buffer ? 1 : 0, ALLEGRO_SUGGEST);
 		if (conf.mode.freq > 0) 
 			al_set_new_display_refresh_rate(conf.mode.freq);
-		if (!conf.window_name.empty()) 
-			al_set_new_window_title(conf.window_name.c_str());
+		if (!conf.window_title.empty()) 
+			al_set_new_window_title(conf.window_title.c_str());
 
 
 		if (conf.use_basic_internal_event_system) {
@@ -99,13 +171,17 @@ namespace Lunaris {
 
 		if (!(window = al_create_display(conf.mode.width > 0 ? conf.mode.width : 0, conf.mode.height > 0 ? conf.mode.height : 0))) 
 		{
-			al_destroy_event_queue(ev_qu);
+			if (ev_qu) al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 			return false;
 		}
 
-		al_register_event_source(ev_qu, al_get_display_event_source(window));
+		if (conf.use_basic_internal_event_system) {
+			al_register_event_source(ev_qu, al_get_display_event_source(window));
+		}
 		al_set_target_backbuffer(window);
+
+		al_identity_transform(&latest_transform);
 
 		return true;
 	}
@@ -127,8 +203,13 @@ namespace Lunaris {
 		conf.mode.height = height;
 		conf.mode.freq = freq;
 		conf.fullscreen = false;
-		conf.window_name = wname;
+		conf.window_title = wname;
 		return create(conf);
+	}
+
+	void display::set_window_title(const std::string& str)
+	{
+		if (!empty() && !str.empty()) al_set_window_title(window, str.c_str());
 	}
 
 	void display::hook_event_handler(std::function<void(const ALLEGRO_EVENT&)> f)
@@ -213,50 +294,53 @@ namespace Lunaris {
 
 			if (economy_mode) std::this_thread::sleep_for(economy_mode_delay);
 			
-			if (ev_qu && ((al_get_time() - last_event_check) > default_display_self_check_time)) {
+			if (((al_get_time() - last_event_check) > default_display_self_check_time)) {
 
 				std::lock_guard<std::mutex> lucky(sensitive);
 
 				const ALLEGRO_TRANSFORM* cpy = al_get_current_transform();
 				if (cpy) latest_transform = *cpy;
 
-				ALLEGRO_EVENT ev;
-				while (al_get_next_event(ev_qu, &ev)) {
+				if (ev_qu) {
 
-					switch (ev.type) {
+					ALLEGRO_EVENT ev;
+					while (al_get_next_event(ev_qu, &ev)) {
 
-					case ALLEGRO_EVENT_DISPLAY_EXPOSE: // shown again
-					case ALLEGRO_EVENT_DISPLAY_FOUND:
-					case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+						switch (ev.type) {
 
-						if (ev.display.source != window)
-							throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+						case ALLEGRO_EVENT_DISPLAY_EXPOSE: // shown again
+						case ALLEGRO_EVENT_DISPLAY_FOUND:
+						case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
 
-						economy_mode = false;
+							if (ev.display.source != window)
+								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
 
-						break;
+							economy_mode = false;
 
-					case ALLEGRO_EVENT_DISPLAY_LOST:
-					case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+							break;
 
-						if (ev.display.source != window)
-							throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+						case ALLEGRO_EVENT_DISPLAY_LOST:
+						case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
 
-						economy_mode = true;
+							if (ev.display.source != window)
+								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
 
-						break;
+							economy_mode = true;
 
-					case ALLEGRO_EVENT_DISPLAY_RESIZE:
+							break;
 
-						if (ev.display.source != window)
-							throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+						case ALLEGRO_EVENT_DISPLAY_RESIZE:
 
-						acknowledge_resize();
-						break;
+							if (ev.display.source != window)
+								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+
+							acknowledge_resize();
+							break;
+						}
+
+						// after handling by itself, call hooked function (if any)
+						if (hooked_events) hooked_events(ev);
 					}
-
-					// after handling by itself, call hooked function (if any)
-					if (hooked_events) hooked_events(ev);
 				}
 			}
 		}

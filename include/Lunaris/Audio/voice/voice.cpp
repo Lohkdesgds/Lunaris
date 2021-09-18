@@ -55,9 +55,10 @@ namespace Lunaris {
 		}
 	}
 
-	void voice::mute(const bool muted)
+	bool voice::mute(const bool muted)
 	{
-		if (device) al_set_voice_playing(device, !muted);
+		if (device) return al_set_voice_playing(device, !muted);
+		return false;
 	}
 
 	bool voice::exists() const

@@ -32,7 +32,8 @@ namespace Lunaris {
 		while (keep_running) {
 			ALLEGRO_EVENT ev;
 			try {
-				auto lucky = get_lock();
+				auto lucky = get_lock(true);
+				if (!lucky.try_lock()) continue; // as fast as it can
 
 				if (al_wait_for_event_timed(ev_qu, &ev, 0.1f))
 					handle_events(ev);
@@ -69,16 +70,18 @@ namespace Lunaris {
 	{
 		if (ev_qu) {
 			keep_running = false;
-			while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			auto lucky = get_lock();
+			//while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (thr.joinable()) thr.join();
 			al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 		}
 	}
 
-	std::unique_lock<std::recursive_mutex> __common_event::get_lock()
+	std::unique_lock<std::recursive_mutex> __common_event::get_lock(const bool deferred)
 	{
-		return std::move(std::unique_lock<std::recursive_mutex>(safety));
+		if (deferred) return std::unique_lock<std::recursive_mutex>(safety, std::defer_lock);
+		return std::unique_lock<std::recursive_mutex>(safety);
 	}
 
 	ALLEGRO_EVENT_QUEUE* __common_event::get_event_queue() const

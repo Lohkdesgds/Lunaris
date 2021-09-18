@@ -14,4 +14,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\__shared\supertest.ipp" />
+  </ItemGroup>
 </Project>

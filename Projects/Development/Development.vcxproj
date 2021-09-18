@@ -227,6 +227,8 @@
     <ClCompile Include="..\..\include\Lunaris\Graphics\transform\transform.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
     <ClCompile Include="main_verificator.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -278,6 +280,8 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\future.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\future\future.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\future\future.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash\hash.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\memory.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.ipp" />
@@ -290,12 +294,15 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\process.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\random.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\random\random.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\socket.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.ipp" />
+    <ClInclude Include="..\__shared\supertest.ipp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

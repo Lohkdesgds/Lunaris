@@ -12,6 +12,7 @@ namespace Lunaris {
 	{
         log("Process #" + std::to_string((uintptr_t)piProcInfo.hProcess) + " started.");
         is_running = true;
+        has_run_once = true;
 
         SetCommTimeouts(g_hChildStd_OUT_Rd, &td.timeouts);
 
@@ -90,17 +91,19 @@ namespace Lunaris {
 
         if (!good) return false; // bad
 
-        is_running = true; // assume it's running because it's all good!
+        //is_running = true; // assume it's running because it's all good!
 
         CloseHandle(piProcInfo.hThread);
 
         CloseHandle(g_hChildStd_OUT_Wr);
 
-        if (thr_read.joinable()) thr_read.join();
+        //if (thr_read.joinable()) thr_read.join();
         keep_running = true;
         thr_read = std::thread([&] { thr_read_output(); });
 
-        return true;
+        for (size_t tries = 0; tries < 10 && !has_run_once; tries++) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+        return has_run_once;
     }
 
     bool process::running() const
@@ -110,6 +113,7 @@ namespace Lunaris {
 
     void process::stop()
     {
+        has_run_once = false;
         if (keep_running) {
             keep_running = false;
 

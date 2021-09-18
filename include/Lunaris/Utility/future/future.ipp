@@ -100,13 +100,13 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	future<T>::future(future&& oth)
+	future<T>::future(future&& oth) noexcept
 		: m_data(std::move(oth.m_data))
 	{
 	}
 
 	template<typename T>
-	void future<T>::operator=(future&& oth)
+	void future<T>::operator=(future&& oth) noexcept
 	{
 		m_data = std::move(oth.m_data);
 	}
