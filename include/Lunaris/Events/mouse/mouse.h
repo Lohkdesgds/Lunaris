@@ -25,11 +25,12 @@ namespace Lunaris {
 		};
 	private:
 		mouse_event mouse_rn;
+		bool hint_changes_coming = false;
 
-		bool had_mouse_event = false;
-		float quick_cpy_mouse[2] = { 0.0f,0.0f };
+		//bool had_mouse_event = false;
+		//float quick_cpy_mouse[2] = { 0.0f,0.0f };
 
-		ALLEGRO_TIMER* timer = nullptr;
+		//ALLEGRO_TIMER* timer = nullptr;
 		std::function<void(const int, const mouse_event&)> event_handler;
 		std::function<ALLEGRO_TRANSFORM(void)> current_transform_getter;
 
@@ -37,7 +38,7 @@ namespace Lunaris {
 
 		void handle_events(const ALLEGRO_EVENT&);
 	public:
-		mouse(const std::function<ALLEGRO_TRANSFORM(void)>);
+		mouse(std::function<ALLEGRO_TRANSFORM(void)>);
 		~mouse();
 
 		void hook_event(const std::function<void(const int, const mouse_event&)>); // ALLEGRO_EVENT thing, mouse info

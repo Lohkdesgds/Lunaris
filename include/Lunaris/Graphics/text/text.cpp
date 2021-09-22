@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	text_shadow::text_shadow(const double a, const double b, const color c)
+	text_shadow::text_shadow(const float a, const float b, const color c)
 		: offset_x(a), offset_y(b), clr(c)
 	{
 	}
@@ -17,21 +17,21 @@ namespace Lunaris {
 		return std::unique_lock<std::shared_mutex>(font_mtx);
 	}
 
-	void text::draw_task(const transform& transf, const float& limit_x, const float& limit_y) // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! 
+	void text::draw_task(transform transf, transform drawntransf, const float& limit_x, const float& limit_y) // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! 
 	{
 		auto lock = mu_shared_read_control();
 
 		if (font_used.empty()) return;
 
-		const double& scale_g = get<double>(enum_sprite_double_e::SCALE_G);
-		const double& scale_x = get<double>(enum_sprite_double_e::SCALE_X);
-		const double& scale_y = get<double>(enum_sprite_double_e::SCALE_Y);
-		const double& draw_line_height = get<double>(enum_text_double_e::DRAW_LINE_PROP);
-		const double& draw_pos_x = get<double>(enum_sprite_double_e::RO_DRAW_PROJ_POS_X);
-		const double& draw_pos_y = get<double>(enum_sprite_double_e::RO_DRAW_PROJ_POS_Y);
-		const double& center_x = get<double>(enum_sprite_double_e::DRAW_RELATIVE_CENTER_X);
-		const double& center_y = get<double>(enum_sprite_double_e::DRAW_RELATIVE_CENTER_Y);
-		const std::string& to_str = get<std::string>(enum_text_string_e::STRING);
+		const float& scale_g = get<float>(enum_sprite_float_e::SCALE_G);
+		const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
+		const float& scale_y = get<float>(enum_sprite_float_e::SCALE_Y);
+		const float& draw_line_height = get<float>(enum_text_float_e::DRAW_LINE_PROP);
+		const float& draw_pos_x = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_X);
+		const float& draw_pos_y = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_Y);
+		const float& center_x = get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X);
+		const float& center_y = get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y);
+		const std::string to_str = get<safe_string>(enum_text_safe_string_e::STRING).read();
 		const int& text_alignment = get<int>(enum_text_integer_e::DRAW_ALIGNMENT);
 		const color& text_clr = get<color>(enum_sprite_color_e::DRAW_TINT);
 
@@ -43,19 +43,22 @@ namespace Lunaris {
 		transf_back = transf; // later just apply back
 		current = transf; // working here
 
-		const double csx = scale_g * scale_x / height;
-		const double csy = scale_g * scale_y / height;
+		const float csx = scale_g * scale_x / height;
+		const float csy = scale_g * scale_y / height;
 
-		current.scale_inverse(1.0 / csx, 1.0 / csy);
-		current.translate_inverse(-draw_pos_x / csx, -draw_pos_y / csy);
+		drawntransf.scale_inverse(1.0 / csx, 1.0 / csy);
+		drawntransf.apply();
 
-
-		/*const double const_scale_x = (scale_g * scale_x);
-		const double const_scale_y = (scale_g * scale_y);
-
-		current.translate_inverse(- draw_pos_x * const_scale_x * height, - draw_pos_y * const_scale_y * height);
-		current.scale_inverse(static_cast<float>(1.0 * height / const_scale_x), static_cast<float>(1.0 * height / const_scale_y));*/
-		current.apply();
+		//current.scale_inverse(1.0 / csx, 1.0 / csy);
+		//current.translate_inverse(-draw_pos_x / csx, -draw_pos_y / csy);
+		//
+		//
+		///*const float const_scale_x = (scale_g * scale_x);
+		//const float const_scale_y = (scale_g * scale_y);
+		//
+		//current.translate_inverse(- draw_pos_x * const_scale_x * height, - draw_pos_y * const_scale_y * height);
+		//current.scale_inverse(static_cast<float>(1.0 * height / const_scale_x), static_cast<float>(1.0 * height / const_scale_y));*/
+		//current.apply();
 
 		const auto text_len = font_used->get_width(to_str);
 
@@ -95,8 +98,8 @@ namespace Lunaris {
 
 	text::text() :
 		sprite(),
-		fixed_multi_map_work<static_cast<size_t>(enum_text_double_e::_SIZE), double, enum_text_double_e>(default_text_double_il),
-		fixed_multi_map_work<static_cast<size_t>(enum_text_string_e::_SIZE), std::string, enum_text_string_e>(default_text_string_il),
+		fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>(default_text_float_il),
+		fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), safe_string, enum_text_safe_string_e>(default_text_string_il),
 		fixed_multi_map_work<static_cast<size_t>(enum_text_integer_e::_SIZE), int, enum_text_integer_e>(default_text_integer_il)
 	{
 	}

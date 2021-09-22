@@ -3,6 +3,7 @@
 #include "../sprite.h"
 #include "../transform.h"
 #include "../font.h"
+#include "../../Utility/safe_data.h"
 
 #include <vector>
 #include <shared_mutex>
@@ -12,13 +13,13 @@
 
 namespace Lunaris {
 
-	enum class enum_text_double_e {
+	enum class enum_text_float_e {
 		DRAW_LINE_PROP,				// [0.0,inf) 1.0 means font height for multiple lines
 
 		_SIZE
 	};
 
-	enum class enum_text_string_e {
+	enum class enum_text_safe_string_e {
 		STRING,						// The actual string drawn
 
 		_SIZE
@@ -31,14 +32,14 @@ namespace Lunaris {
 	};
 
 
-	const std::initializer_list<multi_pair<double, enum_text_double_e>>									default_text_double_il = {
+	const std::initializer_list<multi_pair<float, enum_text_float_e>>									default_text_float_il = {
 		// READONLY DATA
-		{1.0,		enum_text_double_e::DRAW_LINE_PROP }
+		{1.0,		enum_text_float_e::DRAW_LINE_PROP }
 	};
 
-	const std::initializer_list<multi_pair<std::string, enum_text_string_e>>							default_text_string_il = {
+	const std::initializer_list<multi_pair<safe_data<std::string>, enum_text_safe_string_e>>							default_text_string_il = {
 		// READONLY DATA
-		{"",		enum_text_string_e::STRING}
+		{std::string(""),		enum_text_safe_string_e::STRING}
 	};
 
 	const std::initializer_list<multi_pair<int, enum_text_integer_e>>									default_text_integer_il = {
@@ -47,19 +48,19 @@ namespace Lunaris {
 	};
 
 	struct text_shadow {
-		double offset_x = 0.0;
-		double offset_y = 0.0;
+		float offset_x = 0.0;
+		float offset_y = 0.0;
 		color clr;
 
 		text_shadow() = default;
-		text_shadow(const double, const double, const color);
+		text_shadow(const float, const float, const color);
 	};
 
 
 	class text :
 		public sprite,
-		public fixed_multi_map_work<static_cast<size_t>(enum_text_double_e::_SIZE), double, enum_text_double_e>,
-		public fixed_multi_map_work<static_cast<size_t>(enum_text_string_e::_SIZE), std::string, enum_text_string_e>,
+		public fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>,
+		public fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), safe_data<std::string>, enum_text_safe_string_e>,
 		public fixed_multi_map_work<static_cast<size_t>(enum_text_integer_e::_SIZE), int, enum_text_integer_e>
 	{
 		// variables
@@ -72,9 +73,11 @@ namespace Lunaris {
 		std::unique_lock<std::shared_mutex> mu_shared_write_control() const; // easier
 
 	protected:
-		void draw_task(const transform&, const float&, const float&);
+		void draw_task(transform, transform, const float&, const float&);
 
 	public:
+		using safe_string = safe_data<std::string>;
+
 		text();
 
 		void font_set(const hybrid_memory<font>&);
@@ -90,14 +93,14 @@ namespace Lunaris {
 		using sprite::get;
 		using sprite::index;
 		using sprite::size;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_double_e::_SIZE), double, enum_text_double_e>::set;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_double_e::_SIZE), double, enum_text_double_e>::get;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_double_e::_SIZE), double, enum_text_double_e>::index;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_double_e::_SIZE), double, enum_text_double_e>::size;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_string_e::_SIZE), std::string, enum_text_string_e>::set;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_string_e::_SIZE), std::string, enum_text_string_e>::get;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_string_e::_SIZE), std::string, enum_text_string_e>::index;
-		using fixed_multi_map_work<static_cast<size_t>(enum_text_string_e::_SIZE), std::string, enum_text_string_e>::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), text::safe_string, enum_text_safe_string_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), text::safe_string, enum_text_safe_string_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), text::safe_string, enum_text_safe_string_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), text::safe_string, enum_text_safe_string_e>::size;
 		using fixed_multi_map_work<static_cast<size_t>(enum_text_integer_e::_SIZE), int, enum_text_integer_e>::set;
 		using fixed_multi_map_work<static_cast<size_t>(enum_text_integer_e::_SIZE), int, enum_text_integer_e>::get;
 		using fixed_multi_map_work<static_cast<size_t>(enum_text_integer_e::_SIZE), int, enum_text_integer_e>::index;

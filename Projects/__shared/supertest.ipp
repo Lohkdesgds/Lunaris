@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iterator>
+
 using namespace Lunaris;
 
 //#define RUN_AND_TEST(FUNC, ERRMSG) { \
@@ -13,6 +15,7 @@ const std::string fixed_audio_src_url = "https://cdn.discordapp.com/attachments/
 const std::string fixed_image_src_url = "https://media.discordapp.net/attachments/888270629990707331/888272596720844850/3.jpg?width=918&height=612";
 const std::string fixed_image_src_url_sha256_precalc = "e02e1baec55f8e37b5a5b3ef29d403fc2a2084267f05dfc75d723536081aff10";
 const std::string temp_local_file_path = "lunaris_temp_local.tmp";
+const std::string random_img_url =  "https://picsum.photos/1024"; // "https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
 
 constexpr size_t num_of_entities_in_package_test = 1000;
 
@@ -38,8 +41,8 @@ int main(int argc, char* argv[]) {
 
 	if (utility_test(currpath) != 0) return 1;
 	if (audio_test() != 0) return 1;
-	//if (graphics_test() != 0) return 1; // todo
 	if (events_test() != 0) return 1;
+	if (graphics_test() != 0) return 1; // todo
 }
 
 void hold_user()
@@ -647,7 +650,212 @@ int graphics_test()
 	cout << console::color::BLUE << "# Starting graphics_test...";
 	cout << console::color::DARK_BLUE << "======================================";
 
+	std::atomic<bool> keep_running_things = true;
+	block blk_fixed, blk_mouse;
+	text txt_main;
+	display my_display;
+	file fp; // random file
+	thread blocks_col;
+	mouse mousing(my_display);
+	collisionable cols[2] = { blk_mouse, blk_fixed };
+	const color no_collision = color(127, 255, 127);
+	const color has_collision = color(255, 127, 127);
+	auto random_texture = make_hybrid<texture>();
+	auto font_u = make_hybrid<font>();
 
+	cout << "Opening temporary file for temporary image...'";
+
+	TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
+
+	cout << "Downloading random image from '" << random_img_url << "'";
+
+	{
+		downloader down;
+		TESTLU(down.get_store(random_img_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+	}
+
+	cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
+	fp.flush();
+
+	cout << "Creating display...";
+
+	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1280).set_height(720)).set_window_title("GRAPHICS TEST").set_self_draw(true).set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE)), "Failed to create the display");
+
+	cout << "Setting up some variables...";
+
+	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, false);
+	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, false);
+	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, false);
+
+	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Test string text"));
+	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
+	txt_main.set<float>(enum_sprite_float_e::SCALE_G, 0.1f);
+	txt_main.set<float>(enum_sprite_float_e::SCALE_X, 0.3f);
+	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.992f);
+	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.992f);
+	txt_main.set<float>(enum_sprite_float_e::DRAW_MOVEMENT_RESPONSIVENESS, 3.0f);
+	for (int __c = 1; 255 - 25 * __c > 0; __c++) {
+		int ctee = (255 - 25 * __c);
+		txt_main.shadow_insert(text_shadow(0.0001f * __c, 0.007f * __c, color(ctee / 10, ctee / 10, ctee / 10, ctee)));
+	}
+
+	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.4f);
+	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX, true);
+
+	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255,255,255));
+	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
+	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.3f);
+
+	cout << "Applying default transformation to display...";
+
+	my_display.add_run_once_in_drawing_thread([&my_display] {
+		transform transf;
+		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 1.0f, 1.0f);
+		transf.apply();
+	});
+
+	cout << "Loading texture in video memory and default font...";
+
+	{
+		bool good = false, dod = false;
+		my_display.add_run_once_in_drawing_thread([&] {
+			good = random_texture->load(fp.get_current_path()) && font_u->create_builtin_font();
+			dod = true;
+		});
+
+		while (!dod) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		TESTLU(good, "Couldn't load texture/font for test!");
+	}
+
+	cout << "Setting up drawing call...";
+
+	my_display.hook_draw_function([&] {
+		al_clear_to_color(al_map_rgb(
+			cos(al_get_time() * 0.4111) * 100 + 150,
+			sin(al_get_time() * 0.2432) * 100 + 150,
+			cos(al_get_time() * 0.5321) * 100 + 150
+		));
+
+		blk_fixed.draw();
+		blk_mouse.draw();
+		txt_main.draw();
+
+		{
+			transform savv, raww;
+			savv.get_current_transform();
+
+			raww.identity();
+			raww.apply();
+
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), 30, al_map_rgb(150, 0, 0), 5);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), 30, al_map_rgb(0, 150, 0), 5);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 30, al_map_rgb(0, 0, 150), 5);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 30, al_map_rgb(150, 150, 0), 5);
+
+			savv.apply();
+		}
+	});
+
+	cout << "Setting up display events function...";
+
+	my_display.hook_event_handler([&keep_running_things](const ALLEGRO_EVENT& ev) {
+		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.type << " triggered.";
+		
+		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			cout << console::color::GREEN << "Closing app...";
+			keep_running_things = false;
+		}
+		else if (ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE) {
+			cout << console::color::GREEN << "Screen size is now: " << ev.display.width << "x" << ev.display.height;
+			transform transf;
+			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, 1.0f, 1.0f);
+			transf.apply();
+		}
+	});
+
+	cout << "Hooking mouse to a sprite...";
+
+	mousing.hook_event([&blk_mouse](int type, const mouse::mouse_event& ev) {
+		if (type == ALLEGRO_EVENT_MOUSE_AXES) {
+			blk_mouse.set<float>(enum_sprite_float_e::POS_X, ev.real_posx);
+			blk_mouse.set<float>(enum_sprite_float_e::POS_Y, ev.real_posy);
+		}
+	});
+
+	cout << "Setting up collision & extra tasks thread...";
+	
+	for (auto& i : cols) i.set_work([&](int data, sprite& one) {one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, data != 0 ? has_collision : no_collision); one.think(); });
+
+	blocks_col.task_async([&] {
+
+		for (auto& i : cols) i.reset();
+		for (size_t p = 0; p < std::size(cols); p++)
+		{
+			for (size_t q = 0; q < std::size(cols); q++) {
+				if (q != p) cols[p].overlap(cols[q]);
+			}
+		}
+		for (auto& i : cols) i.work();
+
+		// extra mine
+		blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.75f);
+		blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.2f);
+		txt_main.set<float>(enum_sprite_float_e::ROTATION, cos(al_get_time() * 2.5) * 0.3f);
+
+		{
+			std::string dat;
+
+			dat += "POINTS MOUSE RAW:\n";
+			dat += "TOPLEFT:   [red]    [" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X)) + ";" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y)) + "]\n";
+			dat += "TOPRIGHT:  [green]  [" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X)) + ";" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y)) + "]\n";
+			dat += "DOWNLEFT:  [blue]   [" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X)) + ";" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y)) + "]\n";
+			dat += "DOWNRIGHT: [yellow] [" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X)) + ";" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y)) + "]\n";
+			dat += "ROTATION ANGLE (DEGREES): " +
+				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::ROTATION) * 180.0f / ALLEGRO_PI) % 360) + " or " + 
+				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION) * 180.0f / ALLEGRO_PI) % 360) + " (proj/smooth)";
+
+			txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, dat);
+		}
+	}, thread::speed::INTERVAL, 1.0/20);
+
+	cout << "Enabling things on screen...";
+
+	txt_main.font_set(font_u);
+	blk_mouse.texture_insert(random_texture);
+
+	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
+	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
+	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
+
+	cout << console::color::DARK_GRAY << "Done! Close the screen if you want to exit.";
+	cout << console::color::DARK_GRAY << "This test is not complete, but this loading stuff and so on is kinda of a test.";
+
+	while (keep_running_things) {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
+	cout << console::color::DARK_GRAY << "Detected end! Closing stuff...";
+
+	//std::atomic<bool> keep_running_things = true;
+	//block blk_fixed, blk_mouse;
+	//text txt_main;
+	//display my_display;
+	//file fp; // random file
+	//thread blocks_col;
+	//mouse mousing(my_display);
+	//collisionable cols[2] = { blk_mouse, blk_fixed };
+	//const color no_collision = color(127, 255, 127);
+	//const color has_collision = color(255, 127, 127);
+	//auto random_texture = make_hybrid<texture>();
+	//auto font_u = make_hybrid<font>();
+
+	blocks_col.join();
+	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Closing..."));
+	my_display.destroy();
+	// the rest should be fine.
+
+	cout << console::color::DARK_GRAY << "Everything should be good now.";
+	
 
 	cout << console::color::DARK_BLUE << "======================================";
 	cout << console::color::BLUE << "# Ended graphics_test!";
@@ -740,7 +948,7 @@ int events_test()
 
 	cout << "Now some mouse testing (please keep screen selected while doing it):";
 	{
-		mouse mousse(disp.get_current_transform_function());
+		mouse mousse(disp);
 
 		transform transf;
 		transf.build_classic_fixed_proportion(disp.get_width(), disp.get_height(), 1.0f * disp.get_width() / disp.get_height());		

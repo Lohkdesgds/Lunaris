@@ -134,7 +134,7 @@
 //
 //	text txt;
 //	txt.font_set(font_u);
-//	txt.set<std::string>(enum_text_string_e::STRING, "Screen: ----x----\nFPS: ----\nTPS: --");
+//	txt.set<std::string>(enum_text_safe_string_e::STRING, "Screen: ----x----\nFPS: ----\nTPS: --");
 //	txt.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 //	txt.set<double>(enum_sprite_double_e::SCALE_G, 0.06);
 //	txt.set<double>(enum_sprite_double_e::SCALE_X, 0.6);
@@ -288,7 +288,7 @@
 //			size_t __tmp_tps = tps_counting;
 //			tps_counting = 0;
 //
-//			txt.set<std::string>(enum_text_string_e::STRING,
+//			txt.set<std::string>(enum_text_safe_string_e::STRING,
 //				(	"Screen: " + std::to_string(mywindow.get_width()) + "x" + std::to_string(mywindow.get_height()) + "@" + std::to_string(mywindow.get_frequency()) + "\n"
 //					"FPS: " + std::to_string(__tmp_fps) + "\n"
 //					"TPS: " + std::to_string(__tmp_tps) + 

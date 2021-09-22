@@ -65,6 +65,9 @@
     <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp">
       <Filter>include\Lunaris\Utility\__impl\random</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\collisionable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="include">
@@ -198,6 +201,12 @@
     </Filter>
     <Filter Include="include\Lunaris\Utility\__impl\random">
       <UniqueIdentifier>{56b17146-68b7-4881-9f22-d3d52885bf56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\collisionable">
+      <UniqueIdentifier>{0f8376c5-5f93-4e54-8a77-6d8db9c060f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\safe_data">
+      <UniqueIdentifier>{0a372471-3543-4e43-948b-da8684ab9e9b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -411,6 +420,21 @@
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\random\random.h">
       <Filter>include\Lunaris\Utility\__impl\random</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.h">
+      <Filter>include\Lunaris\Graphics\__impl\collisionable</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.h">
+      <Filter>include\Lunaris\Utility\__impl\safe_data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.ipp">
+      <Filter>include\Lunaris\Utility\__impl\safe_data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

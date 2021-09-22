@@ -218,6 +218,7 @@
     <ClCompile Include="..\..\include\Lunaris\Events\mouse\mouse.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Events\shared_start\shared_start.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\block\block.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\color\color.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\display\display.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\font\font.cpp" />
@@ -255,6 +256,8 @@
     <ClInclude Include="..\..\include\Lunaris\graphics.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\block.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\block\block.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\color.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\color\color.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\display.h" />
@@ -296,6 +299,9 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\random.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\random\random.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\socket.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.ipp" />

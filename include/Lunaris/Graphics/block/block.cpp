@@ -2,24 +2,6 @@
 
 namespace Lunaris {
 
-	/*block::_block_drawing_references_fast::_block_drawing_references_fast(const double& a, const double& b, const double& c, const double& d, const double& e, const double& f, const double& g, const double& h, const double& i, const double& j, const double& k, const double& l, const double& m, const double& n) :
-		RO_DRAW_PROJ_POS_X(a),
-		RO_DRAW_PROJ_POS_Y(b),
-		RO_DRAW_PROJ_ROTATION(c),
-		RO_DRAW_LAST_DRAW(d),
-		DRAW_RELATIVE_CENTER_X(e),
-		DRAW_RELATIVE_CENTER_Y(f),
-		DRAW_ELASTIC_POSITION_PROP(g),
-		POS_X(h),
-		POS_Y(i),
-		ROTATION(j),
-		SCALE_G(k),
-		SCALE_X(l),
-		SCALE_Y(m),
-		OUT_OF_SIGHT_POS(n)
-	{
-	}*/
-
 	std::shared_lock<std::shared_mutex> block::mu_shared_read_control() const
 	{
 		return std::shared_lock<std::shared_mutex>(textures_mtx);
@@ -39,15 +21,15 @@ namespace Lunaris {
 			throw std::runtime_error("Texture had invalid size!");
 		}
 
-		const float rot_rad = static_cast<float>(get<double>(enum_sprite_double_e::RO_DRAW_PROJ_ROTATION)) * ALLEGRO_PI / 180.0f;
-		const float dsx = 1.0f * static_cast<float>(get<double>(enum_sprite_double_e::SCALE_X)) * static_cast<float>(get<double>(enum_sprite_double_e::SCALE_G)) * (1.0f / bmpx);
-		const float dsy = 1.0f * static_cast<float>(get<double>(enum_sprite_double_e::SCALE_Y)) * static_cast<float>(get<double>(enum_sprite_double_e::SCALE_G)) * (1.0f / bmpy);
+		//const float rot_rad = static_cast<float>(get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION)) * ALLEGRO_PI / 180.0f;
+		const float dsx = 1.0f * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_X)) * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_G)) * (1.0f / bmpx);
+		const float dsy = 1.0f * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_Y)) * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_G)) * (1.0f / bmpy);
 
 		bmp.draw_scaled_rotated_at(
-			static_cast<float>(get<double>(enum_sprite_double_e::DRAW_RELATIVE_CENTER_X)), static_cast<float>(get<double>(enum_sprite_double_e::DRAW_RELATIVE_CENTER_Y)),
-			static_cast<float>(get<double>(enum_sprite_double_e::RO_DRAW_PROJ_POS_X)), static_cast<float>(get<double>(enum_sprite_double_e::RO_DRAW_PROJ_POS_Y)),
+			get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X), get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y),
+			0.0f,0.0f,//static_cast<float>(get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_X)), static_cast<float>(get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_Y)),
 			dsx, dsy,
-			rot_rad);
+			0.0f);
 
 		/*const float rot_rad = static_cast<float>(_draw_fast.RO_DRAW_PROJ_ROTATION) * ALLEGRO_PI / 180.0f;
 		const float dsx = 1.0f * static_cast<float>(_draw_fast.SCALE_X) * static_cast<float>(_draw_fast.SCALE_G) * (1.0f / bmpx);
@@ -78,7 +60,7 @@ namespace Lunaris {
 		}*/
 	}
 
-	void block::draw_task(const transform& transf, const float& limit_x, const float& limit_y)
+	void block::draw_task(transform transf, transform transf2, const float& limit_x, const float& limit_y)
 	{
 		// this is for range check
 
@@ -111,9 +93,6 @@ namespace Lunaris {
 					}
 				}
 			}
-
-			//set<std::chrono::milliseconds>(enum_block_cmilliseconds_e::RO_DRAW_LAST_FRAME, last_time); // should update as it goes now, because it's a ref
-			//set<uintptr_t>(enum_block_sizet_e::RO_DRAW_FRAME, frame); // should update as it goes now, because it's a ref
 		}
 
 		if (frame >= textures.size()) frame = static_cast<size_t>(textures.size() - 1);

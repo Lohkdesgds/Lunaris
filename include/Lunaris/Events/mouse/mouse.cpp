@@ -29,38 +29,35 @@ namespace Lunaris {
 
     void mouse::handle_events(const ALLEGRO_EVENT& ev)
     {
+        if (hint_changes_coming) std::this_thread::sleep_for(std::chrono::milliseconds(15)); // someone is trying to lock, hold a sec
         auto lucky = get_lock();
 
         switch (ev.type) {
-        case ALLEGRO_EVENT_TIMER:
+        case ALLEGRO_EVENT_MOUSE_AXES:
         {
-            if (!had_mouse_event) return;
-            had_mouse_event = false;
+            if (ev.mouse.dw != 0) set_mouse_axis_plus(0, ev.mouse.dw);
+            if (ev.mouse.dz != 0) set_mouse_axis_plus(1, ev.mouse.dz);
 
             ALLEGRO_TRANSFORM curr_transf = current_transform_getter();
 
             float max_x = -1.0f, max_y = -1.0f;
+            float quick_mx, quick_my;
+            quick_mx = ev.mouse.x;
+            quick_my = ev.mouse.y;
 
             al_invert_transform(&curr_transf);
 
             al_transform_coordinates(&curr_transf, &max_x, &max_y);
-            al_transform_coordinates(&curr_transf, &quick_cpy_mouse[0], &quick_cpy_mouse[1]);
+            al_transform_coordinates(&curr_transf, &quick_mx, &quick_my);
 
-            mouse_rn.real_posx = quick_cpy_mouse[0];
-            mouse_rn.real_posy = quick_cpy_mouse[1];
+            mouse_rn.real_posx = quick_mx;
+            mouse_rn.real_posy = quick_my;
             mouse_rn.relative_posx = mouse_rn.real_posx * 1.0 / fabsf(max_x);
             mouse_rn.relative_posy = mouse_rn.real_posy * 1.0 / fabsf(max_y);
 
             if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_AXES, mouse_rn);
             mouse_rn.scroll_event = 0; // always reset
         }
-            break;
-        case ALLEGRO_EVENT_MOUSE_AXES:
-            quick_cpy_mouse[0] = ev.mouse.x;
-            quick_cpy_mouse[1] = ev.mouse.y;
-            if (ev.mouse.dw != 0) set_mouse_axis_plus(0, ev.mouse.dw);
-            if (ev.mouse.dz != 0) set_mouse_axis_plus(1, ev.mouse.dz);
-            had_mouse_event = true;
             break;
         case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
             if (ev.mouse.button <= 32) {
@@ -79,7 +76,7 @@ namespace Lunaris {
         }
     }
 
-    mouse::mouse(const std::function<ALLEGRO_TRANSFORM(void)> f) : __common_event()
+    mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) : __common_event()
     {
         if (!f) throw std::runtime_error("No function detected in mouse! Mouse needs a valid function to get transformation of current display so it can translate coords!");
 
@@ -87,35 +84,39 @@ namespace Lunaris {
 
         current_transform_getter = f;
 
-        if (!(timer = al_create_timer(default_mouse_update_rate))) {
-            throw std::bad_alloc();
-        }
+        //if (!(timer = al_create_timer(default_mouse_update_rate))) {
+        //    throw std::bad_alloc();
+        //}
 
         al_register_event_source(get_event_queue(), al_get_mouse_event_source());
-        al_register_event_source(get_event_queue(), al_get_timer_event_source(timer));
+        //al_register_event_source(get_event_queue(), al_get_timer_event_source(timer));
 
-
-        al_start_timer(timer);
+        //al_start_timer(timer);
     }
 
     mouse::~mouse()
     {
-        if (timer) {
-            this->stop(); // stop before destroying timer
-            al_destroy_timer(timer);
-            timer = nullptr;
-        }
+        if (get_event_queue()) al_unregister_event_source(get_event_queue(), al_get_mouse_event_source());
+        //if (timer) {
+        //    this->stop(); // stop before destroying timer
+        //    al_destroy_timer(timer);
+        //    timer = nullptr;
+        //}
     }
 
     void mouse::hook_event(const std::function<void(const int, const mouse_event&)> f)
     {
+        hint_changes_coming = true;
         auto lucky = get_lock();
+        hint_changes_coming = false;
         event_handler = f;
     }
 
     void mouse::unhook_event()
     {
+        hint_changes_coming = true;
         auto lucky = get_lock();
+        hint_changes_coming = false;
         event_handler = {};
     }
 

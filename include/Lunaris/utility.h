@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Utility/safe_data.h"
 #include "Utility/socket.h"
 #include "Utility/console.h"
 #include "Utility/future.h"
