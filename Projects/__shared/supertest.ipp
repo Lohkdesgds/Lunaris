@@ -39,9 +39,9 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	if (utility_test(currpath) != 0) return 1;
-	if (audio_test() != 0) return 1;
-	if (events_test() != 0) return 1;
+	//if (utility_test(currpath) != 0) return 1;
+	//if (audio_test() != 0) return 1;
+	//if (events_test() != 0) return 1;
 	if (graphics_test() != 0) return 1; // todo
 }
 
@@ -657,7 +657,7 @@ int graphics_test()
 	file fp; // random file
 	thread blocks_col;
 	mouse mousing(my_display);
-	collisionable cols[2] = { blk_mouse, blk_fixed };
+	collisionable_v2 cols[2] = { blk_mouse, blk_fixed };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
 	auto random_texture = make_hybrid<texture>();
@@ -699,12 +699,12 @@ int graphics_test()
 		txt_main.shadow_insert(text_shadow(0.0001f * __c, 0.007f * __c, color(ctee / 10, ctee / 10, ctee / 10, ctee)));
 	}
 
-	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.4f);
+	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.25f);
 	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX, true);
 
 	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255,255,255));
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
-	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.3f);
+	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.5f);
 
 	cout << "Applying default transformation to display...";
 
@@ -752,6 +752,11 @@ int graphics_test()
 			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 30, al_map_rgb(0, 0, 150), 5);
 			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 30, al_map_rgb(150, 150, 0), 5);
 
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), 10, al_map_rgb(150, 0, 0), 3);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), 10, al_map_rgb(0, 150, 0), 3);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 10, al_map_rgb(0, 0, 150), 3);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 10, al_map_rgb(150, 150, 0), 3);
+
 			savv.apply();
 		}
 	});
@@ -798,8 +803,8 @@ int graphics_test()
 		for (auto& i : cols) i.work();
 
 		// extra mine
-		blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.75f);
-		blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.2f);
+		blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.15f);
+		blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.05f);
 		txt_main.set<float>(enum_sprite_float_e::ROTATION, cos(al_get_time() * 2.5) * 0.3f);
 
 		{
@@ -835,19 +840,6 @@ int graphics_test()
 	}
 
 	cout << console::color::DARK_GRAY << "Detected end! Closing stuff...";
-
-	//std::atomic<bool> keep_running_things = true;
-	//block blk_fixed, blk_mouse;
-	//text txt_main;
-	//display my_display;
-	//file fp; // random file
-	//thread blocks_col;
-	//mouse mousing(my_display);
-	//collisionable cols[2] = { blk_mouse, blk_fixed };
-	//const color no_collision = color(127, 255, 127);
-	//const color has_collision = color(255, 127, 127);
-	//auto random_texture = make_hybrid<texture>();
-	//auto font_u = make_hybrid<font>();
 
 	blocks_col.join();
 	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Closing..."));

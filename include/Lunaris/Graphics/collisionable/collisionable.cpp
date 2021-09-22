@@ -154,4 +154,105 @@ namespace Lunaris {
 		}
 	}
 
+	void collisionable_v2::each_pt_col(const float& px, const float& py, const direction_corners_internal& opt)
+	{
+		//const float& px = oth.nwx;
+		//const float& py = oth.nwy;
+		float area[4];
+
+		// north
+		{
+			const float& ax = nwx;
+			const float& ay = nwy;
+			const float& bx = nex;
+			const float& by = ney;
+			area[static_cast<int>(direction_internal::NORTH)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+		}
+		// south
+		{
+			const float& ax = swx;
+			const float& ay = swy;
+			const float& bx = sex;
+			const float& by = sey;
+			area[static_cast<int>(direction_internal::SOUTH)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+		}
+		// east
+		{
+			const float& ax = nex;
+			const float& ay = ney;
+			const float& bx = sex;
+			const float& by = sey;
+			area[static_cast<int>(direction_internal::EAST)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+		}
+		// west
+		{
+			const float& ax = nwx;
+			const float& ay = nwy;
+			const float& bx = swx;
+			const float& by = swy;
+			area[static_cast<int>(direction_internal::WEST)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+		}
+
+		float sum_areas = 0.0f;
+		for (const auto& i : area) sum_areas += fabs(i);
+
+		if (sum_areas <= (default_collision_oversize_prop * last_self_area)) {
+			was_col = true;
+			++directions_cases[static_cast<int>(opt)];
+		}
+	}
+
+	collisionable_v2::collisionable_v2(sprite& ref)
+		: wrap(ref),
+		nwx(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X)),
+		nwy(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y)),
+		nex(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X)),
+		ney(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y)),
+		swx(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X)),
+		swy(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y)),
+		sex(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X)),
+		sey(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y))
+		//propx(ref.get<float>(enum_sprite_float_e::SCALE_X)),
+		//propy(ref.get<float>(enum_sprite_float_e::SCALE_Y)),
+		//propg(ref.get<float>(enum_sprite_float_e::SCALE_G))
+	{
+	}
+
+	bool collisionable_v2::overlap(const collisionable_v2& oth)
+	{
+		last_self_area = (nwx * ney + nwy * swx + nex * swy - ney * swx - nwx * swy - nwy * nex);
+		//last_self_area = (propx * propg) * (propy * propg);
+
+		each_pt_col(oth.nwx, oth.nwy, direction_corners_internal::NW);
+		each_pt_col(oth.nex, oth.ney, direction_corners_internal::NE);
+		each_pt_col(oth.swx, oth.swy, direction_corners_internal::SW);
+		each_pt_col(oth.sex, oth.sey, direction_corners_internal::SE);
+
+		return was_col;
+	}
+
+	int collisionable_v2::result() const
+	{
+		return was_col ? 1 : 0; // for now
+	}
+
+	void collisionable_v2::reset()
+	{
+		was_col = false;
+		for (auto& i : directions_cases) i = 0;
+	}
+
+	void collisionable_v2::work()
+	{
+		if (workar) {
+			int res = result();
+			workar(res, wrap);
+		}
+	}
+
+	void collisionable_v2::set_work(const std::function<void(int, sprite&)> f)
+	{
+		workar = f;
+	}
+
 }
