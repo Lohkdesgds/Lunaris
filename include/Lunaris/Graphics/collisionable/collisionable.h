@@ -63,7 +63,6 @@ namespace Lunaris {
 		};
 
 		std::vector<result> cases;
-		std::string fname;
 
 		sprite& wrap;
 		std::function<void(result, sprite&)> workar;
@@ -80,13 +79,12 @@ namespace Lunaris {
 		int fix_op_rot(const int); // expects direction_op combo
 		int fix_op_invert(const int); // just north <-> south etc
 	public:
-		collisionable(sprite&, const std::string&);
+		collisionable(sprite&);
 
 		void overlap(collisionable&);
 		void reset();
 		void work();
 		void set_work(const std::function<void(result, sprite&)>);
-		const std::string& nam() const;
 	};
 
 	// begin, end

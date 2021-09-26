@@ -39,9 +39,9 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	//if (utility_test(currpath) != 0) return 1;
-	//if (audio_test() != 0) return 1;
-	//if (events_test() != 0) return 1;
+	if (utility_test(currpath) != 0) return 1;
+	if (audio_test() != 0) return 1;
+	if (events_test() != 0) return 1;
 	if (graphics_test() != 0) return 1; // todo
 }
 
@@ -188,6 +188,60 @@ int utility_test(const std::string& self_path)
 				std::this_thread::sleep_for(std::chrono::seconds(5));
 
 				cout << console::color::YELLOW << "PASSED! (timedout user, so assuming good)";
+			}
+
+			cout << console::color::LIGHT_PURPLE << "Testing 'safe_data'...";
+			{
+				cout << "Setting up many threads trying to access the same sensitive data...";
+
+				const size_t running_time_max = 5;
+				const size_t numthreads = 32;
+				safe_data<std::string> safer;
+
+				std::atomic<unsigned long long> num_times[numthreads];
+				std::atomic<bool> startline = false;
+				thread my_threads[numthreads];
+
+				for (size_t p = 0; p < numthreads * 0.5f; p++) {
+					my_threads[p].task_async([p, &num_times, &safer, &startline] {
+						while (!startline) std::this_thread::yield();
+						safer.set("value = " + std::to_string(random()));
+						++num_times[p];
+					});
+				}
+				for (size_t p = numthreads * 0.5f; p < numthreads; p++) {
+					my_threads[p].task_async([p, &num_times, &safer, &startline] {
+						while (!startline) std::this_thread::yield();
+						std::string res = safer.read();
+						if (!res.empty()) ++num_times[p];
+					});
+				}
+				cout << "Waiting a second before starting...";
+
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+
+				cout << "Running threads for " << running_time_max << " seconds...";
+
+				startline = true;
+				std::this_thread::sleep_for(std::chrono::seconds(running_time_max));
+				for (auto& i : my_threads) i.signal_stop();
+
+				cout << "Waiting threads to stop";
+				for (auto& i : my_threads) i.join();
+
+				cout << "These are the results:";
+
+				for (size_t p = 0; p < numthreads * 0.5f; p++) {
+					cout << "Thread #" << p << ": (write) " << console::color::AQUA << (num_times[p] / running_time_max) << console::color::DARK_GRAY << " ips"; // iterations per sec
+				}
+				for (size_t p = numthreads * 0.5f; p < numthreads; p++) {
+					cout << "Thread #" << p << ": (read) " << console::color::LIGHT_PURPLE << (num_times[p] / running_time_max) << console::color::DARK_GRAY << " ips"; // iterations per sec
+				}
+
+				for (const auto& i : num_times) {
+					TESTLU(i != 0, "One of the threads got ZERO. That's not good.");
+				}
+
 			}
 
 			cout << console::color::LIGHT_PURPLE << "Testing 'package'...";
@@ -657,7 +711,7 @@ int graphics_test()
 	//file fp; // random file
 	thread blocks_col;
 	mouse mousing(my_display);
-	collisionable cols[2] = { {blk_mouse, "mouse"}, {blk_fixed, "block"}};
+	collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
 	const color mouse_no_collision = color(127, 255, 255);
@@ -808,10 +862,10 @@ int graphics_test()
 			one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
 		}
 		if (res.dir_to != 0) {
-			if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << i.nam() << " COL NORTH #" << (size_t)((void*)&i);
-			if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << i.nam() << " COL SOUTH #" << (size_t)((void*)&i);
-			if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << i.nam() << " COL EAST  #" << (size_t)((void*)&i);
-			if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << i.nam() << " COL WEST  #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << " COL NORTH #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << " COL SOUTH #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << " COL EAST  #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << " COL WEST  #" << (size_t)((void*)&i);
 		}
 		one.think(); 
 	});

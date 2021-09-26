@@ -398,7 +398,7 @@ namespace Lunaris {
 		return res;
 	}
 
-	collisionable::collisionable(sprite& ref, const std::string& debugnam)
+	collisionable::collisionable(sprite& ref)
 		: wrap(ref),
 		nwx(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X)),
 		nwy(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y)),
@@ -414,7 +414,6 @@ namespace Lunaris {
 		speedy(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y)),
 		rot(ref.get<float>(enum_sprite_float_e::ROTATION))
 	{
-		fname = debugnam;
 	}
 
 	void collisionable::overlap(collisionable& oth)
@@ -458,11 +457,6 @@ namespace Lunaris {
 	void collisionable::set_work(const std::function<void(result, sprite&)> f)
 	{
 		workar = f;
-	}
-
-	const std::string& collisionable::nam() const
-	{
-		return fname;
 	}
 
 
