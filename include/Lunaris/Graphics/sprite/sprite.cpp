@@ -74,9 +74,9 @@ namespace Lunaris {
 
 		// - - - - - - - - Working - - - - - - - - //
 		if ( draw_should_draw && // basic rule
-			(out_of_sight_prop <= 0.0 || (
-				(fabs(target_pos_x) < fabs(out_of_sight_prop * (limit_x + 0.5 * (scale_g * scale_x)))) && // within borders (version 1.0)
-				(fabs(target_pos_y) < fabs(out_of_sight_prop * (limit_y + 0.5 * (scale_g * scale_y))))
+			(out_of_sight_prop <= 0.0f || (
+				(fabsf(target_pos_x) < fabsf(out_of_sight_prop * (limit_x + 0.5f * (scale_g * scale_x)))) && // within borders (version 1.0)
+				(fabsf(target_pos_y) < fabsf(out_of_sight_prop * (limit_y + 0.5f * (scale_g * scale_y))))
 			)
 			))	// within borders (version 1.0)
 		{
@@ -151,10 +151,15 @@ namespace Lunaris {
 
 		float& curr_speed_x = get<float>(enum_sprite_float_e::RO_THINK_SPEED_X);
 		float& curr_speed_y = get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y);
+		float& curr_speed_rot = get<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION);
+
 		float& curr_pos_x = get<float>(enum_sprite_float_e::POS_X);
 		float& curr_pos_y = get<float>(enum_sprite_float_e::POS_Y);
+		float& curr_pos_rot = get<float>(enum_sprite_float_e::ROTATION);
+
 		float& curr_accel_x = get<float>(enum_sprite_float_e::ACCEL_X);
 		float& curr_accel_y = get<float>(enum_sprite_float_e::ACCEL_Y);
+		float& curr_accel_rot = get<float>(enum_sprite_float_e::ACCEL_ROTATION);
 
 		double timee = al_get_time();
 		think_delta_v = timee - last_think_v;
@@ -164,14 +169,17 @@ namespace Lunaris {
 
 		curr_pos_x += curr_speed_x;
 		curr_pos_y += curr_speed_y;
+		curr_pos_rot += curr_speed_rot;
 
 		curr_speed_x += curr_accel_x;
 		curr_speed_y += curr_accel_y;
+		curr_speed_rot += curr_accel_rot;
 
 		if (elasticity > 1.0) throw std::runtime_error("Elasticity is higher than 1.0, this means speed would go to infinite!");
 
 		curr_speed_x *= elasticity;
 		curr_speed_y *= elasticity;
+		curr_speed_rot *= elasticity;
 
 		think_task();
 

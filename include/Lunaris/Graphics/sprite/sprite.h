@@ -21,6 +21,7 @@ namespace Lunaris {
 		RO_DRAW_PROJ_ROTATION,			// smooth ROTATION (real in-screen value) (in rad)						-- IN_USE / READY
 		RO_THINK_SPEED_X,				// accel makes speed. Speed is smooth.									-- IN_USE
 		RO_THINK_SPEED_Y,				// accel makes speed. Speed is smooth.									-- IN_USE / READY
+		RO_THINK_SPEED_ROTATION,		// accel makes speed. Speed is smooth.
 		RO_THINK_POINT_NORTHWEST_X,		// Automatically calculates pixel-like positions for further collision
 		RO_THINK_POINT_NORTHWEST_Y,		// Automatically calculates pixel-like positions for further collision
 		RO_THINK_POINT_NORTHEAST_X,		// Automatically calculates pixel-like positions for further collision
@@ -43,11 +44,12 @@ namespace Lunaris {
 		POS_X,								// Target position to be (may change if collision or acceleration)
 		POS_Y,								// Target position to be (may chance if collision or acceleration)
 		ROTATION,							// Target rotation to be (may change if collision or acceleration)
-		ACCEL_X,							// Acceleration in X (affects internal SPEED and affect POS_X)		-- IN_USE
-		ACCEL_Y,							// Acceleration in Y (affects internal SPEED and affect POS_Y)		-- IN_USE
-		SCALE_G,							// Scale (general)													-- IN_USE
-		SCALE_X,							// Scale (horizontal)												-- IN_USE
-		SCALE_Y,							// Scale (vertical)													-- IN_USE
+		ACCEL_X,							// Acceleration in X (affects internal SPEED and affect POS_X)							-- IN_USE
+		ACCEL_Y,							// Acceleration in Y (affects internal SPEED and affect POS_Y)							-- IN_USE
+		ACCEL_ROTATION,						// Acceleration in rotation (affects internal rotation SPEED and affect ROTATION)
+		SCALE_G,							// Scale (general)																		-- IN_USE
+		SCALE_X,							// Scale (horizontal)																	-- IN_USE
+		SCALE_Y,							// Scale (vertical)																		-- IN_USE
 		OUT_OF_SIGHT_POS,					// [0.0, inf) = What coords (any direction) should be considered "too far" so it should not attempt to draw itself? Default: 2.0 (distant from screen)
 		_SIZE								// For easy sizing
 	};
@@ -94,6 +96,7 @@ namespace Lunaris {
 		{0.0f,		enum_sprite_float_e::RO_DRAW_PROJ_ROTATION},
 		{0.0f,		enum_sprite_float_e::RO_THINK_SPEED_X},
 		{0.0f,		enum_sprite_float_e::RO_THINK_SPEED_Y},
+		{0.0f,		enum_sprite_float_e::RO_THINK_SPEED_ROTATION},
 		{0.0f,		enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X},
 		{0.0f,		enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y},
 		{0.0f,		enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X},
@@ -113,6 +116,7 @@ namespace Lunaris {
 		{0.0f,		enum_sprite_float_e::ROTATION},
 		{0.0f,		enum_sprite_float_e::ACCEL_X},
 		{0.0f,		enum_sprite_float_e::ACCEL_Y},
+		{0.0f,		enum_sprite_float_e::ACCEL_ROTATION},
 		{1.0f,		enum_sprite_float_e::SCALE_G},
 		{1.0f,		enum_sprite_float_e::SCALE_X},
 		{1.0f,		enum_sprite_float_e::SCALE_Y},

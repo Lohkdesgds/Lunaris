@@ -2,22 +2,22 @@
 
 namespace Lunaris {
 
-	float collisionable::get_size_x() const
+	float collisionable_legacy::get_size_x() const
 	{
 		return default_collision_oversize + (wrap.get<float>(enum_sprite_float_e::SCALE_G) * wrap.get<float>(enum_sprite_float_e::SCALE_X));
 	}
 
-	float collisionable::get_size_y() const
+	float collisionable_legacy::get_size_y() const
 	{
 		return default_collision_oversize + (wrap.get<float>(enum_sprite_float_e::SCALE_G) * wrap.get<float>(enum_sprite_float_e::SCALE_Y));
 	}
 
-	collisionable::collisionable(sprite& wrp)
+	collisionable_legacy::collisionable_legacy(sprite& wrp)
 		: wrap(wrp), posx(wrp.get<float>(enum_sprite_float_e::POS_X)), posy(wrp.get<float>(enum_sprite_float_e::POS_Y))
 	{
 	}
 
-	bool collisionable::overlap(const collisionable& ol)
+	bool collisionable_legacy::overlap(const collisionable_legacy& ol)
 	{
 		const float sizx = get_size_x();
 		const float sizy = get_size_y();
@@ -25,10 +25,10 @@ namespace Lunaris {
 		const float ol_sizy = ol.get_size_y();
 
 		const float dist_x = (posx - ol.posx);
-		const float diff_x = fabs(dist_x) - (sizx + ol_sizx) * 1.0 / 2.0; // if < 0, col
+		const float diff_x = fabs(dist_x) - (sizx + ol_sizx) * 1.0f / 2.0f; // if < 0, col
 		const bool col_x = diff_x < 0.0;
 		const float dist_y = (posy - ol.posy);
-		const float diff_y = fabs(dist_y) - (sizy + ol_sizy) * 1.0 / 2.0; // if < 0, col
+		const float diff_y = fabs(dist_y) - (sizy + ol_sizy) * 1.0f / 2.0f; // if < 0, col
 		const bool col_y = diff_y < 0.0;
 		const bool is_col = col_y && col_x;
 
@@ -68,7 +68,7 @@ namespace Lunaris {
 		return is_col;
 	}
 
-	int collisionable::result() const
+	int collisionable_legacy::result() const
 	{
 		const bool n = directions_cases[static_cast<int>(direction_internal::NORTH)] > 0;
 		const bool s = directions_cases[static_cast<int>(direction_internal::SOUTH)] > 0;
@@ -118,14 +118,14 @@ namespace Lunaris {
 		return 0;
 	}
 
-	void collisionable::reset()
+	void collisionable_legacy::reset()
 	{
 		was_col = false;
 		for (auto& i : directions_cases) i = 0;
 		dx_max = dy_max = 0.0;
 	}
 
-	void collisionable::work()
+	void collisionable_legacy::work()
 	{
 		if (workar) {
 			int res = this->result();
@@ -133,12 +133,12 @@ namespace Lunaris {
 		}
 	}
 
-	void collisionable::set_work(const std::function<void(int, sprite&)> f)
+	void collisionable_legacy::set_work(const std::function<void(int, sprite&)> f)
 	{
 		workar = f;
 	}
 
-	unsigned collisionable::read_cases(const direction_op transl) const
+	unsigned collisionable_legacy::read_cases(const direction_op transl) const
 	{
 		switch (transl) {
 		case direction_op::DIR_NORTH:
@@ -154,10 +154,15 @@ namespace Lunaris {
 		}
 	}
 
-	void collisionable_v2::each_pt_col(const float& px, const float& py, const direction_corners_internal& opt)
+	bool collisionable::result::is_dir(const direction_op& op)
 	{
-		//const float& px = oth.nwx;
-		//const float& py = oth.nwy;
+		return (dir_to & (static_cast<int>(op))) != 0;
+	}
+
+	collisionable::raw_result collisionable::each_pt_col(const float& px, const float& py, const collisionable& oth) const
+	{
+		raw_result _tmp;
+
 		float area[4];
 
 		// north
@@ -166,7 +171,7 @@ namespace Lunaris {
 			const float& ay = nwy;
 			const float& bx = nex;
 			const float& by = ney;
-			area[static_cast<int>(direction_internal::NORTH)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+			area[static_cast<int>(direction_index::NORTH)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
 		}
 		// south
 		{
@@ -174,7 +179,7 @@ namespace Lunaris {
 			const float& ay = swy;
 			const float& bx = sex;
 			const float& by = sey;
-			area[static_cast<int>(direction_internal::SOUTH)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+			area[static_cast<int>(direction_index::SOUTH)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
 		}
 		// east
 		{
@@ -182,7 +187,7 @@ namespace Lunaris {
 			const float& ay = ney;
 			const float& bx = sex;
 			const float& by = sey;
-			area[static_cast<int>(direction_internal::EAST)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+			area[static_cast<int>(direction_index::EAST)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
 		}
 		// west
 		{
@@ -190,19 +195,210 @@ namespace Lunaris {
 			const float& ay = nwy;
 			const float& bx = swx;
 			const float& by = swy;
-			area[static_cast<int>(direction_internal::WEST)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
+			area[static_cast<int>(direction_index::WEST)] = 0.5f * (px * ay + py * bx + ax * by - ay * bx - px * by - py * ax);
 		}
 
 		float sum_areas = 0.0f;
-		for (const auto& i : area) sum_areas += fabs(i);
+		for (const auto& i : area) sum_areas += fabsf(i);
 
 		if (sum_areas <= (default_collision_oversize_prop * last_self_area)) {
-			was_col = true;
-			++directions_cases[static_cast<int>(opt)];
+
+			float _quick_small = sum_areas;
+			for (const auto& i : area) if (_quick_small > fabsf(i)) _quick_small = fabsf(i);
+
+			unsigned index = 0;
+			for (; index < 4; index++) if (_quick_small == fabsf(area[index])) break;
+			if (index == 4) return _tmp;
+
+			_tmp.dir_to_raw = static_cast<direction_index>(index);
+
+			const float speed_dx = speedx - oth.speedx;
+			const float speed_dy = speedy - oth.speedy;
+
+			if (fabsf(speed_dx) > fabsf(speed_dy)) {
+				_tmp.moment_dir = oth.cy - cy;
+			}
+			else {
+				_tmp.moment_dir = oth.cx - cx;
+			}
+		}
+
+		return _tmp;
+	}
+
+	collisionable::result collisionable::combine_to(const collisionable& othr)
+	{
+		raw_result arr[4];
+		result res;
+
+		arr[0] = each_pt_col(othr.nwx, othr.nwy, othr);
+		arr[1] = each_pt_col(othr.nex, othr.ney, othr);
+		arr[2] = each_pt_col(othr.swx, othr.swy, othr);
+		arr[3] = each_pt_col(othr.sex, othr.sey, othr);
+
+		//arr[4] = othr.each_pt_col(nwx, nwy, *this);
+		//arr[5] = othr.each_pt_col(nex, ney, *this);
+		//arr[6] = othr.each_pt_col(swx, swy, *this);
+		//arr[7] = othr.each_pt_col(sex, sey, *this);
+
+		//for (size_t p = 4; p < 8; p++) {
+		//	arr[p].dir_to_raw = fix_index_inverse(arr[p].dir_to_raw);
+		//}
+
+		unsigned opts[4] = { 0u,0u,0u,0u };
+
+		for (const auto& i : arr) { if (i.dir_to_raw != direction_index::NONE) { ++opts[static_cast<int>(i.dir_to_raw)]; res.moment_dir += i.moment_dir; } }
+
+		unsigned maxval = 0;
+		for (const auto& i : opts) if (maxval < i) maxval = i; // find max val
+		if (maxval == 0) return res;
+
+		for (size_t p = 0; p < 4; p++) {
+			auto& i = opts[p];
+			if (i == maxval) {
+				switch (p) {
+				case static_cast<int>(direction_index::NORTH):
+					res.dir_to |= static_cast<int>(direction_op::DIR_NORTH);
+					break;
+				case static_cast<int>(direction_index::SOUTH):
+					res.dir_to |= static_cast<int>(direction_op::DIR_SOUTH);
+					break;
+				case static_cast<int>(direction_index::EAST):
+					res.dir_to |= static_cast<int>(direction_op::DIR_EAST);
+					break;
+				case static_cast<int>(direction_index::WEST):
+					res.dir_to |= static_cast<int>(direction_op::DIR_WEST);
+					break;
+				}
+			}
+		}
+
+		return res;
+	}
+
+	collisionable::direction_index collisionable::fix_index_rot(const direction_index fx) const
+	{
+		if (fx == direction_index::_MAX || fx == direction_index::NONE) return fx;
+		int rw = static_cast<int>(fx);
+
+		long long fixx = (static_cast<long long>(rot * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360); // degrees
+		if (fixx < 0) fixx += 360;
+		fixx /= 45;
+		switch (fixx) {
+		case 7:
+		case 0:
+			return static_cast<direction_index>((rw) % 4);
+		case 1:
+		case 2:
+			return static_cast<direction_index>((rw + 1) % 4);
+		case 3:
+		case 4:
+			return static_cast<direction_index>((rw + 2) % 4);
+		case 5:
+		case 6:
+			return static_cast<direction_index>((rw + 3) % 4);
+		default:
+			return static_cast<direction_index>((rw) % 4);
 		}
 	}
 
-	collisionable_v2::collisionable_v2(sprite& ref)
+	collisionable::direction_index collisionable::fix_index_inverse(const direction_index fx) const
+	{
+		switch (fx) {
+		case direction_index::NORTH:
+			return direction_index::SOUTH;
+		case direction_index::SOUTH:
+			return direction_index::NORTH;
+		case direction_index::WEST:
+			return direction_index::EAST;
+		case direction_index::EAST:
+			return direction_index::WEST;
+		default:
+			return direction_index::NONE;
+		}
+	}
+
+	int collisionable::fix_op_rot_each(const direction_op a)
+	{
+		switch (a) {
+		case direction_op::DIR_NORTH:
+			switch (fix_index_rot(direction_index::NORTH)) {
+			case direction_index::NORTH:
+				return static_cast<int>(direction_op::DIR_NORTH);
+			case direction_index::SOUTH:
+				return static_cast<int>(direction_op::DIR_SOUTH);
+			case direction_index::EAST:
+				return static_cast<int>(direction_op::DIR_EAST);
+			case direction_index::WEST:
+				return static_cast<int>(direction_op::DIR_WEST);
+			default:
+				return 0;
+			}
+		case direction_op::DIR_SOUTH:
+			switch (fix_index_rot(direction_index::SOUTH)) {
+			case direction_index::NORTH:
+				return static_cast<int>(direction_op::DIR_NORTH);
+			case direction_index::SOUTH:
+				return static_cast<int>(direction_op::DIR_SOUTH);
+			case direction_index::EAST:
+				return static_cast<int>(direction_op::DIR_EAST);
+			case direction_index::WEST:
+				return static_cast<int>(direction_op::DIR_WEST);
+			default:
+				return 0;
+			}
+		case direction_op::DIR_EAST:
+			switch (fix_index_rot(direction_index::EAST)) {
+			case direction_index::NORTH:
+				return static_cast<int>(direction_op::DIR_NORTH);
+			case direction_index::SOUTH:
+				return static_cast<int>(direction_op::DIR_SOUTH);
+			case direction_index::EAST:
+				return static_cast<int>(direction_op::DIR_EAST);
+			case direction_index::WEST:
+				return static_cast<int>(direction_op::DIR_WEST);
+			default:
+				return 0;
+			}
+		case direction_op::DIR_WEST:
+			switch (fix_index_rot(direction_index::WEST)) {
+			case direction_index::NORTH:
+				return static_cast<int>(direction_op::DIR_NORTH);
+			case direction_index::SOUTH:
+				return static_cast<int>(direction_op::DIR_SOUTH);
+			case direction_index::EAST:
+				return static_cast<int>(direction_op::DIR_EAST);
+			case direction_index::WEST:
+				return static_cast<int>(direction_op::DIR_WEST);
+			default:
+				return 0;
+			}
+		default:
+			return 0;
+		}
+	}
+
+	int collisionable::fix_op_rot(const int o)
+	{
+		int res = 0;
+		if ((o & static_cast<int>(direction_op::DIR_NORTH)) != 0) res |= fix_op_rot_each(direction_op::DIR_NORTH);
+		if ((o & static_cast<int>(direction_op::DIR_SOUTH)) != 0) res |= fix_op_rot_each(direction_op::DIR_SOUTH);
+		if ((o & static_cast<int>(direction_op::DIR_EAST)) != 0)  res |= fix_op_rot_each(direction_op::DIR_EAST);
+		if ((o & static_cast<int>(direction_op::DIR_WEST)) != 0)  res |= fix_op_rot_each(direction_op::DIR_WEST);
+		return res;
+	}
+
+	int collisionable::fix_op_invert(const int o)
+	{
+		int res = 0;
+		if ((o & static_cast<int>(direction_op::DIR_NORTH)) != 0) res |= static_cast<int>(direction_op::DIR_SOUTH);
+		if ((o & static_cast<int>(direction_op::DIR_SOUTH)) != 0) res |= static_cast<int>(direction_op::DIR_NORTH);
+		if ((o & static_cast<int>(direction_op::DIR_EAST)) != 0)  res |= static_cast<int>(direction_op::DIR_WEST);
+		if ((o & static_cast<int>(direction_op::DIR_WEST)) != 0)  res |= static_cast<int>(direction_op::DIR_EAST);
+		return res;
+	}
+
+	collisionable::collisionable(sprite& ref, const std::string& debugnam)
 		: wrap(ref),
 		nwx(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X)),
 		nwy(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y)),
@@ -211,48 +407,80 @@ namespace Lunaris {
 		swx(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X)),
 		swy(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y)),
 		sex(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X)),
-		sey(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y))
-		//propx(ref.get<float>(enum_sprite_float_e::SCALE_X)),
-		//propy(ref.get<float>(enum_sprite_float_e::SCALE_Y)),
-		//propg(ref.get<float>(enum_sprite_float_e::SCALE_G))
+		sey(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y)),
+		cx(ref.get<float>(enum_sprite_float_e::POS_X)),
+		cy(ref.get<float>(enum_sprite_float_e::POS_Y)),
+		speedx(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_X)),
+		speedy(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y)),
+		rot(ref.get<float>(enum_sprite_float_e::ROTATION))
 	{
+		fname = debugnam;
 	}
 
-	bool collisionable_v2::overlap(const collisionable_v2& oth)
+	void collisionable::overlap(collisionable& oth)
 	{
-		last_self_area = (nwx * ney + nwy * swx + nex * swy - ney * swx - nwx * swy - nwy * nex);
-		//last_self_area = (propx * propg) * (propy * propg);
+		auto a = combine_to(oth);
+		auto b = oth.combine_to(*this);		
 
-		each_pt_col(oth.nwx, oth.nwy, direction_corners_internal::NW);
-		each_pt_col(oth.nex, oth.ney, direction_corners_internal::NE);
-		each_pt_col(oth.swx, oth.swy, direction_corners_internal::SW);
-		each_pt_col(oth.sex, oth.sey, direction_corners_internal::SE);
-
-		return was_col;
-	}
-
-	int collisionable_v2::result() const
-	{
-		return was_col ? 1 : 0; // for now
-	}
-
-	void collisionable_v2::reset()
-	{
-		was_col = false;
-		for (auto& i : directions_cases) i = 0;
-	}
-
-	void collisionable_v2::work()
-	{
-		if (workar) {
-			int res = result();
-			workar(res, wrap);
+		if (a.dir_to != 0 || b.dir_to != 0) {
+			result res;
+			res.dir_to = fix_op_rot(a.dir_to) | fix_op_invert(oth.fix_op_rot(b.dir_to));
+			res.moment_dir = a.moment_dir;
+			//a.dir_to = fix_op_rot(a.dir_to);
+			cases.push_back(res);
 		}
 	}
 
-	void collisionable_v2::set_work(const std::function<void(int, sprite&)> f)
+	void collisionable::reset()
+	{
+		cases.clear();
+		last_self_area = (nwx * ney + nwy * swx + nex * swy - ney * swx - nwx * swy - nwy * nex);
+	}
+
+	void collisionable::work()
+	{
+		switch (cases.size()) {
+		case 0:
+			workar({}, wrap);
+			return;
+		case 1:
+			workar(cases[0], wrap);
+			return;
+		default:
+		{
+			size_t tmp = random() % cases.size();
+			workar(cases[tmp], wrap);
+		}
+			return;
+		}
+	}
+
+	void collisionable::set_work(const std::function<void(result, sprite&)> f)
 	{
 		workar = f;
+	}
+
+	const std::string& collisionable::nam() const
+	{
+		return fname;
+	}
+
+
+	void work_all_auto(collisionable* be, const collisionable* en)
+	{
+		if (be >= en) return;
+
+		for (collisionable* ptr_p = be; ptr_p != en; ++ptr_p) ptr_p->reset();
+		
+		for (collisionable* ptr_a = be; ptr_a != en; ++ptr_a)
+		{
+			for (collisionable* ptr_b = be; ptr_b != en; ++ptr_b)
+			{
+				if (ptr_a != ptr_b) ptr_a->overlap(*ptr_b);
+			}
+		}
+
+		for (collisionable* ptr_p = be; ptr_p != en; ++ptr_p) ptr_p->work();
 	}
 
 }

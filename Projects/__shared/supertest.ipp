@@ -654,28 +654,30 @@ int graphics_test()
 	block blk_fixed, blk_mouse;
 	text txt_main;
 	display my_display;
-	file fp; // random file
+	//file fp; // random file
 	thread blocks_col;
 	mouse mousing(my_display);
-	collisionable_v2 cols[2] = { blk_mouse, blk_fixed };
+	collisionable cols[2] = { {blk_mouse, "mouse"}, {blk_fixed, "block"}};
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
-	auto random_texture = make_hybrid<texture>();
+	const color mouse_no_collision = color(127, 255, 255);
+	const color mouse_has_collision = color(255, 127, 255);
+	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
 
-	cout << "Opening temporary file for temporary image...'";
-
-	TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
-
-	cout << "Downloading random image from '" << random_img_url << "'";
-
-	{
-		downloader down;
-		TESTLU(down.get_store(random_img_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
-	}
-
-	cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
-	fp.flush();
+	//cout << "Opening temporary file for temporary image...'";
+	//
+	//TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
+	//
+	//cout << "Downloading random image from '" << random_img_url << "'";
+	//
+	//{
+	//	downloader down;
+	//	TESTLU(down.get_store(random_img_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+	//}
+	//
+	//cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
+	//fp.flush();
 
 	cout << "Creating display...";
 
@@ -719,13 +721,28 @@ int graphics_test()
 	{
 		bool good = false, dod = false;
 		my_display.add_run_once_in_drawing_thread([&] {
-			good = random_texture->load(fp.get_current_path()) && font_u->create_builtin_font();
+			good = /*random_texture->load(fp.get_current_path()) && */font_u->create_builtin_font();
 			dod = true;
 		});
 
 		while (!dod) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		TESTLU(good, "Couldn't load texture/font for test!");
 	}
+
+	cout << "Hooking mouse to a sprite...";
+
+	mousing.hook_event([&blk_mouse](int type, const mouse::mouse_event& ev) {
+		if (type == ALLEGRO_EVENT_MOUSE_AXES) {
+			blk_mouse.set<float>(enum_sprite_float_e::POS_X, ev.real_posx);
+			blk_mouse.set<float>(enum_sprite_float_e::POS_Y, ev.real_posy);
+		}
+		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && ev.is_button_pressed(0)) {
+			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.06f);
+		}
+		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_UP && !ev.is_button_pressed(0)) {
+			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.0f);
+		}
+	});
 
 	cout << "Setting up drawing call...";
 
@@ -778,33 +795,51 @@ int graphics_test()
 		}
 	});
 
-	cout << "Hooking mouse to a sprite...";
-
-	mousing.hook_event([&blk_mouse](int type, const mouse::mouse_event& ev) {
-		if (type == ALLEGRO_EVENT_MOUSE_AXES) {
-			blk_mouse.set<float>(enum_sprite_float_e::POS_X, ev.real_posx);
-			blk_mouse.set<float>(enum_sprite_float_e::POS_Y, ev.real_posy);
-		}
-	});
-
 	cout << "Setting up collision & extra tasks thread...";
 	
-	for (auto& i : cols) i.set_work([&](int data, sprite& one) {one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, data != 0 ? has_collision : no_collision); one.think(); });
+	for (auto& i : cols) i.set_work([&](collisionable::result res, sprite& one) {
+		one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
+		//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
+		if (res.dir_to != 0) {
+			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
+			one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
+		}
+		if (res.dir_to != 0) {
+			if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << i.nam() << " COL NORTH #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << i.nam() << " COL SOUTH #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << i.nam() << " COL EAST  #" << (size_t)((void*)&i);
+			if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << i.nam() << " COL WEST  #" << (size_t)((void*)&i);
+		}
+		one.think(); 
+	});
+
 
 	blocks_col.task_async([&] {
 
-		for (auto& i : cols) i.reset();
-		for (size_t p = 0; p < std::size(cols); p++)
-		{
-			for (size_t q = 0; q < std::size(cols); q++) {
-				if (q != p) cols[p].overlap(cols[q]);
-			}
-		}
-		for (auto& i : cols) i.work();
+		work_all_auto(std::begin(cols), std::end(cols));
+
+		///cols[0].reset();
+		///cols[1].reset();
+		///cols[1].overlap(cols[0]);
+		///cols[0].work();
+		///cols[1].work();
+		
+		//for (auto& i : cols) i.reset();
+		//for (size_t p = 0; p < std::size(cols); p++)
+		//{
+		//	for (size_t q = 0; q < std::size(cols); q++) {
+		//		if (q != p) cols[p].overlap(cols[q]);
+		//	}
+		//}
+		//for (auto& i : cols) i.work();
 
 		// extra mine
-		blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.15f);
-		blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.05f);
+		//blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.15f);
+		//blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.05f);
+
 		txt_main.set<float>(enum_sprite_float_e::ROTATION, cos(al_get_time() * 2.5) * 0.3f);
 
 		{
@@ -826,7 +861,9 @@ int graphics_test()
 	cout << "Enabling things on screen...";
 
 	txt_main.font_set(font_u);
-	blk_mouse.texture_insert(random_texture);
+	//blk_mouse.texture_insert(random_texture);
+	blk_mouse.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(75, 75, 255));
+	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
 
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
 	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
