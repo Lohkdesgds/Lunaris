@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\Lunaris\audio.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\mixer.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\mixer\mixer.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\sample.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\sample\sample.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\track.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\track\track.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\voice.h" />
+    <ClInclude Include="..\..\include\Lunaris\Audio\voice\voice.h" />
+    <ClInclude Include="..\..\include\Lunaris\events.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keyboard.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keyboard\keyboard.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keys.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\keys\keys.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\mouse.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\mouse\mouse.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\shared_start.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\shared_start\shared_start.h" />
+    <ClInclude Include="..\..\include\Lunaris\graphics.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\block.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\block\block.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\color.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\color\color.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\display.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\display\display.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\font.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\font\font.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\sprite.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\sprite\sprite.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\text.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\texture.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\texture\texture.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\text\text.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\transform.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\transform\transform.h" />
+    <ClInclude Include="..\..\include\Lunaris\utility.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\console.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\console\console.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\console\console.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\downloader.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\downloader\downloader.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\file.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\file\file.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\future.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\future\future.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\future\future.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash\hash.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\package.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\package\package.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\package\package.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\process.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\random.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\random\random.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.ipp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\include\Lunaris\Audio\mixer\mixer.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Audio\sample\sample.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Audio\track\track.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Audio\voice\voice.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\keyboard\keyboard.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\keys\keys.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\mouse\mouse.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Events\shared_start\shared_start.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\block\block.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\color\color.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\display\display.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\font\font.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\sprite\sprite.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\transform\transform.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{4f34aae5-9ba8-4456-adb4-e3b79cd3b1da}</ProjectGuid>
+    <RootNamespace>LSWLib</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <PublicModuleDirectories>$(PublicModuleDirectories)</PublicModuleDirectories>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+    <Allegro_LibraryType>DynamicDebug</Allegro_LibraryType>
+    <OutDir>$(SolutionDir)\libs\Lunaris\x86\</OutDir>
+    <TargetName>LSW_dynamic_debug_x86</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <PublicModuleDirectories>$(PublicModuleDirectories)</PublicModuleDirectories>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+    <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
+    <OutDir>$(SolutionDir)\libs\Lunaris\x86\</OutDir>
+    <TargetName>LSW_static_release_x86</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <PublicModuleDirectories>$(PublicModuleDirectories)</PublicModuleDirectories>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+    <Allegro_LibraryType>DynamicDebug</Allegro_LibraryType>
+    <OutDir>$(SolutionDir)\libs\Lunaris\x64\</OutDir>
+    <TargetName>LSW_dynamic_debug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <PublicModuleDirectories>$(PublicModuleDirectories)</PublicModuleDirectories>
+    <Allegro_AddonImage>true</Allegro_AddonImage>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>
+    <Allegro_AddonAudio>true</Allegro_AddonAudio>
+    <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonPhysfs>true</Allegro_AddonPhysfs>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
+    <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
+    <Allegro_AddonColor>true</Allegro_AddonColor>
+    <Allegro_AddonVideo>true</Allegro_AddonVideo>
+    <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
+    <OutDir>$(SolutionDir)\libs\Lunaris\x64\</OutDir>
+    <TargetName>LSW_static_release</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets" Condition="Exists('..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets')" />
+    <Import Project="..\..\packages\Allegro.5.2.7\build\native\Allegro.targets" Condition="Exists('..\..\packages\Allegro.5.2.7\build\native\Allegro.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\AllegroDeps.1.12.0\build\native\AllegroDeps.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Allegro.5.2.7\build\native\Allegro.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Allegro.5.2.7\build\native\Allegro.targets'))" />
+  </Target>
+</Project>

@@ -3,6 +3,6 @@
 // This will include all the respective folder for you
 
 #include "track/track.h"
-#ifdef LUNARIS_HEADER_ONLY
+#ifndef LUNARIS_NO_INCLUDE_SOURCE
 #include "track/track.cpp"
 #endif

@@ -3,6 +3,6 @@
 // This will include all the respective folder for you
 
 #include "shared_start/shared_start.h"
-#ifdef LUNARIS_HEADER_ONLY
+#ifndef LUNARIS_NO_INCLUDE_SOURCE
 #include "shared_start/shared_start.cpp"
 #endif

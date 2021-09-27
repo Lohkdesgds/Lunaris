@@ -1,0 +1,441 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{06723d3a-a2c9-458b-82bd-b3ba8fe48083}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris">
+      <UniqueIdentifier>{971d4aa3-58ad-4148-a861-34846d5da7cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility">
+      <UniqueIdentifier>{af749112-8101-4062-a667-7febc448af2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__include">
+      <UniqueIdentifier>{63106569-013e-4870-8a6a-1c20c13b10f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl">
+      <UniqueIdentifier>{692108c0-37f7-4ef2-a1ef-d76b0e39bf3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\console">
+      <UniqueIdentifier>{afcf5b7b-a7f5-4d7e-a106-0173004e8bc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\future">
+      <UniqueIdentifier>{43cb648a-37ad-434c-af69-abf15807ed5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\thread">
+      <UniqueIdentifier>{77d1c5dd-870d-4b35-82ab-d8b7c1c4ea7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\memory">
+      <UniqueIdentifier>{e1d8fae7-df16-45cb-84bb-9377069ad2ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\package">
+      <UniqueIdentifier>{f2ed6740-47b2-450e-8bfd-15719b365ef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\socket">
+      <UniqueIdentifier>{4bf0adc5-6ee4-4223-9dc7-87b27487f23e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\process">
+      <UniqueIdentifier>{6d8c65fc-758d-437a-8d97-7c33a2b82aa7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\multi_map">
+      <UniqueIdentifier>{e5035a6b-1795-4b42-aca0-66d47c764b0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\downloader">
+      <UniqueIdentifier>{69badccc-2381-4bcb-affd-920dd697ed51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\file">
+      <UniqueIdentifier>{77184349-37f7-46b6-8a9a-45d2e9806517}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\hash">
+      <UniqueIdentifier>{12aa11a9-1eb3-4580-bb67-3d1c5514dd6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\random">
+      <UniqueIdentifier>{b9529c57-6e5b-4c3d-b352-5b1cbe74f1b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\safe_data">
+      <UniqueIdentifier>{0fef9700-4f7e-45f6-90a5-8a6dda2e212b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\__include">
+      <UniqueIdentifier>{a6fd6350-6847-4705-9b3d-7ac8dd30272b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics">
+      <UniqueIdentifier>{85a9bac7-0193-482b-9ca9-be5ca202f4ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl">
+      <UniqueIdentifier>{3b6afb80-d126-4857-9201-b6712f4bce52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\transform">
+      <UniqueIdentifier>{c1e4db54-8e94-49f3-b641-cdfbe5821488}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\display">
+      <UniqueIdentifier>{d242425b-9dc4-418a-8817-811ca342802d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\texture">
+      <UniqueIdentifier>{45f9f494-b8ee-44df-8422-640514ce71f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\color">
+      <UniqueIdentifier>{89012d3d-ade4-4f1c-b6a5-2d38169dd9d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\sprite">
+      <UniqueIdentifier>{b4009d24-ac9a-47dc-8f17-62500346527a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\block">
+      <UniqueIdentifier>{9e6ea0b8-fd74-439c-9eac-0f4f9d66322d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\text">
+      <UniqueIdentifier>{e0a90526-83e2-4a13-92dc-ee4b674d727e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\font">
+      <UniqueIdentifier>{f1daf4a6-bd2a-4aa1-8206-9d3202016c30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\collisionable">
+      <UniqueIdentifier>{1410f2a2-c31f-4e3a-a440-c3ab99e833fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Graphics\__include">
+      <UniqueIdentifier>{835621b3-4418-4a02-bb6a-a20dbbdfdf0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio">
+      <UniqueIdentifier>{44653025-095b-492a-967f-9b896fbc9b80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio\__impl">
+      <UniqueIdentifier>{3eddc78f-2563-46d7-971f-8a42f755f06d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio\__impl\mixer">
+      <UniqueIdentifier>{0ecaba4d-503a-41d4-9564-fc8d9a115bd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio\__impl\track">
+      <UniqueIdentifier>{979eac54-a975-440f-985a-4c6ec1388651}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio\__impl\voice">
+      <UniqueIdentifier>{2dd71f78-7967-42bc-813c-2523585ba004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio\__impl\sample">
+      <UniqueIdentifier>{c703a1b2-1e64-451b-a807-db6b546d2aa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Audio\__include">
+      <UniqueIdentifier>{d0392485-37f0-4c61-9100-473f239f297a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events">
+      <UniqueIdentifier>{d9db3fe6-d553-4869-9533-8cbd96b6a310}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__impl">
+      <UniqueIdentifier>{f4258d66-fe45-4010-b018-62c4a1773f3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__impl\keyboard">
+      <UniqueIdentifier>{96cff0f2-0ed9-43cf-abb5-339cec53062d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__impl\mouse">
+      <UniqueIdentifier>{fef3a004-def9-46f6-8893-4cd0fbd7f4e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__impl\keys">
+      <UniqueIdentifier>{f9414755-0e38-4bf4-8861-767a8ad7aea6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__impl\shared_start">
+      <UniqueIdentifier>{062bbad6-8d59-4358-92c7-f0da35f8be9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__impl\generic_event_handler">
+      <UniqueIdentifier>{8e879717-fa19-45a3-866d-0e87dc517650}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Events\__include">
+      <UniqueIdentifier>{158e0d6b-0772-4d77-9cd6-b22513555841}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\downloader.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\file.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\future.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\package.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\process.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\random.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\console\console.h">
+      <Filter>include\Lunaris\Utility\__impl\console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\console\console.ipp">
+      <Filter>include\Lunaris\Utility\__impl\console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\future\future.h">
+      <Filter>include\Lunaris\Utility\__impl\future</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\future\future.ipp">
+      <Filter>include\Lunaris\Utility\__impl\future</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.h">
+      <Filter>include\Lunaris\Utility\__impl\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.ipp">
+      <Filter>include\Lunaris\Utility\__impl\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.h">
+      <Filter>include\Lunaris\Utility\__impl\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\memory\memory.ipp">
+      <Filter>include\Lunaris\Utility\__impl\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\package\package.h">
+      <Filter>include\Lunaris\Utility\__impl\package</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\package\package.ipp">
+      <Filter>include\Lunaris\Utility\__impl\package</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.h">
+      <Filter>include\Lunaris\Utility\__impl\socket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\socket\socket.ipp">
+      <Filter>include\Lunaris\Utility\__impl\socket</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.h">
+      <Filter>include\Lunaris\Utility\__impl\process</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp">
+      <Filter>include\Lunaris\Utility\__impl\process</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.h">
+      <Filter>include\Lunaris\Utility\__impl\multi_map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.ipp">
+      <Filter>include\Lunaris\Utility\__impl\multi_map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\downloader\downloader.h">
+      <Filter>include\Lunaris\Utility\__impl\downloader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\file\file.h">
+      <Filter>include\Lunaris\Utility\__impl\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\hash\hash.h">
+      <Filter>include\Lunaris\Utility\__impl\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\random\random.h">
+      <Filter>include\Lunaris\Utility\__impl\random</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.h">
+      <Filter>include\Lunaris\Utility\__impl\safe_data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\safe_data\safe_data.ipp">
+      <Filter>include\Lunaris\Utility\__impl\safe_data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\audio.h">
+      <Filter>include\Lunaris\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\events.h">
+      <Filter>include\Lunaris\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\graphics.h">
+      <Filter>include\Lunaris\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\utility.h">
+      <Filter>include\Lunaris\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\transform\transform.h">
+      <Filter>include\Lunaris\Graphics\__impl\transform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\display\display.h">
+      <Filter>include\Lunaris\Graphics\__impl\display</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\texture\texture.h">
+      <Filter>include\Lunaris\Graphics\__impl\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\color\color.h">
+      <Filter>include\Lunaris\Graphics\__impl\color</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\sprite\sprite.h">
+      <Filter>include\Lunaris\Graphics\__impl\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\block\block.h">
+      <Filter>include\Lunaris\Graphics\__impl\block</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\text\text.h">
+      <Filter>include\Lunaris\Graphics\__impl\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\font\font.h">
+      <Filter>include\Lunaris\Graphics\__impl\font</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.h">
+      <Filter>include\Lunaris\Graphics\__impl\collisionable</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\block.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\color.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\display.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\font.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\sprite.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\text.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\texture.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\transform.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\mixer\mixer.h">
+      <Filter>include\Lunaris\Audio\__impl\mixer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\track\track.h">
+      <Filter>include\Lunaris\Audio\__impl\track</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\voice\voice.h">
+      <Filter>include\Lunaris\Audio\__impl\voice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\sample\sample.h">
+      <Filter>include\Lunaris\Audio\__impl\sample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\mixer.h">
+      <Filter>include\Lunaris\Audio\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\sample.h">
+      <Filter>include\Lunaris\Audio\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\track.h">
+      <Filter>include\Lunaris\Audio\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Audio\voice.h">
+      <Filter>include\Lunaris\Audio\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\keyboard\keyboard.h">
+      <Filter>include\Lunaris\Events\__impl\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\mouse\mouse.h">
+      <Filter>include\Lunaris\Events\__impl\mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\keys\keys.h">
+      <Filter>include\Lunaris\Events\__impl\keys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\shared_start\shared_start.h">
+      <Filter>include\Lunaris\Events\__impl\shared_start</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.h">
+      <Filter>include\Lunaris\Events\__impl\generic_event_handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler.h">
+      <Filter>include\Lunaris\Events\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\keyboard.h">
+      <Filter>include\Lunaris\Events\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\mouse.h">
+      <Filter>include\Lunaris\Events\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\keys.h">
+      <Filter>include\Lunaris\Events\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\shared_start.h">
+      <Filter>include\Lunaris\Events\__include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">
+      <Filter>include\Lunaris\Utility\__impl\downloader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp">
+      <Filter>include\Lunaris\Utility\__impl\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp">
+      <Filter>include\Lunaris\Utility\__impl\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp">
+      <Filter>include\Lunaris\Utility\__impl\random</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\transform\transform.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\transform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\display\display.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\display</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\texture</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\color\color.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\color</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\sprite\sprite.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\block\block.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\block</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\text</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\font\font.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\collisionable</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Audio\mixer\mixer.cpp">
+      <Filter>include\Lunaris\Audio\__impl\mixer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Audio\track\track.cpp">
+      <Filter>include\Lunaris\Audio\__impl\track</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Audio\voice\voice.cpp">
+      <Filter>include\Lunaris\Audio\__impl\voice</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Audio\sample\sample.cpp">
+      <Filter>include\Lunaris\Audio\__impl\sample</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Events\keyboard\keyboard.cpp">
+      <Filter>include\Lunaris\Events\__impl\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Events\mouse\mouse.cpp">
+      <Filter>include\Lunaris\Events\__impl\mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Events\keys\keys.cpp">
+      <Filter>include\Lunaris\Events\__impl\keys</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Events\shared_start\shared_start.cpp">
+      <Filter>include\Lunaris\Events\__impl\shared_start</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.cpp">
+      <Filter>include\Lunaris\Events\__impl\generic_event_handler</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

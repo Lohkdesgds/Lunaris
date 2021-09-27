@@ -130,16 +130,15 @@ namespace Lunaris {
 
 	SOCKET socket_core::common_select(std::vector<SOCKET>& servers, const long to)
 	{
-		int i = 0;
+		size_t i = 0;
 		fd_set SockSet{};
-		int NumSocks = static_cast<int>(servers.size());
+		size_t NumSocks = servers.size();
 
 		timeval timeout_time;
 		timeout_time.tv_sec = to;
 		timeout_time.tv_usec = 0;
 
 		if (!NumSocks) {
-			//core->printlog(socket::log_event_type::ERROR, "No server listeners available!");
 			return INVALID_SOCKET;
 		}
 
@@ -152,9 +151,7 @@ namespace Lunaris {
 		if (i == NumSocks) {
 			for (i = 0; i < NumSocks; i++)
 				FD_SET(servers[i], &SockSet);
-			if (select(NumSocks, &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr)) == SOCKET_ERROR) {
-				//const auto err = WSAGetLastError();
-				//core->printlog(socket::log_event_type::ERROR, "select() failed with error " + std::to_string(err));
+			if (select(static_cast<int>(NumSocks), &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr)) == SOCKET_ERROR) {
 				return INVALID_SOCKET;
 			}
 		}

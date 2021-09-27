@@ -91,7 +91,7 @@ namespace Lunaris {
 			void rethrow_any_exception(); // if any exception stored, rethrow, else no throw
 		};
 
-		ALLEGRO_TRANSFORM latest_transform; // useful elsewhere, trust me (see mouse)
+		ALLEGRO_TRANSFORM latest_transform{}; // useful elsewhere, trust me (see mouse)
 		ALLEGRO_DISPLAY* window = nullptr;
 		ALLEGRO_EVENT_QUEUE* ev_qu = nullptr;
 		double last_event_check = 0.0;

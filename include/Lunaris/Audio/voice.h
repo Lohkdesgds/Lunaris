@@ -3,6 +3,6 @@
 // This will include all the respective folder for you
 
 #include "voice/voice.h"
-#ifdef LUNARIS_HEADER_ONLY
+#ifndef LUNARIS_NO_INCLUDE_SOURCE
 #include "voice/voice.cpp"
 #endif

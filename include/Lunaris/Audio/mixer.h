@@ -3,6 +3,6 @@
 // This will include all the respective folder for you
 
 #include "mixer/mixer.h"
-#ifdef LUNARIS_HEADER_ONLY
+#ifndef LUNARIS_NO_INCLUDE_SOURCE
 #include "mixer/mixer.cpp"
 #endif
