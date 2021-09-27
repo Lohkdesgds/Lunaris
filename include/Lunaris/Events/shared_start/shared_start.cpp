@@ -35,9 +35,10 @@ namespace Lunaris {
 				auto lucky = get_lock(true);
 				if (!lucky.try_lock()) continue; // as fast as it can
 
-				if (al_wait_for_event_timed(ev_qu, &ev, 0.1f))
+				if (ev_qu && al_wait_for_event_timed(ev_qu, &ev, 0.1f)) {
+					lucky.unlock();
 					handle_events(ev);
-
+				}
 				else {
 					lucky.unlock(); // free up for a while
 					std::this_thread::sleep_for(std::chrono::milliseconds(10));

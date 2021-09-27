@@ -210,7 +210,7 @@ namespace Lunaris {
 
 			if (((al_get_time() - last_event_check) > default_display_self_check_time)) {
 
-				std::lock_guard<std::mutex> lucky(sensitive);
+				std::lock_guard<std::recursive_mutex> lucky(sensitive);
 
 				const ALLEGRO_TRANSFORM* cpy = al_get_current_transform();
 				if (cpy) latest_transform = *cpy;
@@ -218,7 +218,7 @@ namespace Lunaris {
 				if (ev_qu) {
 
 					ALLEGRO_EVENT ev;
-					while (al_get_next_event(ev_qu, &ev)) {
+					while (ev_qu && al_get_next_event(ev_qu, &ev)) {
 
 						switch (ev.type) {
 
@@ -393,13 +393,13 @@ namespace Lunaris {
 
 	void display::hook_event_handler(std::function<void(const ALLEGRO_EVENT&)> f)
 	{
-		std::lock_guard<std::mutex> lucky(sensitive);
+		std::lock_guard<std::recursive_mutex> lucky(sensitive);
 		hooked_events = f;
 	}
 
 	void display::unhook_event_handler()
 	{
-		std::lock_guard<std::mutex> lucky(sensitive);
+		std::lock_guard<std::recursive_mutex> lucky(sensitive);
 		hooked_events = {};
 	}
 
@@ -455,6 +455,7 @@ namespace Lunaris {
 			draw_self.reset();
 		}
 		if (ev_qu) {
+			std::lock_guard<std::recursive_mutex> lucky(sensitive);
 			al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 			last_event_check = 0.0;

@@ -98,7 +98,7 @@ namespace Lunaris {
 		std::unique_ptr<self_draw_block> draw_self; // opt
 		std::function<void(const ALLEGRO_EVENT&)> hooked_events;
 		bool economy_mode = false; // auto detects if display is hidden (then goes to 30 fps). Available with conf.use_basic_internal_event_system
-		std::mutex sensitive;
+		std::recursive_mutex sensitive;
 
 		void _flip_nocheck();
 		std::function<void(void)> combine_func_to_essential(const std::function<void(void)> = {});
