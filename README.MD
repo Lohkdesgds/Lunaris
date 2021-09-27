@@ -43,7 +43,7 @@
   * ◼ *C/C++ > Code Generation > Runtime Library: **/MT** and **/MTd** for **RELEASE** and **DEBUG**;*
   * ◻ *C/C++ > Code Generation > Floating Point Model: **Fast**;*
   * ◼ *Linker > General > Additional Libraries Directory: Add **"$(SolutionDir)/libs/Lunaris/x64"** to the **"x64"** and **$(SolutionDir)/libs/Lunaris/x86** to the **"Win32"**;*
-  * ◻ *VC++ Directories > Include Directories: Add **$(SolutionDir)/include** path (or path to Lunaris folder in this) so you can do* **`#include <Lunaris/module.h>`** * (module being one of the options like utility or graphics) anywhere.*
+  * ◻ *VC++ Directories > Include Directories: Add **$(SolutionDir)/include** path (or path to Lunaris folder in this) so you can do* **`#include <Lunaris/module.h>`** *(module being one of the options like utility or graphics) anywhere.*
   * ◻ *C/C++ > Additional Include Directories: Add **$(SolutionDir)/include** path (like the other one)*
 
 <hr>
