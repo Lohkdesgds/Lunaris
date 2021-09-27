@@ -133,6 +133,8 @@ namespace Lunaris {
 		int get_frequency() const;
 		int get_flags() const;
 
+		void toggle_flag(const int);
+
 		// only if use_basic_internal_event_system is enabled
 		bool get_is_economy_mode_activated() const;
 

@@ -439,6 +439,14 @@ namespace Lunaris {
 		return 0;
 	}
 
+	void display::toggle_flag(const int flg)
+	{
+		if (window) {
+			al_toggle_display_flag(window, flg, !(al_get_display_flags(window) & flg));
+			acknowledge_resize();
+		}
+	}
+
 	bool display::get_is_economy_mode_activated() const
 	{
 		return economy_mode;
