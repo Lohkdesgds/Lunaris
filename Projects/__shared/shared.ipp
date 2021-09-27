@@ -709,6 +709,7 @@ int graphics_test()
 	//file fp; // random file
 	thread blocks_col;
 	mouse mousing(my_display);
+	keys kb;
 	collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
@@ -844,6 +845,18 @@ int graphics_test()
 			transform transf;
 			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, 1.0f, 1.0f);
 			transf.apply();
+		}
+	});
+
+	kb.hook_event([&](const keys::key_event& ev) {
+		if (ev.down && ev.key_id == ALLEGRO_KEY_F11) {
+			my_display.add_run_once_in_drawing_thread([&] {
+				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
+				transform transf;
+				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 1.0f, 1.0f);
+				transf.apply();
+			});
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		}
 	});
 

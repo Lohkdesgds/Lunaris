@@ -36,7 +36,7 @@ namespace Lunaris {
 				if (!lucky.try_lock()) continue; // as fast as it can
 
 				if (ev_qu && al_wait_for_event_timed(ev_qu, &ev, 0.1f)) {
-					lucky.unlock();
+					//lucky.unlock();
 					handle_events(ev);
 				}
 				else {
