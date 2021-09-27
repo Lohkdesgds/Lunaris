@@ -68,6 +68,7 @@ namespace Lunaris {
 		std::function<void(result, sprite&)> workar;
 
 		float last_self_area = 0.0f;
+		bool work_all = true;
 		const float &nwx, &nwy, &nex, &ney, &swx, &swy, &sex, &sey, &cx, &cy, &speedx, &speedy, &rot;
 
 		raw_result each_pt_col(const float&, const float&, const collisionable&) const;
@@ -85,6 +86,9 @@ namespace Lunaris {
 		void reset();
 		void work();
 		void set_work(const std::function<void(result, sprite&)>);
+
+		// if true, if there are more than 1 collision cases, work() will be called multiple times, else only once with a random option
+		void set_work_works_all_cases(const bool);
 	};
 
 	// begin, end

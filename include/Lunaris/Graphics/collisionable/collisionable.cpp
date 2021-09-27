@@ -438,6 +438,7 @@ namespace Lunaris {
 
 	void collisionable::work()
 	{
+		if (!workar) return;
 		switch (cases.size()) {
 		case 0:
 			workar({}, wrap);
@@ -447,8 +448,13 @@ namespace Lunaris {
 			return;
 		default:
 		{
-			size_t tmp = random() % cases.size();
-			workar(cases[tmp], wrap);
+			if (work_all) {
+				for(auto& eac : cases) workar(eac, wrap);
+			}
+			else {
+				size_t tmp = random() % cases.size();
+				workar(cases[tmp], wrap);
+			}
 		}
 			return;
 		}
@@ -457,6 +463,11 @@ namespace Lunaris {
 	void collisionable::set_work(const std::function<void(result, sprite&)> f)
 	{
 		workar = f;
+	}
+
+	void collisionable::set_work_works_all_cases(const bool var)
+	{
+		work_all = var;
 	}
 
 
