@@ -62,6 +62,9 @@
     <ClInclude Include="..\..\include\Lunaris\Graphics\transform.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\transform\transform.h" />
     <ClInclude Include="..\..\include\Lunaris\utility.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\config.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\config\config.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\config\config.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\console\console.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\console\console.ipp" />
@@ -117,6 +120,7 @@
     <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\transform\transform.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\config\config.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />

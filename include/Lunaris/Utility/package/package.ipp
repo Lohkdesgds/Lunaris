@@ -1,3 +1,4 @@
+#include "package.h"
 #pragma once
 
 namespace Lunaris {
@@ -128,9 +129,23 @@ namespace Lunaris {
 		return buf;
 	}
 
+	inline size_t package::read_as_data(char* ptr, const size_t max) const
+	{
+		size_t p = 0;
+		for (; p < max && p < buf.size(); ++p) {
+			ptr[p] = buf[p];
+		}
+		return p;
+	}
+
 	inline void package::import_as_array(std::vector<char>&& oth)
 	{
 		buf = std::move(oth);
+	}
+
+	inline void package::import_as_data(const char* ptr, const size_t len)
+	{
+		for (const char* be = ptr; be < (ptr + len); ++be) buf.push_back(*be);
 	}
 
 	inline package::operator const std::vector<char>&() const

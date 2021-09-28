@@ -38,7 +38,9 @@ namespace Lunaris {
 		void reset_internal_iterator();
 
 		const std::vector<char>& read_as_array() const;
+		size_t read_as_data(char*, const size_t = static_cast<size_t>(-1)) const;
 		void import_as_array(std::vector<char>&&);
+		void import_as_data(const char*, const size_t);
 
 		operator const std::vector<char>&() const;
 	};
