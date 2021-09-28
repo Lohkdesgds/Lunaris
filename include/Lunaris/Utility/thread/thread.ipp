@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	bool thread::_data::_run_ctrl()
+	inline bool thread::_data::_run_ctrl()
 	{
 		if (should_quit) return false; // quit fast
 
@@ -29,7 +29,7 @@ namespace Lunaris {
 		return !should_quit;
 	}
 
-	void thread::_data::_thr_work()
+	inline void thread::_data::_thr_work()
 	{
 		_ended_gracefully = false;
 
@@ -46,29 +46,29 @@ namespace Lunaris {
 		_ended_gracefully = true;
 	}
 
-	thread::thread(std::function<void(void)> fun, const speed mode, const double interv)
+	inline thread::thread(std::function<void(void)> fun, const speed mode, const double interv)
 	{
 		task_async(fun, mode, interv);
 	}
 
-	thread::~thread()
+	inline thread::~thread()
 	{
 		join(true);
 	}
 
-	thread::thread(thread&& oth) noexcept
+	inline thread::thread(thread&& oth) noexcept
 		: data(std::move(oth.data))
 	{
 	}
 
-	void thread::operator=(thread&& oth) noexcept
+	inline void thread::operator=(thread&& oth) noexcept
 	{
 		join();
 		data = std::move(oth.data);
 	}
 
 	// keep running undefinitely
-	void thread::task_async(std::function<void(void)> fun, const speed mode, const double interv)
+	inline void thread::task_async(std::function<void(void)> fun, const speed mode, const double interv)
 	{
 		if (!fun) throw std::runtime_error("Invalid function for thread!");
 		if (interv > 86400) throw std::runtime_error("Invalid time interval! (More than 1 day? Seriously?)");
@@ -80,12 +80,12 @@ namespace Lunaris {
 		data->thr = std::thread([piece = this->data]{ piece->_thr_work(); });
 	}
 
-	void thread::signal_stop()
+	inline void thread::signal_stop()
 	{
 		data->should_quit = true;
 	}
 
-	void thread::join(const bool skip_any_exception)
+	inline void thread::join(const bool skip_any_exception)
 	{
 		data->should_quit = true;
 		if (data->thr.joinable()) {
@@ -94,7 +94,7 @@ namespace Lunaris {
 		}
 	}
 
-	void thread::force_kill()
+	inline void thread::force_kill()
 	{
 		if (data->thr.joinable()) {
 			data->should_quit = true;

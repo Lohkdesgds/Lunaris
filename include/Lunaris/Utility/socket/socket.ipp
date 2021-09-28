@@ -4,7 +4,7 @@ namespace Lunaris {
 
 	socket_core::_data socket_core::data;
 
-	std::string socket_config::format() const
+	inline std::string socket_config::format() const
 	{
 		switch (family) {
 		case socket_config::e_family::IPV4:
@@ -14,37 +14,37 @@ namespace Lunaris {
 		}
 	}
 
-	socket_config& socket_config::set_family(const e_family& var)
+	inline socket_config& socket_config::set_family(const e_family& var)
 	{
 		family = var;
 		return *this;
 	}
 
-	socket_config& socket_config::set_port(const u_short& var)
+	inline socket_config& socket_config::set_port(const u_short& var)
 	{
 		port = var;
 		return *this;
 	}
 
-	socket_config& socket_config::set_ip_address(const std::string& var)
+	inline socket_config& socket_config::set_ip_address(const std::string& var)
 	{
 		ip_address = var;
 		return *this;
 	}
 
-	socket_core::_data::_data()
+	inline socket_core::_data::_data()
 	{
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) { // wake up
 			throw std::exception("Socket core can't start!");
 		}
 	}
 
-	socket_core::_data::~_data()
+	inline socket_core::_data::~_data()
 	{
 		WSACleanup(); // end
 	}
 
-	SOCKET socket_core::gen_client(const char* addr, const u_short port, const int protocol, const int family)
+	inline SOCKET socket_core::gen_client(const char* addr, const u_short port, const int protocol, const int family)
 	{
 		char Port[8]{};
 		ADDRINFO Hints;
@@ -80,7 +80,7 @@ namespace Lunaris {
 		return INVALID_SOCKET;
 	}
 
-	std::vector<SOCKET> socket_core::gen_host(const u_short port, const int protocol, const int family)
+	inline std::vector<SOCKET> socket_core::gen_host(const u_short port, const int protocol, const int family)
 	{
 		std::vector<SOCKET> sockets;
 
@@ -128,7 +128,7 @@ namespace Lunaris {
 		return sockets;
 	}
 
-	SOCKET socket_core::common_select(std::vector<SOCKET>& servers, const long to)
+	inline SOCKET socket_core::common_select(std::vector<SOCKET>& servers, const long to)
 	{
 		size_t i = 0;
 		fd_set SockSet{};
@@ -169,9 +169,9 @@ namespace Lunaris {
 
 
 	template<int protocol, bool host>
-	bool socket<protocol, host>::setup(const socket_config& config)
+	inline bool socket<protocol, host>::setup(const socket_config& config)
 	{
-		if (has_socket()) close_sockets();
+		if (has_socket()) close_socket();
 
 		if (host) {
 			std::vector<SOCKET> res = gen_host(config.port, protocol, static_cast<int>(config.family));
@@ -191,7 +191,7 @@ namespace Lunaris {
 	}
 
 	template<int protocol, bool host>
-	bool socket<protocol, host>::convert_from(socket_config& conf, const SOCKADDR_STORAGE& addr)
+	inline bool socket<protocol, host>::convert_from(socket_config& conf, const SOCKADDR_STORAGE& addr)
 	{
 		const auto fun_get_in_addr = [&]() -> void* {
 			const sockaddr* sa = (struct sockaddr*)(&addr);
@@ -221,27 +221,27 @@ namespace Lunaris {
 	}
 
 	template<int protocol, bool host>
-	void socket_client<protocol, host>::close_sockets()
+	inline void socket_client<protocol, host>::close_socket()
 	{
 		if (data->connection != INVALID_SOCKET) ::closesocket(data->connection);
 		data->connection = INVALID_SOCKET;
 	}
 
 	template<int protocol, bool host>
-	void socket_client<protocol, host>::add_socket(SOCKET conn)
+	inline void socket_client<protocol, host>::add_socket(SOCKET conn)
 	{
-		close_sockets();
+		close_socket();
 		data->connection = conn;
 	}
 
 	template<int protocol, bool host>
-	bool socket_client<protocol, host>::has_socket()
+	inline bool socket_client<protocol, host>::has_socket()
 	{
 		return data->connection != INVALID_SOCKET;
 	}
 
 	template<int protocol, bool host>
-	socket_client<protocol, host>::socket_client(SOCKET socket, const SOCKADDR_STORAGE& addr)
+	inline socket_client<protocol, host>::socket_client(SOCKET socket, const SOCKADDR_STORAGE& addr)
 	{
 		if (socket == INVALID_SOCKET) throw std::runtime_error("Invalid socket!");
 		data->connection = socket;
@@ -250,26 +250,26 @@ namespace Lunaris {
 
 
 	template<int protocol, bool host>
-	void socket_host<protocol, host>::close_sockets()
+	inline void socket_host<protocol, host>::close_socket()
 	{
 		for (auto& i : data->listeners) { if (i != INVALID_SOCKET) ::closesocket(i); }
 		data->listeners.clear();
 	}
 
 	template<int protocol, bool host>
-	void socket_host<protocol, host>::add_socket(SOCKET conn)
+	inline void socket_host<protocol, host>::add_socket(SOCKET conn)
 	{
 		if (conn != INVALID_SOCKET) data->listeners.push_back(conn);
 	}
 
 	template<int protocol, bool host>
-	bool socket_host<protocol, host>::has_socket()
+	inline bool socket_host<protocol, host>::has_socket()
 	{
 		return data->listeners.size() != 0;
 	}
 
 
-	bool TCP_client::send(const std::vector<char>& raw)
+	inline bool TCP_client::send(const std::vector<char>& raw)
 	{
 		if (!has_socket()) return false;
 
@@ -284,7 +284,7 @@ namespace Lunaris {
 		return true;
 	}
 
-	std::vector<char> TCP_client::recv(const size_t amount, const bool wait)
+	inline std::vector<char> TCP_client::recv(const size_t amount, const bool wait)
 	{
 		if (!has_socket()) return {};
 		std::vector<char> raw;
@@ -312,12 +312,12 @@ namespace Lunaris {
 				}
 				case WSAENETRESET: // failed in the middle of something
 				case WSAECONNRESET: // still offline or became offline right now
-					this->close_sockets();
+					this->close_socket();
 					return raw;
 				}
 			}
 			else if (res == 0) { // disconnect
-				this->close_sockets();
+				this->close_socket();
 				return raw;
 			}
 			else blocks_tries = 0;
@@ -329,7 +329,7 @@ namespace Lunaris {
 	}
 
 
-	TCP_client TCP_host::listen(const long to)
+	inline TCP_client TCP_host::listen(const long to)
 	{
 		SOCKET selected = INVALID_SOCKET;
 		while (1) {
@@ -353,17 +353,17 @@ namespace Lunaris {
 	}
 
 
-	bool UDP_client::send(const std::vector<char>& raw)
+	inline bool UDP_client::send(const std::vector<char>& raw)
 	{
 		if (!has_socket() || raw.size() > socket_maximum_udp_buffer_size) return false;
 
 		int res = ::send(data->connection, raw.data(), static_cast<int>(raw.size()), 0);
-		if (res < 0) close_sockets();
+		if (res < 0) close_socket();
 
 		return res == raw.size();
 	}
 
-	std::vector<char> UDP_client::recv(const size_t amount, const bool wait)
+	inline std::vector<char> UDP_client::recv(const size_t amount, const bool wait)
 	{
 		if (!has_socket() || (amount > socket_maximum_udp_buffer_size && amount != static_cast<size_t>(-1))) return {};
 		std::vector<char> raw;
@@ -392,12 +392,12 @@ namespace Lunaris {
 				}
 				case WSAENETRESET: // failed in the middle of something
 				case WSAECONNRESET: // still offline or became offline right now
-					this->close_sockets();
+					this->close_socket();
 					return raw;
 				}
 			}
 			else if (res == 0) { // disconnect
-				this->close_sockets();
+				this->close_socket();
 				raw.clear();
 				return raw;
 			}
@@ -414,12 +414,12 @@ namespace Lunaris {
 		return raw;
 	}
 
-	const socket_config& UDP_client::last_recv_info() const
+	inline const socket_config& UDP_client::last_recv_info() const
 	{
 		return conf;
 	}
 
-	UDP_host::UDP_host_handler UDP_host::recv(const size_t amount, const long to)
+	inline UDP_host::UDP_host_handler UDP_host::recv(const size_t amount, const long to)
 	{
 		std::vector<char> raw;
 		const int expected = static_cast<int>(amount > socket_maximum_udp_buffer_size ? socket_maximum_udp_buffer_size : amount);
@@ -441,23 +441,23 @@ namespace Lunaris {
 		return UDP_host_handler(selected, _temp, std::move(raw));
 	}
 
-	UDP_host::UDP_host_handler::UDP_host_handler(SOCKET sock, const SOCKADDR_STORAGE& ad, std::vector<char>&& raw)
+	inline UDP_host::UDP_host_handler::UDP_host_handler(SOCKET sock, const SOCKADDR_STORAGE& ad, std::vector<char>&& raw)
 		: socket(sock), addr(ad), data(std::move(raw))
 	{
 		if (!socket::convert_from(conf, addr)) throw std::runtime_error("Could not get info properly! Data may be corrupted!");
 	}
 
-	bool UDP_host::UDP_host_handler::valid() const
+	inline bool UDP_host::UDP_host_handler::valid() const
 	{
 		return socket != INVALID_SOCKET;
 	}
 
-	const std::vector<char>& UDP_host::UDP_host_handler::get() const // not recv
+	inline const std::vector<char>& UDP_host::UDP_host_handler::get() const // not recv
 	{
 		return data;
 	}
 
-	bool UDP_host::UDP_host_handler::send(const std::vector<char>& raw)
+	inline bool UDP_host::UDP_host_handler::send(const std::vector<char>& raw)
 	{
 		if (raw.size() > socket_maximum_udp_buffer_size) return false;
 
@@ -466,12 +466,12 @@ namespace Lunaris {
 		return res == raw.size();
 	}
 
-	SOCKADDR_STORAGE UDP_host::UDP_host_handler::address() const
+	inline SOCKADDR_STORAGE UDP_host::UDP_host_handler::address() const
 	{
 		return addr;
 	}
 
-	const socket_config& UDP_host::UDP_host_handler::info() const
+	inline const socket_config& UDP_host::UDP_host_handler::info() const
 	{
 		return conf;
 	}
