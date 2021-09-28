@@ -66,6 +66,66 @@ int utility_test(const std::string& self_path)
 
 	cout << console::color::GREEN << "Console is probably working (you can see me, right?)";
 
+	cout << console::color::LIGHT_PURPLE << "Testing 'config'...";
+	{
+		const std::string temp_path_conf = "temp_conf.conf";
+		const unsigned long long val = random();
+		const std::string str = "lala" + std::to_string(random()) + "lolo" + std::to_string(random());
+
+		{
+			cout << "Opening a temporary config file...";
+
+			config conf;
+			conf.set("global", config::config_section_mode::MEMORY_ONLY);
+			conf.set("global", "yoyo", true);
+			conf.set("global", "yaya", false);
+
+			cout << "Testing boolean...";
+
+			TESTLU(conf.get_as<bool>("global", "yoyo") == true, "Config can't set values properly");
+			TESTLU(conf.get_as<bool>("global", "yaya") == false, "Config can't set values properly");
+
+			conf.set("global", "numba", val);
+
+			cout << "Testing number...";
+
+			TESTLU(conf.get_as<unsigned long long>("global", "numba") == val, "Config can't set values properly");
+
+			conf.set("global", "strang", str);
+
+			cout << "Testing string...";
+
+			TESTLU(conf.get("global", "strang") == str, "Config can't set values properly");
+
+			cout << "Testing saving the file...";
+
+			conf.save_path(temp_path_conf);
+			conf.set("global", config::config_section_mode::SAVE);
+
+			TESTLU(conf.flush(), "Could not temporarily save file in current folder!");
+
+			cout << "Testing reloading the file...";
+		}
+		{
+			config conf;
+			TESTLU(conf.load(temp_path_conf), "Could not reload config properly");
+
+			cout << "Checking all values...";
+
+			TESTLU(conf.get_as<bool>("global", "yoyo") == true, "Config can't reload values properly");
+			TESTLU(conf.get_as<bool>("global", "yaya") == false, "Config can't reload values properly");
+			TESTLU(conf.get_as<unsigned long long>("global", "numba") == val, "Config can't reload values properly");
+			TESTLU(conf.get("global", "strang") == str, "Config can't reload values properly");
+
+			cout << "Removing file...";
+
+			conf.auto_save(false);
+
+			std::remove(temp_path_conf.c_str());
+		}
+		cout << console::color::GREEN << "PASSED!";
+	}
+
 	cout << console::color::LIGHT_PURPLE << "Testing 'downloader'...";
 	{
 		cout << "Downloading a file...";
@@ -278,6 +338,26 @@ int utility_test(const std::string& self_path)
 
 				TESTLU(a == b, "Transfer don't match!");
 			}
+
+			cout << console::color::GREEN << "PASSED!";
+
+			cout << "Testing random struct comparison...";
+
+			struct __random_struct {
+				unsigned long long ra = random(), rb = random();
+			};
+
+			__random_struct my, me;
+
+			package pack_t_sen;
+			pack_t_sen.import_as_data((char*)&my, sizeof(my));
+
+			tcp_host_client.send(pack_t_sen);
+
+			package pack_t_rec = tcp_client.recv(sizeof(me));
+			pack_t_rec.read_as_data((char*)&me, sizeof(me));
+
+			TESTLU((me.ra == my.ra && me.rb == my.rb), "Raw package messed up.");
 
 			cout << console::color::GREEN << "PASSED!";
 		}

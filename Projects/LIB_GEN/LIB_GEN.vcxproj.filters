@@ -142,6 +142,9 @@
     <Filter Include="include\Lunaris\Events\__include">
       <UniqueIdentifier>{158e0d6b-0772-4d77-9cd6-b22513555841}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\config">
+      <UniqueIdentifier>{dfa4615c-a1ff-4cd8-a182-c27740b82d4f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -369,6 +372,15 @@
     <ClInclude Include="..\..\include\Lunaris\Events\shared_start.h">
       <Filter>include\Lunaris\Events\__include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\config\config.h">
+      <Filter>include\Lunaris\Utility\__impl\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\config\config.ipp">
+      <Filter>include\Lunaris\Utility\__impl\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\config.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">
@@ -436,6 +448,9 @@
     </ClCompile>
     <ClCompile Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.cpp">
       <Filter>include\Lunaris\Events\__impl\generic_event_handler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\config\config.cpp">
+      <Filter>include\Lunaris\Utility\__impl\config</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
