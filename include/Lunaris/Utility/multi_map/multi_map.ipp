@@ -4,60 +4,60 @@ namespace Lunaris {
 
     template<typename ...T>
     template<typename V, typename Orig>
-    const V& multiple_data<T...>::operator=(const V& oth)
+    inline const V& multiple_data<T...>::operator=(const V& oth)
     {
         return; // none
     }
 
     template<typename ...T>
     template<typename V, typename Orig>
-    void multiple_data<T...>::operator=(V&& oth)
+    inline void multiple_data<T...>::operator=(V&& oth)
     {
         return; // none
     }
 
     template<typename ...T>
     template<typename V, typename Orig>
-    bool multiple_data<T...>::operator==(const V& oth) const
+    inline bool multiple_data<T...>::operator==(const V& oth) const
     {
         return false;
     }
 
     template<typename ...T>
-    bool multiple_data<T...>::operator==(const multiple_data& oth) const
+    inline bool multiple_data<T...>::operator==(const multiple_data& oth) const
     {
         return false; // this is or, and if none was true, this shouldn't 
     }
 
     template<typename ...T>
-    bool multiple_data<T...>::is_one_equal(const multiple_data& oth) const
+    inline bool multiple_data<T...>::is_one_equal(const multiple_data& oth) const
     {
         return false; // this is or, and if none was true, this shouldn't 
     }
 
     template<typename ...T>
-    bool multiple_data<T...>::is_all_equal(const multiple_data& oth) const
+    inline bool multiple_data<T...>::is_all_equal(const multiple_data& oth) const
     {
         return true; // this is and, so if all true, this must be true
     }
 
     template<typename ...T>
     template<typename V, typename Orig>
-    multiple_data<T...>::operator V() const
+    inline multiple_data<T...>::operator V() const
     {
         throw std::runtime_error("Invalid type casting!");
         return *((V*)nullptr);
     }
 
     template<typename T, typename ...Rest>
-    multiple_data<T, Rest...>::multiple_data(const T& first, const Rest & ...rest)
+    inline multiple_data<T, Rest...>::multiple_data(const T& first, const Rest & ...rest)
         : first(first), rest(rest...)
     {
     }
 
     template<typename T, typename ...Rest>
     template<typename V, typename Orig>
-    const V& multiple_data<T, Rest...>::operator=(const V& oth)
+    inline const V& multiple_data<T, Rest...>::operator=(const V& oth)
     {
         if (typeid(Orig) == typeid(first)) {
             (*(V*)&first) = oth;
@@ -68,7 +68,7 @@ namespace Lunaris {
 
     template<typename T, typename ...Rest>
     template<typename V, typename Orig>
-    void multiple_data<T, Rest...>::operator=(V&& oth)
+    inline void multiple_data<T, Rest...>::operator=(V&& oth)
     {
         if (typeid(Orig) == typeid(first)) {
             (*(V*)&first) = std::move(oth);
@@ -79,33 +79,33 @@ namespace Lunaris {
 
     template<typename T, typename ...Rest>
     template<typename V, typename Orig>
-    bool multiple_data<T, Rest...>::operator==(const V& oth) const
+    inline bool multiple_data<T, Rest...>::operator==(const V& oth) const
     {
         if (typeid(Orig) == typeid(first)) return (*(Orig*)&first) == oth;
         return rest == oth;
     }
 
     template<typename T, typename ...Rest>
-    bool multiple_data<T, Rest...>::operator==(const multiple_data& oth) const
+    inline bool multiple_data<T, Rest...>::operator==(const multiple_data& oth) const
     {
         return first == oth.first || rest == oth.rest;
     }
 
     template<typename T, typename ...Rest>
-    bool multiple_data<T, Rest...>::is_one_equal(const multiple_data& oth) const
+    inline bool multiple_data<T, Rest...>::is_one_equal(const multiple_data& oth) const
     {
         return first == oth.first || rest == oth.rest;
     }
 
     template<typename T, typename ...Rest>
-    bool multiple_data<T, Rest...>::is_all_equal(const multiple_data& oth) const
+    inline bool multiple_data<T, Rest...>::is_all_equal(const multiple_data& oth) const
     {
         return first == oth.first && rest == oth.rest;
     }
 
     template<typename T, typename ...Rest>
     template<typename V, typename Orig>
-    multiple_data<T, Rest...>::operator V() const
+    inline multiple_data<T, Rest...>::operator V() const
     {
         if (typeid(Orig) == typeid(first))
             return (*(V*)&first);
@@ -115,7 +115,7 @@ namespace Lunaris {
 
 
     template<typename Store, typename ...Keys>
-    multi_pair<Store, Keys...>::multi_pair(const Store& stor, const Keys&... vals)
+    inline multi_pair<Store, Keys...>::multi_pair(const Store& stor, const Keys&... vals)
         : store(stor), keys(vals...)
     {
     }
@@ -260,20 +260,20 @@ namespace Lunaris {
     }
 
     template<typename Store, size_t amount, typename ...Keys>
-    auto fixed_multi_map<Store, amount, Keys...>::find_if(find_func func)
+    inline auto fixed_multi_map<Store, amount, Keys...>::find_if(find_func func)
     {
         return std::find_if(begin(), end(), func);
     }
 
     template<typename Store, size_t amount, typename ...Keys>
-    auto fixed_multi_map<Store, amount, Keys...>::find_if(find_func func) const
+    inline auto fixed_multi_map<Store, amount, Keys...>::find_if(find_func func) const
     {
         return std::find_if(begin(), end(), func);
     }
 
 
     template<typename Store, typename ...Keys>
-    void multi_map<Store, Keys...>::generic_add_or_assign(const multi_pair<Store, Keys...>& oth)
+    inline void multi_map<Store, Keys...>::generic_add_or_assign(const multi_pair<Store, Keys...>& oth)
     {
         for (auto& i : objects) {
             if (i.keys == oth.keys) { // has one equal
@@ -285,7 +285,7 @@ namespace Lunaris {
     }
 
     template<typename Store, typename ...Keys>
-    void multi_map<Store, Keys...>::generic_add_or_assign(multi_pair<Store, Keys...>&& oth)
+    inline void multi_map<Store, Keys...>::generic_add_or_assign(multi_pair<Store, Keys...>&& oth)
     {
         for (auto& i : objects) {
             if (i.keys == oth.keys) { // has one equal
@@ -297,31 +297,31 @@ namespace Lunaris {
     }
 
     template<typename Store, typename... Keys>
-    multi_map<Store, Keys...>::multi_map(const multi_map& oth)
+    inline multi_map<Store, Keys...>::multi_map(const multi_map& oth)
         : objects(oth.objects)
     {
     }
 
     template<typename Store, typename... Keys>
-    multi_map<Store, Keys...>::multi_map(multi_map&& oth) noexcept
+    inline multi_map<Store, Keys...>::multi_map(multi_map&& oth) noexcept
         : objects(std::move(oth.objects))
     {
     }
 
     template<typename Store, typename... Keys>
-    multi_map<Store, Keys...>::multi_map(std::initializer_list<multi_pair<Store, Keys...>> list)
+    inline multi_map<Store, Keys...>::multi_map(std::initializer_list<multi_pair<Store, Keys...>> list)
     {
         for (const auto& i : list) objects.push_back(i);
     }
 
     template<typename Store, typename... Keys>
-    const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator=(const multi_map& oth)
+    inline const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator=(const multi_map& oth)
     {
         objects = oth.objects;
     }
 
     template<typename Store, typename... Keys>
-    const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator=(multi_map&& oth) noexcept
+    inline const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator=(multi_map&& oth) noexcept
     {
         objects = std::move(oth.objects);
     }
@@ -334,7 +334,7 @@ namespace Lunaris {
     }
 
     template<typename Store, typename ...Keys>
-    const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator+=(multi_map&& oth) noexcept
+    inline const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator+=(multi_map&& oth) noexcept
     {
         for (auto& i : oth.objects) generic_add_or_assign(std::move(i));
         oth.objects.clear();
@@ -342,39 +342,39 @@ namespace Lunaris {
     }
 
     template<typename Store, typename ...Keys>
-    const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator+=(const multi_pair<Store, Keys...>& oth)
+    inline const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator+=(const multi_pair<Store, Keys...>& oth)
     {
         generic_add_or_assign(oth);
         return *this;
     }
 
     template<typename Store, typename ...Keys>
-    const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator+=(multi_pair<Store, Keys...>&& oth) noexcept
+    inline const multi_map<Store, Keys...>& multi_map<Store, Keys...>::operator+=(multi_pair<Store, Keys...>&& oth) noexcept
     {
         generic_add_or_assign(std::move(oth));
         return *this;
     }
 
     template<typename Store, typename... Keys>
-    typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::begin()
+    inline typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::begin()
     {
         return objects.begin();
     }
 
     template<typename Store, typename... Keys>
-    typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::end()
+    inline typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::end()
     {
         return objects.end();
     }
 
     template<typename Store, typename... Keys>
-    typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::begin() const
+    inline typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::begin() const
     {
         return objects.cbegin();
     }
 
     template<typename Store, typename... Keys>
-    typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::end() const
+    inline typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::end() const
     {
         return objects.cend();
     }
@@ -404,38 +404,38 @@ namespace Lunaris {
     }
 
     template<typename Store, typename... Keys>
-    void multi_map<Store, Keys...>::insert(const multi_pair<Store, Keys...>& oth)
+    inline void multi_map<Store, Keys...>::insert(const multi_pair<Store, Keys...>& oth)
     {
         generic_add_or_assign(oth);
     }
 
     template<typename Store, typename... Keys>
-    void multi_map<Store, Keys...>::insert(multi_pair<Store, Keys...>&& oth)
+    inline void multi_map<Store, Keys...>::insert(multi_pair<Store, Keys...>&& oth)
     {
         generic_add_or_assign(std::move(oth));
     }
 
     template<typename Store, typename... Keys>
-    void multi_map<Store, Keys...>::insert(std::initializer_list<multi_pair<Store, Keys...>> list)
+    inline void multi_map<Store, Keys...>::insert(std::initializer_list<multi_pair<Store, Keys...>> list)
     {
         for(const auto& i : list) generic_add_or_assign(i);
         return *this;
     }
 
     template<typename Store, typename... Keys>
-    void multi_map<Store, Keys...>::push_back(const multi_pair<Store, Keys...>& oth)
+    inline void multi_map<Store, Keys...>::push_back(const multi_pair<Store, Keys...>& oth)
     {
         generic_add_or_assign(oth);
     }
 
     template<typename Store, typename... Keys>
-    void multi_map<Store, Keys...>::push_back(multi_pair<Store, Keys...>&& oth)
+    inline void multi_map<Store, Keys...>::push_back(multi_pair<Store, Keys...>&& oth)
     {
         generic_add_or_assign(std::move(oth));
     }
 
     template<typename Store, typename... Keys>
-    void multi_map<Store, Keys...>::push_back(std::initializer_list<multi_pair<Store, Keys...>> list)
+    inline void multi_map<Store, Keys...>::push_back(std::initializer_list<multi_pair<Store, Keys...>> list)
     {
         for (const auto& i : list) generic_add_or_assign(i);
         return *this;
@@ -475,7 +475,7 @@ namespace Lunaris {
 
     template<typename Store, typename... Keys>
     template<typename V>
-    Store& multi_map<Store, Keys...>::at(const V& oth)
+    inline Store& multi_map<Store, Keys...>::at(const V& oth)
     {
         for (auto& i : objects) {
             if (i.keys == oth) return i.store;
@@ -486,7 +486,7 @@ namespace Lunaris {
 
     template<typename Store, typename... Keys>
     template<typename V>
-    const Store& multi_map<Store, Keys...>::at(const V& oth) const
+    inline const Store& multi_map<Store, Keys...>::at(const V& oth) const
     {
         for (const auto& i : objects) {
             if (i.keys == oth) return i.store;
@@ -497,7 +497,7 @@ namespace Lunaris {
 
     template<typename Store, typename... Keys>
     template<typename V>
-    Store& multi_map<Store, Keys...>::operator[](const V& oth)
+    inline Store& multi_map<Store, Keys...>::operator[](const V& oth)
     {
         for (auto& i : objects) {
             if (i.keys == oth) return i.store;
@@ -508,7 +508,7 @@ namespace Lunaris {
 
     template<typename Store, typename... Keys>
     template<typename V>
-    const Store& multi_map<Store, Keys...>::operator[](const V& oth) const
+    inline const Store& multi_map<Store, Keys...>::operator[](const V& oth) const
     {
         for (const auto& i : objects) {
             if (i.keys == oth) return i.store;
@@ -519,33 +519,33 @@ namespace Lunaris {
 
     template<typename Store, typename... Keys>
     template<typename V>
-    typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::find(const V& oth)
+    inline typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::find(const V& oth)
     {
         return std::find_if(objects.begin(), objects.end(), [&](const multi_pair<Store, Keys...>& a) { return a.keys == oth; });
     }
 
     template<typename Store, typename... Keys>
     template<typename V>
-    typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::find(const V& oth) const
+    inline typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::find(const V& oth) const
     {
         return std::find_if(objects.cbegin(), objects.cend(), [&](const multi_pair<Store, Keys...>& a) { return a.keys == oth; });
     }
 
     template<typename Store, typename... Keys>
     template<typename V>
-    bool multi_map<Store, Keys...>::contains(const V& oth) const
+    inline bool multi_map<Store, Keys...>::contains(const V& oth) const
     {
         return std::find_if(objects.cbegin(), objects.cend(), [&](const multi_pair<Store, Keys...>& a) { return a.keys == oth; }) != objects.cend();
     }
 
     template<typename Store, typename... Keys>
-    typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::find_if(find_func func)
+    inline typename multi_map<Store, Keys...>::multi_map_iterator multi_map<Store, Keys...>::find_if(find_func func)
     {
         return std::find_if(objects.begin(), objects.end(), func);
     }
 
     template<typename Store, typename... Keys>
-    typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::find_if(find_func func) const
+    inline typename multi_map<Store, Keys...>::const_multi_map_iterator multi_map<Store, Keys...>::find_if(find_func func) const
     {
         return std::find_if(objects.cbegin(), objects.cend(), func);
     }
@@ -554,28 +554,28 @@ namespace Lunaris {
 
     template<typename MultiMap, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    Hint& __multi_map_work<MultiMap, Hint, Types...>::get(const O& oth)
+    inline Hint& __multi_map_work<MultiMap, Hint, Types...>::get(const O& oth)
     {
         return this->at(oth);
     }
 
     template<typename MultiMap, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    const Hint& __multi_map_work<MultiMap, Hint, Types...>::get(const O& oth) const
+    inline const Hint& __multi_map_work<MultiMap, Hint, Types...>::get(const O& oth) const
     {
         return this->at(oth);
     }
 
     template<typename MultiMap, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    void __multi_map_work<MultiMap, Hint, Types...>::set(const O& oth, const Hint& val)
+    inline void __multi_map_work<MultiMap, Hint, Types...>::set(const O& oth, const Hint& val)
     {
         this->at(oth) = val;
     }
 
     template<typename MultiMap, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    auto& __multi_map_work<MultiMap, Hint, Types...>::index(const size_t pos)
+    inline auto& __multi_map_work<MultiMap, Hint, Types...>::index(const size_t pos)
     {
         if (pos >= size()) throw std::runtime_error("Invalid index position!");
         return *(this->begin() + pos);
@@ -583,42 +583,42 @@ namespace Lunaris {
 
     template<typename MultiMap, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    size_t __multi_map_work<MultiMap, Hint, Types...>::size()
+    inline size_t __multi_map_work<MultiMap, Hint, Types...>::size()
     {
         return size();
     }
 
     template<typename MultiMap, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    typename MultiMap& __multi_map_work<MultiMap, Hint, Types...>::self()
+    inline typename MultiMap& __multi_map_work<MultiMap, Hint, Types...>::self()
     {
         return *this;
     }
 
     template<typename MultiMap, size_t siz, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    Hint& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::get(const O& oth)
+    inline Hint& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::get(const O& oth)
     {
         return this->at(oth);
     }
 
     template<typename MultiMap, size_t siz, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    const Hint& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::get(const O& oth) const
+    inline const Hint& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::get(const O& oth) const
     {
         return this->at(oth);
     }
 
     template<typename MultiMap, size_t siz, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    void __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::set(const O& oth, const Hint& val)
+    inline void __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::set(const O& oth, const Hint& val)
     {
         this->at(oth) = val;
     }
 
     template<typename MultiMap, size_t siz, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    auto& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::index(const size_t pos)
+    inline auto& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::index(const size_t pos)
     {
         if (pos >= siz) throw std::runtime_error("Invalid index position!");
         return *(this->begin() + pos);
@@ -626,102 +626,16 @@ namespace Lunaris {
 
     template<typename MultiMap, size_t siz, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    size_t __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::size()
+    inline size_t __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::size()
     {
         return siz;
     }
 
     template<typename MultiMap, size_t siz, typename Hint, typename ...Types>
     template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    typename MultiMap& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::self()
+    inline typename MultiMap& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::self()
     {
         return *this;
     }
-
-    /*template<template <typename, typename...> class MultiMap, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    Hint& __multi_map_work<MultiMap, Hint, Types...>::get(const O& oth)
-    {
-        return this->at(oth);
-    }
-
-    template<template <typename, typename...> class MultiMap, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    const Hint& __multi_map_work<MultiMap, Hint, Types...>::get(const O& oth) const
-    {
-        return this->at(oth);
-    }
-
-    template<template <typename, typename...> class MultiMap, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    void __multi_map_work<MultiMap, Hint, Types...>::set(const O& oth, const Hint& val)
-    {
-        this->at(oth) = val;
-    }
-
-    template<template <typename, typename...> class MultiMap, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    auto& __multi_map_work<MultiMap, Hint, Types...>::index(const size_t pos)
-    {
-        if (pos >= size()) throw std::runtime_error("Invalid index position!");
-        return *(this->begin() + pos);
-    }
-
-    template<template <typename, typename...> class MultiMap, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    size_t __multi_map_work<MultiMap, Hint, Types...>::size()
-    {
-        return size();
-    }
-
-    template<template <typename, typename...> class MultiMap, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    typename MultiMap<Hint, Types...>& __multi_map_work<MultiMap, Hint, Types...>::self()
-    {
-        return *this;
-    }
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    Hint& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::get(const O& oth)
-    {
-        return this->at(oth);
-    }
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    const Hint& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::get(const O& oth) const
-    {
-        return this->at(oth);
-    }
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    void __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::set(const O& oth, const Hint& val)
-    {
-        this->at(oth) = val;
-    }
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    auto& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::index(const size_t pos)
-    {
-        if (pos >= siz) throw std::runtime_error("Invalid index position!");
-        return *(this->begin() + pos);
-    }
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    size_t __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::size()
-    {
-        return siz;
-    }
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename ...Types>
-    template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int>>
-    typename MultiMap<Hint, siz, Types...>& __fixed_multi_map_work<MultiMap, siz, Hint, Types...>::self()
-    {
-        return *this;
-    }*/
 
 }

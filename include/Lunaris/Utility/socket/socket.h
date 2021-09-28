@@ -61,7 +61,7 @@ namespace Lunaris {
 	template<int protocol, bool host>
 	class socket : protected socket_core {
 
-		virtual void close_sockets() = 0;
+		virtual void close_socket() = 0;
 		virtual void add_socket(SOCKET) = 0;
 		virtual bool has_socket() = 0;
 	public:
@@ -82,7 +82,7 @@ namespace Lunaris {
 
 		std::unique_ptr<_data> data = std::make_unique<_data>();
 
-		void close_sockets();
+		void close_socket();
 		void add_socket(SOCKET);
 		bool has_socket();
 	public:
@@ -101,7 +101,7 @@ namespace Lunaris {
 
 		std::unique_ptr<_data> data = std::make_unique<_data>();
 
-		void close_sockets();
+		void close_socket();
 		void add_socket(SOCKET);
 		bool has_socket();
 	public:
@@ -114,6 +114,7 @@ namespace Lunaris {
 	public:
 		using socket_client<SOCK_STREAM, false>::socket_client;
 		using socket_client<SOCK_STREAM, false>::has_socket;
+		using socket_client<SOCK_STREAM, false>::close_socket;
 
 		bool send(const std::vector<char>&);
 		std::vector<char> recv(const size_t = static_cast<size_t>(-1), const bool = true);
@@ -131,6 +132,7 @@ namespace Lunaris {
 	public:
 		using socket_client<SOCK_DGRAM, false>::socket_client;
 		using socket_client<SOCK_DGRAM, false>::has_socket;
+		using socket_client<SOCK_DGRAM, false>::close_socket;
 
 		bool send(const std::vector<char>&);
 		std::vector<char> recv(const size_t = static_cast<size_t>(-1), const bool = true);

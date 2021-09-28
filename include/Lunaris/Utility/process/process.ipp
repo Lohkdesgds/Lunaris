@@ -2,13 +2,13 @@
 
 namespace Lunaris {
 
-    void process::log(const std::string& msg) const
+    inline void process::log(const std::string& msg) const
     {
         std::lock_guard<std::mutex> l(safe_log);
         if (log_func) log_func(msg);
     }
 
-	void process::thr_read_output()
+    inline void process::thr_read_output()
 	{
         log("Process #" + std::to_string((uintptr_t)piProcInfo.hProcess) + " started.");
         is_running = true;
@@ -40,18 +40,18 @@ namespace Lunaris {
         is_running = false;
 	}
 
-    process::~process()
+    inline process::~process()
     {
         stop();
     }
 
-    void process::hook_stdout(std::function<void(const std::string&)> fun)
+    inline void process::hook_stdout(std::function<void(const std::string&)> fun)
     {
         std::lock_guard<std::mutex> l(safe_log);
         log_func = fun;
     }
 
-    bool process::launch(const std::string& cmd)
+    inline bool process::launch(const std::string& cmd)
     {
         stop();
 
@@ -106,12 +106,12 @@ namespace Lunaris {
         return has_run_once;
     }
 
-    bool process::running() const
+    inline bool process::running() const
     {
         return keep_running && is_running;
     }
 
-    void process::stop()
+    inline void process::stop()
     {
         has_run_once = false;
         if (keep_running) {
