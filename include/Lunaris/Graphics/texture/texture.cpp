@@ -47,6 +47,7 @@ namespace Lunaris {
 	bool texture::create(const texture_config& conf)
 	{
 		__bitmap_allegro_start();
+		destroy();
 
 		if (conf.format > 0) 
 			al_set_new_bitmap_format(conf.format);

@@ -142,6 +142,7 @@ namespace Lunaris {
 
 		void destroy();
 
+		ALLEGRO_DISPLAY* get_raw_display() const;
 		ALLEGRO_EVENT_SOURCE* get_event_source();
 		std::function<ALLEGRO_TRANSFORM(void)> get_current_transform_function(); // keep this valid while using it!
 		operator std::function<ALLEGRO_TRANSFORM(void)>() const; // same as ^^
