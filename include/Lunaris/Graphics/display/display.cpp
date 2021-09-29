@@ -475,6 +475,11 @@ namespace Lunaris {
 		hooked_events = {};
 	}
 
+	ALLEGRO_DISPLAY* display::get_raw_display() const
+	{
+		return window;
+	}
+
 	ALLEGRO_EVENT_SOURCE* display::get_event_source()
 	{
 		return window ? al_get_display_event_source(window) : nullptr;
