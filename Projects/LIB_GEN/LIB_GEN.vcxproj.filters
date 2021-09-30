@@ -145,6 +145,18 @@
     <Filter Include="include\Lunaris\Utility\__impl\config">
       <UniqueIdentifier>{dfa4615c-a1ff-4cd8-a182-c27740b82d4f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\Imported">
+      <UniqueIdentifier>{c1c442b0-3a53-4dc8-b266-724924dc471d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Imported\__impl">
+      <UniqueIdentifier>{8a4cb656-fcfd-4b89-91d5-98f30322475e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Imported\__include">
+      <UniqueIdentifier>{f039b21b-1f47-41c6-8b04-55ddf8f2857b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Lunaris\Imported\__impl\algif5">
+      <UniqueIdentifier>{6b2ca46b-e21d-49ec-b7a7-c74e0bdd77c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -381,6 +393,12 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\config.h">
       <Filter>include\Lunaris\Utility\__include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Imported\algif5\algif.h">
+      <Filter>include\Lunaris\Imported\__impl\algif5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Imported\algif5.h">
+      <Filter>include\Lunaris\Imported\__include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">
@@ -451,6 +469,18 @@
     </ClCompile>
     <ClCompile Include="..\..\include\Lunaris\Utility\config\config.cpp">
       <Filter>include\Lunaris\Utility\__impl\config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Imported\algif5\bitmap.cpp">
+      <Filter>include\Lunaris\Imported\__impl\algif5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Imported\algif5\gif.cpp">
+      <Filter>include\Lunaris\Imported\__impl\algif5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Imported\algif5\lzw.cpp">
+      <Filter>include\Lunaris\Imported\__impl\algif5</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Imported\algif5\algif.cpp">
+      <Filter>include\Lunaris\Imported\__impl\algif5</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -146,11 +146,27 @@ namespace Lunaris {
 		return hybrid;
 	}
 
+	template<typename T, typename K>
+	hybrid_memory<T> make_hybrid_derived()
+	{
+		hybrid_memory<T> hybrid;
+		hybrid.replace_this(std::make_unique<K>());
+		return hybrid;
+	}
+
 	template<typename T, typename... Args>
 	inline hybrid_memory<T> make_hybrid(Args... args)
 	{
 		hybrid_memory<T> hybrid;
 		hybrid.replace_this(std::make_unique<T>(args...));
+		return hybrid;
+	}
+
+	template<typename T, typename K, typename ...Args>
+	hybrid_memory<T> make_hybrid_derived(Args... args)
+	{
+		hybrid_memory<T> hybrid;
+		hybrid.replace_this(std::make_unique<K>(args...));
 		return hybrid;
 	}
 
