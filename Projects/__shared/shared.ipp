@@ -14,6 +14,7 @@ const std::string fixed_image_src_url = "https://media.discordapp.net/attachment
 const std::string fixed_image_src_url_sha256_precalc = "e02e1baec55f8e37b5a5b3ef29d403fc2a2084267f05dfc75d723536081aff10";
 const std::string temp_local_file_path = "lunaris_temp_local.tmp";
 const std::string random_img_url =  "https://picsum.photos/1024"; // "https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
+const std::string fixed_my_catto_GIF_url = "https://media.discordapp.net/attachments/888270629990707331/892966440431403029/cat.gif";
 
 constexpr size_t num_of_entities_in_package_test = 1000;
 
@@ -783,10 +784,10 @@ int graphics_test()
 	cout << console::color::DARK_BLUE << "======================================";
 
 	std::atomic<bool> keep_running_things = true;
-	block blk_fixed, blk_mouse;
+	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
 	display my_display;
-	//file fp; // random file
+	file fp; // random file
 	thread blocks_col;
 	mouse mousing(my_display);
 	keys kb;
@@ -797,24 +798,42 @@ int graphics_test()
 	const color mouse_has_collision = color(255, 127, 255);
 	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
-
-	//cout << "Opening temporary file for temporary image...'";
-	//
-	//TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
-	//
-	//cout << "Downloading random image from '" << random_img_url << "'";
-	//
-	//{
-	//	downloader down;
-	//	TESTLU(down.get_store(random_img_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
-	//}
-	//
-	//cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
-	//fp.flush();
+	auto giffye = make_hybrid_derived<texture, texture_gif>();
+	
 
 	cout << "Creating display...";
 
 	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1280).set_height(720)).set_window_title("GRAPHICS TEST").set_self_draw(true).set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE)), "Failed to create the display");
+
+	{
+		texture_gif* oop = (texture_gif*)giffye.get();
+
+		cout << "Opening temporary file for temporary GIF...'";
+
+		TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
+
+		cout << "Downloading random image from '" << fixed_my_catto_GIF_url << "'";
+
+		{
+			downloader down;
+			TESTLU(down.get_store(fixed_my_catto_GIF_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+		}
+
+		cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
+		fp.flush();
+
+
+		TESTLU(oop->load(fp.get_current_path()), "Could not load GIF");
+
+		topleft_dc.texture_insert(giffye);
+		//topleft_dc.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(1.0f, 1.0f, 1.0f, 0.01f));
+		topleft_dc.set<float>(enum_sprite_float_e::POS_X, 0.7f);
+		topleft_dc.set<float>(enum_sprite_float_e::POS_Y, -0.7f);
+		topleft_dc.set<float>(enum_sprite_float_e::SCALE_G, 0.4f);
+		topleft_dc.set<float>(enum_sprite_float_e::SCALE_X, 1.2f);
+		//topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
+		//topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
+	}
 
 	cout << "Setting up some variables...";
 
@@ -835,6 +854,8 @@ int graphics_test()
 	}
 
 	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.25f);
+	blk_mouse.set<float>(enum_sprite_float_e::POS_X, -0.3f);
+	blk_mouse.set<float>(enum_sprite_float_e::POS_Y, -0.3f);
 	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX, true);
 
 	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255,255,255));
@@ -879,6 +900,8 @@ int graphics_test()
 
 	cout << "Setting up drawing call...";
 
+
+
 	my_display.hook_draw_function([&] {
 		al_clear_to_color(al_map_rgb(
 			cos(al_get_time() * 0.4111) * 100 + 150,
@@ -889,6 +912,8 @@ int graphics_test()
 		blk_fixed.draw();
 		blk_mouse.draw();
 		txt_main.draw();
+
+		topleft_dc.draw();
 
 		{
 			transform savv, raww;

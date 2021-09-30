@@ -9,6 +9,7 @@
 
 // deps
 #include "../color.h"
+#include "../../Imported/algif5.h"
 
 namespace Lunaris {
 
@@ -24,13 +25,14 @@ namespace Lunaris {
 	};
 
 	class texture {
+	protected:
 		ALLEGRO_BITMAP* bitmap = nullptr;
 
-		bool check_ready() const;
+		virtual bool check_ready() const;
 	public:
 		texture() = default;
 		texture(const texture_config&);
-		~texture();
+		virtual ~texture();
 
 		texture(texture&&) noexcept;
 		void operator=(texture&&) noexcept;
@@ -48,14 +50,16 @@ namespace Lunaris {
 		texture duplicate();
 		texture create_sub(const int, const int, const int, const int);
 
-		int get_width() const;
-		int get_height() const;
+		virtual int get_width() const;
+		virtual int get_height() const;
 		int get_format() const;
 		int get_flags() const;
 
-		bool empty() const;
+		virtual ALLEGRO_BITMAP* get_raw_bitmap() const;
 
-		void destroy();
+		virtual bool empty() const;
+
+		virtual void destroy();
 
 		/// <summary>
 		/// Draw bitmap.
@@ -196,5 +200,44 @@ namespace Lunaris {
 		void draw_tinted_scaled_region_at(const color&, const float, const float, const float, const float, const float, const float, const float, const float, const int = 0) const;
 
 		void set_as_target() const;
+	};
+
+	class texture_gif : public texture {
+		ALGIF_ANIMATION* animation = nullptr;
+		double start_time = 0.0;
+
+		bool check_ready() const;
+	public:
+		texture_gif() = default;
+		~texture_gif();
+
+		texture_gif(texture_gif&&) noexcept;
+		void operator=(texture_gif&&) noexcept;
+
+		texture_gif(const texture_gif&) = delete;
+		void operator=(const texture_gif&) = delete;
+
+		bool load(const std::string&);
+
+		int get_width() const;
+		int get_height() const;
+
+		ALLEGRO_BITMAP* get_raw_bitmap() const;
+		bool empty();
+		void destroy();
+
+		using texture::duplicate;
+		using texture::draw_at;
+		using texture::draw_tinted_at;
+		using texture::draw_region_at;
+		using texture::draw_tinted_region_at;
+		using texture::draw_rotated_at;
+		using texture::draw_tinted_rotated_at;
+		using texture::draw_scaled_rotated_at;
+		using texture::draw_tinted_scaled_rotated_at;
+		using texture::draw_scaled_at;
+		using texture::draw_scaled_region_at;
+		using texture::draw_tinted_scaled_at;
+		using texture::draw_tinted_scaled_region_at;
 	};
 }
