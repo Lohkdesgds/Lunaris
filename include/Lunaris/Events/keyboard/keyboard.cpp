@@ -72,6 +72,11 @@ namespace Lunaris {
 		al_register_event_source(get_event_queue(), al_get_keyboard_event_source());
 	}
 
+	keyboard::~keyboard()
+	{
+		this->stop(); // stop before this is destroyed
+	}
+
 	void keyboard::hook_each_key_event(const std::function<void(keyboard&, const int)> f)
 	{
 		auto lucky = get_lock();
