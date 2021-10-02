@@ -23,7 +23,6 @@ namespace Lunaris {
 
     void mouse::set_mouse_axis_plus(const int axis, const int val)
     {
-        //printf_s("SET %d -> %d", axis, val);
         mouse_rn.scroll_event |= (1 << (val > 0 ? (axis * 2) : ((axis * 2) + 1)));
     }
 
@@ -84,24 +83,12 @@ namespace Lunaris {
 
         current_transform_getter = f;
 
-        //if (!(timer = al_create_timer(default_mouse_update_rate))) {
-        //    throw std::bad_alloc();
-        //}
-
         al_register_event_source(get_event_queue(), al_get_mouse_event_source());
-        //al_register_event_source(get_event_queue(), al_get_timer_event_source(timer));
-
-        //al_start_timer(timer);
     }
 
     mouse::~mouse()
     {
-        if (get_event_queue()) al_unregister_event_source(get_event_queue(), al_get_mouse_event_source());
-        //if (timer) {
-        //    this->stop(); // stop before destroying timer
-        //    al_destroy_timer(timer);
-        //    timer = nullptr;
-        //}
+        this->stop(); // stop before this is destroyed
     }
 
     void mouse::hook_event(const std::function<void(const int, const mouse_event&)> f)

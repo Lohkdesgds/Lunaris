@@ -23,6 +23,7 @@ namespace Lunaris {
 		void handle_events(const ALLEGRO_EVENT&);
 	public:
 		keys();
+		~keys();
 
 		void hook_event(const std::function<void(const key_event&)>);
 		void unhook_event();

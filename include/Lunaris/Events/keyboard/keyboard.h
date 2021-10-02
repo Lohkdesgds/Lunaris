@@ -21,6 +21,7 @@ namespace Lunaris {
 		void tool_conv(std::string&, const size_t) const; // to, pos in vector
 	public:
 		keyboard();
+		~keyboard();
 
 		void hook_each_key_event(const std::function<void(keyboard&, const int)>);
 		void hook_each_key_phrase_event(const std::function<void(keyboard&, const std::string&)>);
