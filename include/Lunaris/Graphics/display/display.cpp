@@ -172,6 +172,7 @@ namespace Lunaris {
 	{
 		if (!is_drawing) return;
 		keep_drawing = false;
+		while (is_drawing) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		if (thr.joinable()) thr.join();
 		rethrow_any_exception(); // if there
 	}
