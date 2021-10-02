@@ -22,7 +22,7 @@ namespace Lunaris {
 			double interval_seconds = 1.0 / 60;
 			speed mode = speed::HIGH_PERFORMANCE;
 			bool should_quit = false;
-			bool _ended_gracefully = false;
+			bool _ended_gracefully = true;
 			std::exception_ptr _exception; // rethrows on join() if any
 
 			bool _run_ctrl(); // called by _thr_work()'s loop
@@ -52,7 +52,7 @@ namespace Lunaris {
 		void join(const bool = false);
 
 		// caution: may cause memory leak! Use at your own risk!
-		void force_kill();
+		void force_kill(const bool = false);
 	};
 
 }

@@ -88,13 +88,12 @@ namespace Lunaris {
 	inline void thread::join(const bool skip_any_exception)
 	{
 		data->should_quit = true;
-		if (data->thr.joinable()) {
-			data->thr.join();
-			if (!skip_any_exception && data->_exception) std::rethrow_exception(data->_exception);
-		}
+		while (!data->_ended_gracefully) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		if (data->thr.joinable()) data->thr.join();
+		if (!skip_any_exception && data->_exception) std::rethrow_exception(data->_exception);
 	}
 
-	inline void thread::force_kill()
+	inline void thread::force_kill(const bool skip_any_exception)
 	{
 		if (data->thr.joinable()) {
 			data->should_quit = true;
@@ -109,9 +108,8 @@ namespace Lunaris {
 				data->thr.detach();
 				::TerminateThread(handl, 0); // goodbye my friend.
 			}
-
-			if (data->_exception) std::rethrow_exception(data->_exception);
 		}
+		if (!skip_any_exception && data->_exception) std::rethrow_exception(data->_exception);
 	}
 
 }

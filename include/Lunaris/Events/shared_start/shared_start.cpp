@@ -71,8 +71,8 @@ namespace Lunaris {
 	{
 		if (ev_qu) {
 			keep_running = false;
+			while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			auto lucky = get_lock();
-			//while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			if (thr.joinable()) thr.join();
 			al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
