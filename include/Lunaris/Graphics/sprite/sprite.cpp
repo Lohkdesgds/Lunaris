@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	float sprite::get_real_pos_x(const bool refresh)
+	LUNARIS_DECL float sprite::get_real_pos_x(const bool refresh)
 	{
 		if (refresh) m_assist_transform.get_current_transform();
 
@@ -14,7 +14,7 @@ namespace Lunaris {
 		return static_cast<float>(get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE) ? (get<float>(enum_sprite_float_e::POS_X) * static_cast<float>(limit_x)) : get<float>(enum_sprite_float_e::POS_X));
 	}
 
-	float sprite::get_real_pos_y(const bool refresh)
+	LUNARIS_DECL float sprite::get_real_pos_y(const bool refresh)
 	{
 		if (refresh) m_assist_transform.get_current_transform();
 
@@ -26,7 +26,7 @@ namespace Lunaris {
 		return static_cast<float>(get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE) ? (get<float>(enum_sprite_float_e::POS_Y) * static_cast<float>(limit_y)) : get<float>(enum_sprite_float_e::POS_Y));
 	}
 
-	sprite::sprite() :
+	LUNARIS_DECL sprite::sprite() :
 		fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>(default_sprite_float_il),
 		fixed_multi_map_work<static_cast<size_t>(enum_sprite_double_e::_SIZE), double, enum_sprite_double_e>(default_sprite_double_il),
 		fixed_multi_map_work<static_cast<size_t>(enum_sprite_boolean_e::_SIZE), bool, enum_sprite_boolean_e>(default_sprite_boolean_il),
@@ -34,7 +34,7 @@ namespace Lunaris {
 	{
 	}
 
-	void sprite::draw()
+	LUNARIS_DECL void sprite::draw()
 	{
 		// - - - - - - - - Get current camera transform - - - - - - - - //
 		m_assist_transform.get_current_transform();
@@ -137,7 +137,7 @@ namespace Lunaris {
 		}
 	}
 
-	void sprite::think()
+	LUNARIS_DECL void sprite::think()
 	{
 		// not used
 		//float limit_x = -1.f, limit_y = -1.f;

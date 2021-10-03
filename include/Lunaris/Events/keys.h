@@ -3,6 +3,6 @@
 // This will include all the respective folder for you
 
 #include "keys/keys.h"
-#ifndef LUNARIS_NO_INCLUDE_SOURCE
+#ifdef LUNARIS_HEADER_ONLY
 #include "keys/keys.cpp"
 #endif

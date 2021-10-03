@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <condition_variable>
 #include <functional>
 #include <memory>

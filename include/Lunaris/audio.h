@@ -1,6 +1,8 @@
 #pragma once
 
-#include "Audio/voice.h"
-#include "Audio/mixer.h"
-#include "Audio/sample.h"
-#include "Audio/track.h"
+#include <Lunaris/__macro/macros.h>
+
+#include <Lunaris/Audio/voice.h>
+#include <Lunaris/Audio/mixer.h>
+#include <Lunaris/Audio/sample.h>
+#include <Lunaris/Audio/track.h>

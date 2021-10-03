@@ -1,7 +1,8 @@
 #pragma once
 
-#include <allegro5/allegro.h>
+#include <Lunaris/__macro/macros.h>
 
+#include <allegro5/allegro.h>
 #include <thread>
 #include <mutex>
 #include <stdexcept>

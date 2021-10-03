@@ -22,6 +22,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\Lunaris\all.h" />
     <ClInclude Include="..\..\include\Lunaris\audio.h" />
     <ClInclude Include="..\..\include\Lunaris\Audio\mixer.h" />
     <ClInclude Include="..\..\include\Lunaris\Audio\mixer\mixer.h" />
@@ -102,6 +103,7 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\thread.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\__macro\macros.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Audio\mixer\mixer.cpp" />
@@ -131,6 +133,9 @@
     <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\include\Lunaris\_readme.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -201,7 +206,8 @@
     <Allegro_AddonVideo>true</Allegro_AddonVideo>
     <Allegro_LibraryType>DynamicDebug</Allegro_LibraryType>
     <OutDir>$(SolutionDir)\libs\Lunaris\x86\</OutDir>
-    <TargetName>LSW_dynamic_debug_x86</TargetName>
+    <TargetName>LunarisLib-d</TargetName>
+    <IncludePath>$(SolutionDir)include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -220,7 +226,8 @@
     <Allegro_AddonVideo>true</Allegro_AddonVideo>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
     <OutDir>$(SolutionDir)\libs\Lunaris\x86\</OutDir>
-    <TargetName>LSW_static_release_x86</TargetName>
+    <TargetName>LunarisLib</TargetName>
+    <IncludePath>$(SolutionDir)include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -239,7 +246,8 @@
     <Allegro_AddonVideo>true</Allegro_AddonVideo>
     <Allegro_LibraryType>DynamicDebug</Allegro_LibraryType>
     <OutDir>$(SolutionDir)\libs\Lunaris\x64\</OutDir>
-    <TargetName>LSW_dynamic_debug</TargetName>
+    <TargetName>LunarisLib-d</TargetName>
+    <IncludePath>$(SolutionDir)include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -258,13 +266,14 @@
     <Allegro_AddonVideo>true</Allegro_AddonVideo>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
     <OutDir>$(SolutionDir)\libs\Lunaris\x64\</OutDir>
-    <TargetName>LSW_static_release</TargetName>
+    <TargetName>LunarisLib</TargetName>
+    <IncludePath>$(SolutionDir)include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -279,6 +288,12 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -286,7 +301,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -303,12 +318,18 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -323,6 +344,12 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)x64\Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -330,7 +357,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LUNARIS_NO_INCLUDE_SOURCE;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -347,6 +374,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)x64\Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

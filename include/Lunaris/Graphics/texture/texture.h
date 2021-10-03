@@ -1,15 +1,14 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Graphics/color.h>
+#include <Lunaris/Imported/algif5.h>
+
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
-
 #include <stdexcept>
 #include <string>
-
-// deps
-#include "../color.h"
-#include "../../Imported/algif5.h"
 
 namespace Lunaris {
 

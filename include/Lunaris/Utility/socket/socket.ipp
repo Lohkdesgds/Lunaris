@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	socket_core::_data socket_core::data;
+	inline socket_core::_data socket_core::data;
 
 	inline std::string socket_config::format() const
 	{

@@ -2,22 +2,22 @@
 
 namespace Lunaris {
 
-	float collisionable_legacy::get_size_x() const
+	LUNARIS_DECL float collisionable_legacy::get_size_x() const
 	{
 		return default_collision_oversize + (wrap.get<float>(enum_sprite_float_e::SCALE_G) * wrap.get<float>(enum_sprite_float_e::SCALE_X));
 	}
 
-	float collisionable_legacy::get_size_y() const
+	LUNARIS_DECL float collisionable_legacy::get_size_y() const
 	{
 		return default_collision_oversize + (wrap.get<float>(enum_sprite_float_e::SCALE_G) * wrap.get<float>(enum_sprite_float_e::SCALE_Y));
 	}
 
-	collisionable_legacy::collisionable_legacy(sprite& wrp)
+	LUNARIS_DECL collisionable_legacy::collisionable_legacy(sprite& wrp)
 		: wrap(wrp), posx(wrp.get<float>(enum_sprite_float_e::POS_X)), posy(wrp.get<float>(enum_sprite_float_e::POS_Y))
 	{
 	}
 
-	bool collisionable_legacy::overlap(const collisionable_legacy& ol)
+	LUNARIS_DECL bool collisionable_legacy::overlap(const collisionable_legacy& ol)
 	{
 		const float sizx = get_size_x();
 		const float sizy = get_size_y();
@@ -68,7 +68,7 @@ namespace Lunaris {
 		return is_col;
 	}
 
-	int collisionable_legacy::result() const
+	LUNARIS_DECL int collisionable_legacy::result() const
 	{
 		const bool n = directions_cases[static_cast<int>(direction_internal::NORTH)] > 0;
 		const bool s = directions_cases[static_cast<int>(direction_internal::SOUTH)] > 0;
@@ -118,14 +118,14 @@ namespace Lunaris {
 		return 0;
 	}
 
-	void collisionable_legacy::reset()
+	LUNARIS_DECL void collisionable_legacy::reset()
 	{
 		was_col = false;
 		for (auto& i : directions_cases) i = 0;
 		dx_max = dy_max = 0.0;
 	}
 
-	void collisionable_legacy::work()
+	LUNARIS_DECL void collisionable_legacy::work()
 	{
 		if (workar) {
 			int res = this->result();
@@ -133,12 +133,12 @@ namespace Lunaris {
 		}
 	}
 
-	void collisionable_legacy::set_work(const std::function<void(int, sprite&)> f)
+	LUNARIS_DECL void collisionable_legacy::set_work(const std::function<void(int, sprite&)> f)
 	{
 		workar = f;
 	}
 
-	unsigned collisionable_legacy::read_cases(const direction_op transl) const
+	LUNARIS_DECL unsigned collisionable_legacy::read_cases(const direction_op transl) const
 	{
 		switch (transl) {
 		case direction_op::DIR_NORTH:
@@ -154,12 +154,12 @@ namespace Lunaris {
 		}
 	}
 
-	bool collisionable::result::is_dir(const direction_op& op)
+	LUNARIS_DECL bool collisionable::result::is_dir(const direction_op& op)
 	{
 		return (dir_to & (static_cast<int>(op))) != 0;
 	}
 
-	collisionable::raw_result collisionable::each_pt_col(const float& px, const float& py, const collisionable& oth) const
+	LUNARIS_DECL collisionable::raw_result collisionable::each_pt_col(const float& px, const float& py, const collisionable& oth) const
 	{
 		raw_result _tmp;
 
@@ -226,7 +226,7 @@ namespace Lunaris {
 		return _tmp;
 	}
 
-	collisionable::result collisionable::combine_to(const collisionable& othr)
+	LUNARIS_DECL collisionable::result collisionable::combine_to(const collisionable& othr)
 	{
 		raw_result arr[4];
 		result res;
@@ -276,7 +276,7 @@ namespace Lunaris {
 		return res;
 	}
 
-	collisionable::direction_index collisionable::fix_index_rot(const direction_index fx) const
+	LUNARIS_DECL collisionable::direction_index collisionable::fix_index_rot(const direction_index fx) const
 	{
 		if (fx == direction_index::_MAX || fx == direction_index::NONE) return fx;
 		int rw = static_cast<int>(fx);
@@ -302,7 +302,7 @@ namespace Lunaris {
 		}
 	}
 
-	collisionable::direction_index collisionable::fix_index_inverse(const direction_index fx) const
+	LUNARIS_DECL collisionable::direction_index collisionable::fix_index_inverse(const direction_index fx) const
 	{
 		switch (fx) {
 		case direction_index::NORTH:
@@ -318,7 +318,7 @@ namespace Lunaris {
 		}
 	}
 
-	int collisionable::fix_op_rot_each(const direction_op a)
+	LUNARIS_DECL int collisionable::fix_op_rot_each(const direction_op a)
 	{
 		switch (a) {
 		case direction_op::DIR_NORTH:
@@ -378,7 +378,7 @@ namespace Lunaris {
 		}
 	}
 
-	int collisionable::fix_op_rot(const int o)
+	LUNARIS_DECL int collisionable::fix_op_rot(const int o)
 	{
 		int res = 0;
 		if ((o & static_cast<int>(direction_op::DIR_NORTH)) != 0) res |= fix_op_rot_each(direction_op::DIR_NORTH);
@@ -388,7 +388,7 @@ namespace Lunaris {
 		return res;
 	}
 
-	int collisionable::fix_op_invert(const int o)
+	LUNARIS_DECL int collisionable::fix_op_invert(const int o)
 	{
 		int res = 0;
 		if ((o & static_cast<int>(direction_op::DIR_NORTH)) != 0) res |= static_cast<int>(direction_op::DIR_SOUTH);
@@ -398,7 +398,7 @@ namespace Lunaris {
 		return res;
 	}
 
-	collisionable::collisionable(sprite& ref)
+	LUNARIS_DECL collisionable::collisionable(sprite& ref)
 		: wrap(ref),
 		nwx(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X)),
 		nwy(ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y)),
@@ -416,7 +416,7 @@ namespace Lunaris {
 	{
 	}
 
-	void collisionable::overlap(collisionable& oth)
+	LUNARIS_DECL void collisionable::overlap(collisionable& oth)
 	{
 		auto a = combine_to(oth);
 		auto b = oth.combine_to(*this);		
@@ -430,13 +430,13 @@ namespace Lunaris {
 		}
 	}
 
-	void collisionable::reset()
+	LUNARIS_DECL void collisionable::reset()
 	{
 		cases.clear();
 		last_self_area = (nwx * ney + nwy * swx + nex * swy - ney * swx - nwx * swy - nwy * nex);
 	}
 
-	void collisionable::work()
+	LUNARIS_DECL void collisionable::work()
 	{
 		if (!workar) return;
 		switch (cases.size()) {
@@ -460,18 +460,18 @@ namespace Lunaris {
 		}
 	}
 
-	void collisionable::set_work(const std::function<void(result, sprite&)> f)
+	LUNARIS_DECL void collisionable::set_work(const std::function<void(result, sprite&)> f)
 	{
 		workar = f;
 	}
 
-	void collisionable::set_work_works_all_cases(const bool var)
+	LUNARIS_DECL void collisionable::set_work_works_all_cases(const bool var)
 	{
 		work_all = var;
 	}
 
 
-	void work_all_auto(collisionable* be, const collisionable* en)
+	LUNARIS_DECL void work_all_auto(collisionable* be, const collisionable* en)
 	{
 		if (be >= en) return;
 

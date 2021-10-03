@@ -1,6 +1,12 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <allegro5/allegro5.h>
+#include <allegro5/allegro_primitives.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct ALGIF_ANIMATION ALGIF_ANIMATION;
 typedef struct ALGIF_FRAME ALGIF_FRAME;
@@ -48,9 +54,8 @@ struct ALGIF_FRAME {
 int read_code(ALLEGRO_FILE*, char*, int*, int);
 int LZW_decode(ALLEGRO_FILE*, ALGIF_BITMAP*);
 
-inline static void read_palette(ALLEGRO_FILE* file, ALGIF_PALETTE* palette);
-inline static void deinterlace(ALGIF_BITMAP* bmp);
-
+void read_palette(ALLEGRO_FILE* file, ALGIF_PALETTE* palette);
+void deinterlace(ALGIF_BITMAP* bmp);
 
 ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE*);
 ALGIF_ANIMATION* algif_load_animation_f(ALLEGRO_FILE*);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 

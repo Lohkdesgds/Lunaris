@@ -2,14 +2,14 @@
 
 namespace Lunaris {
 	
-	std::string keyboard::gen_output() const
+	LUNARIS_DECL std::string keyboard::gen_output() const
 	{
 		std::string outt;
 		for (size_t p = 0; p < data.size(); p++) tool_conv(outt, p);
 		return outt;
 	}
 
-	void keyboard::handle_events(const ALLEGRO_EVENT& ev)
+	LUNARIS_DECL void keyboard::handle_events(const ALLEGRO_EVENT& ev)
 	{
 		if (ev.type != ALLEGRO_EVENT_KEY_CHAR) return;
 
@@ -51,7 +51,7 @@ namespace Lunaris {
 		}
 	}
 
-	void keyboard::tool_conv(std::string& str, const size_t pos) const
+	LUNARIS_DECL void keyboard::tool_conv(std::string& str, const size_t pos) const
 	{
 		if (pos >= data.size()) return;
 
@@ -65,55 +65,55 @@ namespace Lunaris {
 		for (size_t a = 0; a < len; a++) str += multibyte[a];
 	}
 
-	keyboard::keyboard() : __common_event()
+	LUNARIS_DECL keyboard::keyboard() : __common_event()
 	{
 		__keyboard_allegro_start();
 
 		al_register_event_source(get_event_queue(), al_get_keyboard_event_source());
 	}
 
-	keyboard::~keyboard()
+	LUNARIS_DECL keyboard::~keyboard()
 	{
 		this->stop(); // stop before this is destroyed
 	}
 
-	void keyboard::hook_each_key_event(const std::function<void(keyboard&, const int)> f)
+	LUNARIS_DECL void keyboard::hook_each_key_event(const std::function<void(keyboard&, const int)> f)
 	{
 		auto lucky = get_lock();
 		each_key = f;
 	}
 
-	void keyboard::hook_each_key_phrase_event(const std::function<void(keyboard&, const std::string&)> f)
+	LUNARIS_DECL void keyboard::hook_each_key_phrase_event(const std::function<void(keyboard&, const std::string&)> f)
 	{
 		auto lucky = get_lock();
 		each_combined = f;
 	}
 
-	void keyboard::hook_enter_line_phrase_event(const std::function<void(keyboard&, const std::string&)> f)
+	LUNARIS_DECL void keyboard::hook_enter_line_phrase_event(const std::function<void(keyboard&, const std::string&)> f)
 	{
 		auto lucky = get_lock();
 		enter_combined = f;
 	}
 
-	void keyboard::unhook_each_key_event()
+	LUNARIS_DECL void keyboard::unhook_each_key_event()
 	{
 		auto lucky = get_lock();
 		each_key = {};
 	}
 
-	void keyboard::unhook_each_key_phrase_event()
+	LUNARIS_DECL void keyboard::unhook_each_key_phrase_event()
 	{
 		auto lucky = get_lock();
 		each_combined = {};
 	}
 
-	void keyboard::unhook_enter_line_phrase_event()
+	LUNARIS_DECL void keyboard::unhook_enter_line_phrase_event()
 	{
 		auto lucky = get_lock();
 		enter_combined = {};
 	}
 
-	void keyboard::clear()
+	LUNARIS_DECL void keyboard::clear()
 	{
 		auto lucky = get_lock();
 		data.clear();

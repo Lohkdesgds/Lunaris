@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../voice.h"
-#include "../mixer.h"
-#include "../sample.h"
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Audio/voice.h>
+#include <Lunaris/Audio/mixer.h>
+#include <Lunaris/Audio/sample.h>
 
 namespace Lunaris {
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <vector>
 #include <typeinfo>
 #include <stdexcept>

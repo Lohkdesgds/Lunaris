@@ -4,6 +4,6 @@
 
 #include "config/config.h"
 #include "config/config.ipp"
-#ifndef LUNARIS_NO_INCLUDE_SOURCE
+#ifdef LUNARIS_HEADER_ONLY
 #include "config/config.cpp"
 #endif

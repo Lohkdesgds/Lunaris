@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <windows.h>
 #include <wininet.h>
 #include <ShlObj.h>

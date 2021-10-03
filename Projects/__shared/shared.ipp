@@ -18,7 +18,6 @@ const std::string fixed_my_catto_GIF_url = "https://media.discordapp.net/attachm
 
 constexpr size_t num_of_entities_in_package_test = 1000;
 
-
 void hold_user();
 int run_and_test(std::function<bool(void)>, const std::string&);
 

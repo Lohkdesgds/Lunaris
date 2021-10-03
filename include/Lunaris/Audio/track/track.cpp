@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	bool track::set(ALLEGRO_SAMPLE_INSTANCE* si)
+	LUNARIS_DECL bool track::set(ALLEGRO_SAMPLE_INSTANCE* si)
 	{
 		if (si) {
 			destroy();
@@ -12,24 +12,24 @@ namespace Lunaris {
 		return false;
 	}
 
-	track::track()
+	LUNARIS_DECL track::track()
 	{
 		__audio_allegro_start(); // from voice.h
 	}
 
-	track::~track()
+	LUNARIS_DECL track::~track()
 	{
 		destroy();
 	}
 
-	track::track(track&& tk) noexcept
+	LUNARIS_DECL track::track(track&& tk) noexcept
 		: playing(tk.playing), paused_at(tk.paused_at)
 	{
 		tk.playing = nullptr;
 		tk.paused_at = 0;
 	}
 
-	void track::operator=(track&& tk) noexcept
+	LUNARIS_DECL void track::operator=(track&& tk) noexcept
 	{
 		destroy();
 		playing = tk.playing;
@@ -38,7 +38,7 @@ namespace Lunaris {
 		tk.paused_at = 0;
 	}
 
-	bool track::load(const sample& sp)
+	LUNARIS_DECL bool track::load(const sample& sp)
 	{
 		paused_at = 0;
 
@@ -54,7 +54,7 @@ namespace Lunaris {
 		return false;
 	}
 
-	void track::destroy()
+	LUNARIS_DECL void track::destroy()
 	{
 		if (playing) {
 			al_destroy_sample_instance(playing);
@@ -62,17 +62,17 @@ namespace Lunaris {
 		}
 	}
 
-	bool track::attach_to(const mixer& mx)
+	LUNARIS_DECL bool track::attach_to(const mixer& mx)
 	{
 		return playing && mx.exists() && al_attach_sample_instance_to_mixer(playing, mx.mixing);
 	}
 
-	bool track::exists() const
+	LUNARIS_DECL bool track::exists() const
 	{
 		return playing != nullptr;
 	}
 
-	void track::play()
+	LUNARIS_DECL void track::play()
 	{
 		if (!exists()) return;
 		if (is_playing()) return;
@@ -80,7 +80,7 @@ namespace Lunaris {
 		if (paused_at) set_position_samples(paused_at);
 	}
 
-	void track::pause()
+	LUNARIS_DECL void track::pause()
 	{
 		if (!exists()) return;
 		if (!is_playing()) return;
@@ -88,38 +88,38 @@ namespace Lunaris {
 		al_set_sample_instance_playing(playing, false);
 	}
 
-	void track::stop()
+	LUNARIS_DECL void track::stop()
 	{
 		if (!exists()) return;
 		paused_at = 0;
 		al_stop_sample_instance(playing);
 	}
 
-	bool track::is_playing() const
+	LUNARIS_DECL bool track::is_playing() const
 	{
 		if (!exists()) return false;
 		return al_get_sample_instance_playing(playing);
 	}
 
-	ALLEGRO_CHANNEL_CONF track::get_channel_configuration() const
+	LUNARIS_DECL ALLEGRO_CHANNEL_CONF track::get_channel_configuration() const
 	{
 		if (!exists()) return {};
 		return al_get_sample_instance_channels(playing);
 	}
 
-	size_t track::get_channels_num() const
+	LUNARIS_DECL size_t track::get_channels_num() const
 	{
 		if (!exists()) return 0;
 		return al_get_channel_count(get_channel_configuration());
 	}
 
-	ALLEGRO_AUDIO_DEPTH track::get_depth() const
+	LUNARIS_DECL ALLEGRO_AUDIO_DEPTH track::get_depth() const
 	{
 		if (!exists()) return {};
 		return al_get_sample_instance_depth(playing);
 	}
 
-	int track::get_depth_bits() const
+	LUNARIS_DECL int track::get_depth_bits() const
 	{
 		if (!exists()) return {};
 		switch (al_get_sample_instance_depth(playing)) {
@@ -139,110 +139,110 @@ namespace Lunaris {
 		}
 	}
 
-	unsigned track::get_frequency() const
+	LUNARIS_DECL unsigned track::get_frequency() const
 	{
 		if (!exists()) return 0;
 		return al_get_sample_instance_frequency(playing);
 	}
 
-	unsigned track::get_length_samples() const
+	LUNARIS_DECL unsigned track::get_length_samples() const
 	{
 		if (!exists()) return 0;
 		return al_get_sample_instance_length(playing);
 	}
 
-	void track::set_length_samples(const unsigned len)
+	LUNARIS_DECL void track::set_length_samples(const unsigned len)
 	{
 		if (!exists()) return;
 		al_set_sample_instance_length(playing, len);
 	}
 
-	size_t track::get_length_ms() const
+	LUNARIS_DECL size_t track::get_length_ms() const
 	{
 		if (!exists()) return 0;
 		return static_cast<size_t>((1000.0 * get_length_samples()/* / get_channels_num()*/) / get_frequency());
 	}
 
-	void track::set_length_ms(const size_t ms)
+	LUNARIS_DECL void track::set_length_ms(const size_t ms)
 	{
 		if (!exists()) return;
 		set_length_samples((ms / 1000.0) * get_frequency()/* * get_channels_num()*/);
 	}
 
-	unsigned track::get_position_samples() const
+	LUNARIS_DECL unsigned track::get_position_samples() const
 	{
 		if (!exists()) return 0;
 		return paused_at ? paused_at : al_get_sample_instance_position(playing);
 	}
 
-	void track::set_position_samples(const unsigned pos)
+	LUNARIS_DECL void track::set_position_samples(const unsigned pos)
 	{
 		if (!exists()) return;
 		paused_at = 0;
 		al_set_sample_instance_position(playing, pos);
 	}
 
-	size_t track::get_position_ms() const
+	LUNARIS_DECL size_t track::get_position_ms() const
 	{
 		if (!exists()) return 0;
 		return static_cast<size_t>((1000.0 * get_position_samples()/* / get_channels_num()*/) / get_frequency());
 	}
 
-	void track::set_position_ms(const size_t ms)
+	LUNARIS_DECL void track::set_position_ms(const size_t ms)
 	{
 		if (!exists()) return;
 		set_position_samples((ms / 1000.0) * get_frequency()/* * get_channels_num()*/);
 	}
 
-	float track::get_speed() const
+	LUNARIS_DECL float track::get_speed() const
 	{
 		if (!exists()) return 0.0f;
 		return al_get_sample_instance_speed(playing);
 	}
 
-	void track::set_speed(const float speed)
+	LUNARIS_DECL void track::set_speed(const float speed)
 	{
 		if (!exists()) return;
 		al_set_sample_instance_speed(playing, speed);
 	}
 
-	float track::get_gain() const
+	LUNARIS_DECL float track::get_gain() const
 	{
 		if (!exists()) return 0.0f;
 		return al_get_sample_instance_gain(playing);
 	}
 
-	void track::set_gain(const float gain)
+	LUNARIS_DECL void track::set_gain(const float gain)
 	{
 		if (!exists()) return;
 		al_set_sample_instance_gain(playing, gain);
 	}
 
-	float track::get_pan() const
+	LUNARIS_DECL float track::get_pan() const
 	{
 		if (!exists()) return 0.0f;
 		return al_get_sample_instance_pan(playing);
 	}
 
-	void track::set_pan(const float pan)
+	LUNARIS_DECL void track::set_pan(const float pan)
 	{
 		if (!exists()) return;
 		al_set_sample_instance_pan(playing, pan);
 	}
 
-	float track::get_time_s() const
+	LUNARIS_DECL float track::get_time_s() const
 	{
 		if (!exists()) return 0.0f;
 		return al_get_sample_instance_time(playing);
 	}
 
-	ALLEGRO_PLAYMODE track::get_play_mode() const
+	LUNARIS_DECL ALLEGRO_PLAYMODE track::get_play_mode() const
 	{
 		if (!exists()) return {};
 		return al_get_sample_instance_playmode(playing);
 	}
 
-	void track::set_play_mode(const ALLEGRO_PLAYMODE mode)
+	LUNARIS_DECL void track::set_play_mode(const ALLEGRO_PLAYMODE mode)
 	{
 		if (!exists()) return;
 		al_set_sample_instance_playmode(playing, mode);

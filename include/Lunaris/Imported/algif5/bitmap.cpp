@@ -1,6 +1,6 @@
 #include "algif.h"
 
-ALGIF_BITMAP* algif_create_bitmap(int w, int h) {
+LUNARIS_DECL ALGIF_BITMAP* algif_create_bitmap(int w, int h) {
     ALGIF_BITMAP* bitmap = (ALGIF_BITMAP*)calloc(1, sizeof(ALGIF_BITMAP));
     bitmap->w = w;
     bitmap->h = h;
@@ -8,12 +8,12 @@ ALGIF_BITMAP* algif_create_bitmap(int w, int h) {
     return bitmap;
 }
 
-void algif_destroy_bitmap(ALGIF_BITMAP* bitmap) {
+LUNARIS_DECL void algif_destroy_bitmap(ALGIF_BITMAP* bitmap) {
     free(bitmap->data);
     free(bitmap);
 }
 
-void algif_blit(ALGIF_BITMAP* from, ALGIF_BITMAP* to, int xf, int yf, int xt, int yt,
+LUNARIS_DECL void algif_blit(ALGIF_BITMAP* from, ALGIF_BITMAP* to, int xf, int yf, int xt, int yt,
     int w, int h) {
 
     if (w <= 0 || h <= 0)

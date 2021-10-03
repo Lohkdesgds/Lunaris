@@ -1,9 +1,10 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Events/shared_start.h>
+
 #include <allegro5/allegro.h>
 #include <functional>
-
-#include "../shared_start.h"
 
 namespace Lunaris {
 

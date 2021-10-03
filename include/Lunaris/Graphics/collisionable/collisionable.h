@@ -1,9 +1,10 @@
 #pragma once
 
-#include <functional>
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Graphics/sprite.h>
+#include <Lunaris/Utility/random.h>
 
-#include "../sprite/sprite.h"
-#include "../../Utility/random.h"
+#include <functional>
 
 namespace Lunaris {
 

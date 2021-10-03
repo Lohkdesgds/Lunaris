@@ -2,13 +2,13 @@
 
 namespace Lunaris {
 
-	void __config_allegro_start()
+	LUNARIS_DECL void __config_allegro_start()
 	{
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
 	}
 
 			
-	void config::_set(section& i, const std::string& key, const std::string& val)
+	LUNARIS_DECL void config::_set(section& i, const std::string& key, const std::string& val)
 	{
 		if (key.empty() || val.empty()) return;
 
@@ -22,7 +22,7 @@ namespace Lunaris {
 		return;
 	}
 			
-	config::section& config::_get_to_set(const std::string& sec, const config::config_section_mode mode)
+	LUNARIS_DECL config::section& config::_get_to_set(const std::string& sec, const config::config_section_mode mode)
 	{
 		for (auto& i : conff) {
 			if (i.section_name == sec) {
@@ -33,7 +33,7 @@ namespace Lunaris {
 		return conff.back();
 	}
 
-	const config::section& config::_get(const std::string& sec) const
+	LUNARIS_DECL const config::section& config::_get(const std::string& sec) const
 	{
 		for (const auto& i : conff) {
 			if (i.section_name == sec) {
@@ -44,7 +44,7 @@ namespace Lunaris {
 		return conff.front();
 	}
 
-	bool config::_has(const std::string& sec) const
+	LUNARIS_DECL bool config::_has(const std::string& sec) const
 	{
 		for (const auto& i : conff) {
 			if (i.section_name == sec) return true;
@@ -52,24 +52,24 @@ namespace Lunaris {
 		return false;
 	}
 
-	config::config(config&& c) noexcept
+	LUNARIS_DECL config::config(config&& c) noexcept
 	{
 		path = std::move(c.path);
 		autosave = c.autosave;
 		conff = std::move(c.conff);
 	}
 
-	config::~config()
+	LUNARIS_DECL config::~config()
 	{
 		if (autosave) flush();
 	}
 
-	void config::auto_save(bool b)
+	LUNARIS_DECL void config::auto_save(bool b)
 	{
 		autosave = b;
 	}
 
-	bool config::load(std::string str)
+	LUNARIS_DECL bool config::load(std::string str)
 	{
 		__config_allegro_start();
 
@@ -119,7 +119,7 @@ namespace Lunaris {
 		return true;
 	}
 
-	void config::save_path(std::string str)
+	LUNARIS_DECL void config::save_path(std::string str)
 	{
 		if (str.empty()) {
 			throw std::runtime_error("Null path is not a valid path at save_path!");
@@ -127,7 +127,7 @@ namespace Lunaris {
 		path = str;
 	}
 
-	bool config::flush()
+	LUNARIS_DECL bool config::flush()
 	{
 		__config_allegro_start();
 
@@ -152,12 +152,12 @@ namespace Lunaris {
 		return true;
 	}
 
-	void config::set(const std::string& sec, const config::config_section_mode mode)
+	LUNARIS_DECL void config::set(const std::string& sec, const config::config_section_mode mode)
 	{
 		this->_get_to_set(sec, mode).mode = mode;
 	}
 
-	bool config::has(const std::string& sec, const config::config_section_mode mode) const
+	LUNARIS_DECL bool config::has(const std::string& sec, const config::config_section_mode mode) const
 	{
 		for (const auto& i : conff) {
 			if (i.section_name == sec) {
@@ -167,7 +167,7 @@ namespace Lunaris {
 		return false;
 	}
 
-	bool config::has(const std::string& sec, const std::string& key, const config::config_section_mode mode) const
+	LUNARIS_DECL bool config::has(const std::string& sec, const std::string& key, const config::config_section_mode mode) const
 	{
 		for (const auto& i : conff) {
 			if (i.section_name == sec &&  i.mode == mode){
@@ -181,7 +181,7 @@ namespace Lunaris {
 		return false;
 	}
 
-	bool config::has(const std::string& sec) const
+	LUNARIS_DECL bool config::has(const std::string& sec) const
 	{
 		for (const auto& i : conff) {
 			if (i.section_name == sec) {
@@ -191,7 +191,7 @@ namespace Lunaris {
 		return false;
 	}
 
-	bool config::has(const std::string& sec, const std::string& key) const
+	LUNARIS_DECL bool config::has(const std::string& sec, const std::string& key) const
 	{
 		for (const auto& i : conff) {
 			if (i.section_name == sec) {
@@ -205,67 +205,67 @@ namespace Lunaris {
 		return false;
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::string& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::string& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, val);
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const bool& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const bool& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, val ? "true" : "false");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const char& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const char& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const int& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const int& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const float& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const float& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const double& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const double& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const unsigned& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const unsigned& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const long& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const long& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const long long& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const long long& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const unsigned long long& val)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const unsigned long long& val)
 	{
 		auto& u = _get_to_set(sec);
 		_set(u, key, std::to_string(val));
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<std::string>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<std::string>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -276,7 +276,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<bool>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<bool>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -286,7 +286,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<char>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<char>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -296,7 +296,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<int>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<int>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -306,7 +306,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<float>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<float>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -316,7 +316,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<double>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<double>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -326,7 +326,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<unsigned>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<unsigned>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -336,7 +336,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<long>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<long>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -346,7 +346,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<long long>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<long long>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -356,7 +356,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::initializer_list<unsigned long long>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::initializer_list<unsigned long long>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -366,7 +366,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<std::string>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<std::string>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -378,7 +378,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<bool>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<bool>& vals)
 	{
 		std::string res;
 		for (auto i : vals) {
@@ -388,7 +388,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<char>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<char>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -398,7 +398,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<int>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<int>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -408,7 +408,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<float>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<float>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -418,7 +418,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<double>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<double>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -428,7 +428,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<unsigned>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<unsigned>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -438,7 +438,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<long>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<long>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -448,7 +448,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<long long>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<long long>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -458,7 +458,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::set(const std::string& sec, const std::string& key, const std::vector<unsigned long long>& vals)
+	LUNARIS_DECL void config::set(const std::string& sec, const std::string& key, const std::vector<unsigned long long>& vals)
 	{
 		std::string res;
 		for (const auto& i : vals) {
@@ -468,7 +468,7 @@ namespace Lunaris {
 		set(sec, key, "{" + res + "}");
 	}
 
-	void config::comment(const std::string& sec, std::string comment)
+	LUNARIS_DECL void config::comment(const std::string& sec, std::string comment)
 	{
 		for (auto& i : comment) {
 			if (i == '\n') i = ' ';
@@ -486,7 +486,7 @@ namespace Lunaris {
 		backk.section_comment = comment;
 	}
 
-	std::string config::get(const std::string& sec, const std::string& key) const
+	LUNARIS_DECL std::string config::get(const std::string& sec, const std::string& key) const
 	{
 		for (const auto& i : conff) {
 			if (sec == i.section_name) {
@@ -498,7 +498,7 @@ namespace Lunaris {
 		return "";
 	}
 
-	void config::operator=(config&& c) noexcept
+	LUNARIS_DECL void config::operator=(config&& c) noexcept
 	{
 		path = std::move(c.path);
 		autosave = c.autosave;

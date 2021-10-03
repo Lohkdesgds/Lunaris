@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
@@ -7,11 +8,8 @@
 #include <stdexcept>
 
 namespace Lunaris {
-#ifdef LUNARIS_AUDIO_SAMPLE_AMOUNT
-	constexpr int voice_audio_samples = LUNARIS_AUDIO_SAMPLE_AMOUNT;
-#else
-	constexpr int voice_audio_samples = 8;
-#endif
+
+	constexpr int voice_audio_samples = LUNARIS_AUTOSET_AUDIO_SAMPLE_AMOUNT;
 
 	void __audio_allegro_start();
 

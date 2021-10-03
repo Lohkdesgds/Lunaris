@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	bool downloader::run_get_with_func(const std::string& url, std::function<void(const char*, const size_t)> f)
+	LUNARIS_DECL bool downloader::run_get_with_func(const std::string& url, std::function<void(const char*, const size_t)> f)
 	{
 		constexpr size_t max_block_size = 1536;
 
@@ -32,29 +32,29 @@ namespace Lunaris {
 		return true;
 	}
 
-	bool downloader::get(const std::string& url)
+	LUNARIS_DECL bool downloader::get(const std::string& url)
 	{
 		buf.clear();
 		return run_get_with_func(url, [&](const char* feed, const size_t feed_siz) { buf.insert(buf.end(), feed, feed + feed_siz); });
 	}
 
-	bool downloader::get_store(const std::string& url, std::function<void(const char*, const size_t)> f)
+	LUNARIS_DECL bool downloader::get_store(const std::string& url, std::function<void(const char*, const size_t)> f)
 	{
 		buf.clear();
 		return run_get_with_func(url, f);
 	}
 
-	size_t downloader::bytes_read() const
+	LUNARIS_DECL size_t downloader::bytes_read() const
 	{
 		return TotalBytesRead;
 	}
 
-	const std::vector<char>& downloader::read() const
+	LUNARIS_DECL const std::vector<char>& downloader::read() const
 	{
 		return buf;
 	}
 
-	void downloader::clear_buf()
+	LUNARIS_DECL void downloader::clear_buf()
 	{
 		buf.clear();
 	}
