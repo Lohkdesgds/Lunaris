@@ -32,7 +32,7 @@
 - *Create a new project (I recommend Empty Project)*
 - *Setup project's folder with git (git init) and add this as submodule (I recommend setting output next to the .vcxproj, on Lunaris/...)*
   - Example:
-    - New Project "ABC", using default "create folders" thing: `git submodule add <link this> ABC/Lunaris`
+    - New Project "ABC", using default "create folders" thing: `git submodule add <link this> Lunaris`
     - Your .vcxproj should be at ABC/ABC.vcxproj
 - *Open Nuget, browse for **Allegro** and install it (the dependency too, of course)*
 - *Open project properties, then: (* ◼ *recommended,* ◻ *optional, but recommended )*
@@ -42,9 +42,9 @@
   * ◼ *Allegro 5 > Library Type: **"Dynamic Debug"** for **DEBUG** and **"Static Monolith"** for **RELEASE**;*
   * ◼ *C/C++ > Code Generation > Runtime Library: **/MT** and **/MTd** for **RELEASE** and **DEBUG**;*
   * ◻ *C/C++ > Code Generation > Floating Point Model: **Fast**;*
-  * ◼ *Linker > General > Additional Libraries Directory: Add **"$(SolutionDir)/libs/Lunaris/x64"** to the **"x64"** and **$(SolutionDir)/libs/Lunaris/x86** to the **"Win32"**;*
-  * ◻ *VC++ Directories > Include Directories: Add **$(SolutionDir)/include** path (or path to Lunaris folder in this) so you can do* **`#include <Lunaris/module.h>`** *(module being one of the options like utility or graphics) anywhere.*
-  * ◻ *C/C++ > Additional Include Directories: Add **$(SolutionDir)/include** path (like the other one)*
+  * ◼ *Linker > General > Additional Libraries Directory: Add **"$(SolutionDir)Lunaris\libs\Lunaris\x64"** to the **"x64"** and **$(SolutionDir)Lunaris\libs\Lunaris\x86** to the **"Win32"**;*
+  * ◻ *VC++ Directories > Include Directories: Add **$(SolutionDir)Lunaris\include** path (or path to Lunaris folder in this) so you can do* **`#include <Lunaris/module.h>`** *(module being one of the options like utility or graphics) anywhere.*
+  * ◻ *C/C++ > Additional Include Directories: Add **$(SolutionDir)Lunaris\include** path (like the other one)*
 
 <hr>
 

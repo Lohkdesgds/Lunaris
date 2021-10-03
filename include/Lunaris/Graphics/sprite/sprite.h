@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../../Utility/multi_map.h"
-#include "../../Utility/memory.h"
-#include "../transform.h"
-#include "../color.h"
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Utility/multi_map.h>
+#include <Lunaris/Utility/memory.h>
+#include <Lunaris/Graphics/transform.h>
+#include <Lunaris/Graphics/color.h>
 
 namespace Lunaris {
 

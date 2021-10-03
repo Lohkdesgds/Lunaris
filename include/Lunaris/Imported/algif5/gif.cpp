@@ -1,11 +1,7 @@
-#pragma once
 #include "algif.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 /* Destroy a complete gif, including all frames. */
-void algif_destroy_animation(ALGIF_ANIMATION *gif) {
+LUNARIS_DECL void algif_destroy_animation(ALGIF_ANIMATION *gif) {
     for (int i = 0; i < gif->frames_count; i++)
     {
         ALGIF_FRAME *frame = gif->frames + i;
@@ -21,7 +17,7 @@ void algif_destroy_animation(ALGIF_ANIMATION *gif) {
     free (gif);
 }
 
-static void read_palette(ALLEGRO_FILE * file, ALGIF_PALETTE *palette) {
+LUNARIS_DECL void read_palette(ALLEGRO_FILE * file, ALGIF_PALETTE *palette) {
     for (int i = 0; i < palette->colors_count; i++)
     {
         palette->colors[i].r = al_fgetc(file);
@@ -30,7 +26,7 @@ static void read_palette(ALLEGRO_FILE * file, ALGIF_PALETTE *palette) {
     }
 }
 
-static void deinterlace(ALGIF_BITMAP *bmp)
+LUNARIS_DECL void deinterlace(ALGIF_BITMAP *bmp)
 {
     ALGIF_BITMAP *n = algif_create_bitmap(bmp->w, bmp->h);
     int i = 0;
@@ -54,7 +50,7 @@ static void deinterlace(ALGIF_BITMAP *bmp)
     algif_destroy_bitmap(n);
 }
 
-ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file) {
+LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file) {
     if (!file)
         return nullptr;
 

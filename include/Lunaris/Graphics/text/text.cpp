@@ -2,22 +2,22 @@
 
 namespace Lunaris {
 
-	text_shadow::text_shadow(const float a, const float b, const color c)
+	LUNARIS_DECL text_shadow::text_shadow(const float a, const float b, const color c)
 		: offset_x(a), offset_y(b), clr(c)
 	{
 	}
 
-	std::shared_lock<std::shared_mutex> text::mu_shared_read_control() const
+	LUNARIS_DECL std::shared_lock<std::shared_mutex> text::mu_shared_read_control() const
 	{
 		return std::shared_lock<std::shared_mutex>(font_mtx);
 	}
 
-	std::unique_lock<std::shared_mutex> text::mu_shared_write_control() const
+	LUNARIS_DECL std::unique_lock<std::shared_mutex> text::mu_shared_write_control() const
 	{
 		return std::unique_lock<std::shared_mutex>(font_mtx);
 	}
 
-	void text::draw_task(transform transf, transform drawntransf, const float& limit_x, const float& limit_y) // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! 
+	LUNARIS_DECL void text::draw_task(transform transf, transform drawntransf, const float& limit_x, const float& limit_y) // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! 
 	{
 		auto lock = mu_shared_read_control();
 
@@ -96,7 +96,7 @@ namespace Lunaris {
 		transf_back.apply();
 	}					// NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! 
 
-	text::text() :
+	LUNARIS_DECL text::text() :
 		sprite(),
 		fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>(default_text_float_il),
 		fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), safe_string, enum_text_safe_string_e>(default_text_string_il),
@@ -104,38 +104,38 @@ namespace Lunaris {
 	{
 	}
 
-	void text::font_set(const hybrid_memory<font>& newfont)
+	LUNARIS_DECL void text::font_set(const hybrid_memory<font>& newfont)
 	{
 		auto lock = mu_shared_write_control();
 		font_used = newfont;
 	}
 
-	void text::shadow_insert(text_shadow oth)
+	LUNARIS_DECL void text::shadow_insert(text_shadow oth)
 	{
 		auto lock = mu_shared_write_control();
 		shadows.push_back(oth);
 	}
 
-	const text_shadow& text::shadow_index(const size_t index) const
+	LUNARIS_DECL const text_shadow& text::shadow_index(const size_t index) const
 	{
 		auto lock = mu_shared_read_control();
 		if (index >= shadows.size()) throw std::out_of_range("index out of range");
 		return shadows[index];
 	}
 
-	size_t text::shadow_size() const
+	LUNARIS_DECL size_t text::shadow_size() const
 	{
 		return shadows.size();
 	}
 
-	void text::shadow_remove(const size_t index)
+	LUNARIS_DECL void text::shadow_remove(const size_t index)
 	{
 		auto lock = mu_shared_write_control();
 		if (index >= shadows.size()) throw std::out_of_range("index out of range");
 		shadows.erase(shadows.begin() + index);
 	}
 
-	void text::shadow_remove_all()
+	LUNARIS_DECL void text::shadow_remove_all()
 	{
 		auto lock = mu_shared_write_control();
 		shadows.clear();

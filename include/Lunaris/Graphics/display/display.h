@@ -1,11 +1,10 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <allegro5/allegro.h>
-//#include <allegro5/allegro_opengl.h>
-//#include <allegro5/allegro_direct3d.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
-
 #include <vector>
 #include <stdexcept>
 #include <string>

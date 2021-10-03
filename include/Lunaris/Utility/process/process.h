@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 #include <Windows.h>
 #include <thread>
 #include <mutex>

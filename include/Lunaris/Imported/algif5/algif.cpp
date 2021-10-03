@@ -1,6 +1,4 @@
 #include "algif.h"
-#include <allegro5/allegro_primitives.h>
-#include <math.h>
 
 /* Renders the next frame in a GIF animation to the given position.
  * You need to call this in order on the same destination for frames
@@ -8,7 +6,7 @@
  * The current target bitmap should have the same height as the animation,
  * and blending should be set to fully copy RGBA.
  */
-void algif_render_frame(ALGIF_ANIMATION *gif, int frame, int xpos, int ypos) {
+LUNARIS_DECL void algif_render_frame(ALGIF_ANIMATION *gif, int frame, int xpos, int ypos) {
     int x, y, w, h;
     ALGIF_FRAME *f = &gif->frames[frame];
     ALGIF_PALETTE *pal;
@@ -56,7 +54,7 @@ void algif_render_frame(ALGIF_ANIMATION *gif, int frame, int xpos, int ypos) {
     }
 }
 
-ALGIF_ANIMATION *algif_load_animation_f(ALLEGRO_FILE *file) {
+LUNARIS_DECL ALGIF_ANIMATION *algif_load_animation_f(ALLEGRO_FILE *file) {
     ALGIF_ANIMATION *gif = algif_load_raw(file);
 
     if (!gif)
@@ -84,12 +82,12 @@ ALGIF_ANIMATION *algif_load_animation_f(ALLEGRO_FILE *file) {
     return gif;
 }
 
-ALGIF_ANIMATION *algif_load_animation(char const *filename) {
+LUNARIS_DECL ALGIF_ANIMATION *algif_load_animation(char const *filename) {
     ALLEGRO_FILE *file = al_fopen(filename, "rb");
     return algif_load_animation_f(file); // fclose happens inside this
 }
 
-ALLEGRO_BITMAP *algif_get_bitmap(ALGIF_ANIMATION *gif, double seconds) {
+LUNARIS_DECL ALLEGRO_BITMAP *algif_get_bitmap(ALGIF_ANIMATION *gif, double seconds) {
     int n = gif->frames_count;
     seconds = fmod(seconds, gif->duration / 100.0);
     double d = 0.0;
@@ -101,10 +99,10 @@ ALLEGRO_BITMAP *algif_get_bitmap(ALGIF_ANIMATION *gif, double seconds) {
     return gif->frames[0].rendered;
 }
 
-ALLEGRO_BITMAP *algif_get_frame_bitmap(ALGIF_ANIMATION *gif, int i) {
+LUNARIS_DECL ALLEGRO_BITMAP *algif_get_frame_bitmap(ALGIF_ANIMATION *gif, int i) {
     return gif->frames[i].rendered;
 }
 
-double algif_get_frame_duration(ALGIF_ANIMATION *gif, int i) {
+LUNARIS_DECL double algif_get_frame_duration(ALGIF_ANIMATION *gif, int i) {
     return gif->frames[i].duration / 100.0;
 }

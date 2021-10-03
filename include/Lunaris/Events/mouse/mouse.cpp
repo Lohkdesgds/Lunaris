@@ -2,18 +2,18 @@
 
 namespace Lunaris {
 
-    bool mouse::mouse_event::is_button_pressed(const int id) const
+    LUNARIS_DECL bool mouse::mouse_event::is_button_pressed(const int id) const
     {
         if (id > 32) return false;
         return buttons_pressed & (1 << id);
     }
 
-    bool mouse::mouse_event::got_scroll_event() const
+    LUNARIS_DECL bool mouse::mouse_event::got_scroll_event() const
     {
         return scroll_event > 0;
     }
 
-    int mouse::mouse_event::scroll_event_id(const int id) const
+    LUNARIS_DECL int mouse::mouse_event::scroll_event_id(const int id) const
     {
         if (id > 8) return 0;
         if (scroll_event & (1 << (id * 2))) return 1;
@@ -21,12 +21,12 @@ namespace Lunaris {
         return 0;
     }
 
-    void mouse::set_mouse_axis_plus(const int axis, const int val)
+	LUNARIS_DECL void mouse::set_mouse_axis_plus(const int axis, const int val)
     {
         mouse_rn.scroll_event |= (1 << (val > 0 ? (axis * 2) : ((axis * 2) + 1)));
     }
 
-    void mouse::handle_events(const ALLEGRO_EVENT& ev)
+	LUNARIS_DECL void mouse::handle_events(const ALLEGRO_EVENT& ev)
     {
         if (hint_changes_coming) std::this_thread::sleep_for(std::chrono::milliseconds(15)); // someone is trying to lock, hold a sec
         auto lucky = get_lock();
@@ -75,7 +75,7 @@ namespace Lunaris {
         }
     }
 
-    mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) : __common_event()
+    LUNARIS_DECL mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) : __common_event()
     {
         if (!f) throw std::runtime_error("No function detected in mouse! Mouse needs a valid function to get transformation of current display so it can translate coords!");
 
@@ -86,12 +86,12 @@ namespace Lunaris {
         al_register_event_source(get_event_queue(), al_get_mouse_event_source());
     }
 
-    mouse::~mouse()
+    LUNARIS_DECL mouse::~mouse()
     {
         this->stop(); // stop before this is destroyed
     }
 
-    void mouse::hook_event(const std::function<void(const int, const mouse_event&)> f)
+	LUNARIS_DECL void mouse::hook_event(const std::function<void(const int, const mouse_event&)> f)
     {
         hint_changes_coming = true;
         auto lucky = get_lock();
@@ -99,7 +99,7 @@ namespace Lunaris {
         event_handler = f;
     }
 
-    void mouse::unhook_event()
+	LUNARIS_DECL void mouse::unhook_event()
     {
         hint_changes_coming = true;
         auto lucky = get_lock();
@@ -107,7 +107,7 @@ namespace Lunaris {
         event_handler = {};
     }
 
-    const mouse::mouse_event& mouse::current_mouse() const
+    LUNARIS_DECL const mouse::mouse_event& mouse::current_mouse() const
     {
         return mouse_rn;
     }

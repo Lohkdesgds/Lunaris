@@ -2,17 +2,17 @@
 
 namespace Lunaris {
 
-	std::shared_lock<std::shared_mutex> block::mu_shared_read_control() const
+	LUNARIS_DECL std::shared_lock<std::shared_mutex> block::mu_shared_read_control() const
 	{
 		return std::shared_lock<std::shared_mutex>(textures_mtx);
 	}
 
-	std::unique_lock<std::shared_mutex> block::mu_shared_write_control() const
+	LUNARIS_DECL std::unique_lock<std::shared_mutex> block::mu_shared_write_control() const
 	{
 		return std::unique_lock<std::shared_mutex>(textures_mtx);
 	}
 
-	void block::generic_draw_no_lock(const texture& bmp)
+	LUNARIS_DECL void block::generic_draw_no_lock(const texture& bmp)
 	{
 		const int bmpx = bmp.get_width();
 		const int bmpy = bmp.get_height();
@@ -21,46 +21,17 @@ namespace Lunaris {
 			throw std::runtime_error("Texture had invalid size!");
 		}
 
-		//const float rot_rad = static_cast<float>(get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION)) * ALLEGRO_PI / 180.0f;
 		const float dsx = 1.0f * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_X)) * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_G)) * (1.0f / bmpx);
 		const float dsy = 1.0f * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_Y)) * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_G)) * (1.0f / bmpy);
 
 		bmp.draw_scaled_rotated_at(
 			get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X), get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y),
-			0.0f,0.0f,//static_cast<float>(get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_X)), static_cast<float>(get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_Y)),
+			0.0f, 0.0f,
 			dsx, dsy,
 			0.0f);
-
-		/*const float rot_rad = static_cast<float>(_draw_fast.RO_DRAW_PROJ_ROTATION) * ALLEGRO_PI / 180.0f;
-		const float dsx = 1.0f * static_cast<float>(_draw_fast.SCALE_X) * static_cast<float>(_draw_fast.SCALE_G) * (1.0f / bmpx);
-		const float dsy = 1.0f * static_cast<float>(_draw_fast.SCALE_Y) * static_cast<float>(_draw_fast.SCALE_G) * (1.0f / bmpy);
-
-		bmp.draw_scaled_rotated_at(
-			static_cast<float>(_draw_fast.DRAW_RELATIVE_CENTER_X), static_cast<float>(_draw_fast.DRAW_RELATIVE_CENTER_Y),
-			static_cast<float>(_draw_fast.RO_DRAW_PROJ_POS_X), static_cast<float>(_draw_fast.RO_DRAW_PROJ_POS_Y),
-			dsx, dsy,
-			rot_rad);*/
-
-		// later: color tinted option
-
-		/*if (get_direct<bool>(sprite::e_boolean::USE_COLOR)) {
-			bmp.draw(
-				get_direct<Interface::Color>(sprite::e_color::COLOR),
-				cx, cy,
-				static_cast<float>(_draw_fast.RO_DRAW_PROJ_POS_X), static_cast<float>(_draw_fast.RO_DRAW_PROJ_POS_Y),
-				dsx, dsy,
-				rot_rad);
-		}
-		else {
-			bmp.draw(
-				cx, cy,
-				static_cast<float>(_draw_fast.RO_DRAW_PROJ_POS_X), static_cast<float>(_draw_fast.RO_DRAW_PROJ_POS_Y),
-				dsx, dsy,
-				rot_rad);
-		}*/
 	}
 
-	void block::draw_task(transform transf, transform transf2, const float& limit_x, const float& limit_y)
+	LUNARIS_DECL void block::draw_task(transform transf, transform transf2, const float& limit_x, const float& limit_y)
 	{
 		// this is for range check
 
@@ -100,7 +71,7 @@ namespace Lunaris {
 		generic_draw_no_lock(*textures[frame]);
 	}
 
-	block::block() : 
+	LUNARIS_DECL block::block() :
 		sprite(),
 		fixed_multi_map_work<static_cast<size_t>(enum_block_sizet_e::_SIZE), size_t, enum_block_sizet_e>(default_block_sizet_il),
 		fixed_multi_map_work<static_cast<size_t>(enum_block_cmilliseconds_e::_SIZE), std::chrono::milliseconds, enum_block_cmilliseconds_e>(default_block_cmilliseconds_il),
@@ -109,32 +80,32 @@ namespace Lunaris {
 	{
 	}
 
-	void block::texture_insert(const hybrid_memory<texture>& oth)
+	LUNARIS_DECL void block::texture_insert(const hybrid_memory<texture>& oth)
 	{
 		auto lock = mu_shared_write_control();
 		textures.push_back(oth);
 	}
 
-	const hybrid_memory<texture>& block::texture_index(const size_t index) const
+	LUNARIS_DECL const hybrid_memory<texture>& block::texture_index(const size_t index) const
 	{
 		auto lock = mu_shared_read_control();
 		if (index >= textures.size()) throw std::out_of_range("index out of range");
 		return textures[index];
 	}
 
-	size_t block::texture_size() const
+	LUNARIS_DECL size_t block::texture_size() const
 	{
 		return textures.size();
 	}
 
-	void block::texture_remove(const size_t index)
+	LUNARIS_DECL void block::texture_remove(const size_t index)
 	{
 		auto lock = mu_shared_write_control();
 		if (index >= textures.size()) throw std::out_of_range("index out of range");
 		textures.erase(textures.begin() + index);
 	}
 
-	void block::texture_remove_all()
+	LUNARIS_DECL void block::texture_remove_all()
 	{
 		auto lock = mu_shared_write_control();
 		textures.clear();

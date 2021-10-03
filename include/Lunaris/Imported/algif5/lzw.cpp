@@ -1,6 +1,6 @@
 #include "algif.h"
 
-int read_code(ALLEGRO_FILE* file, char* buf, int* bit_pos, int bit_size)
+LUNARIS_DECL int read_code(ALLEGRO_FILE* file, char* buf, int* bit_pos, int bit_size)
 {
     int i;
     int code = 0;
@@ -32,7 +32,7 @@ int read_code(ALLEGRO_FILE* file, char* buf, int* bit_pos, int bit_size)
     return code;
 }
 
-int LZW_decode(ALLEGRO_FILE* file, ALGIF_BITMAP* bmp)
+LUNARIS_DECL int LZW_decode(ALLEGRO_FILE* file, ALGIF_BITMAP* bmp)
 {
     int orig_bit_size;
     char buf[256];

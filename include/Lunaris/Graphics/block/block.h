@@ -1,18 +1,17 @@
 #pragma once
 
-#include "../transform.h"
-#include "../sprite.h"
-#include "../texture.h"
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Graphics/transform.h>
+#include <Lunaris/Graphics/sprite.h>
+#include <Lunaris/Graphics/texture.h>
 
 #include <vector>
 #include <shared_mutex>
 #include <chrono>
 
 namespace Lunaris {
-
 	
 	constexpr size_t block_max_frames_behind = 30;
-
 
 	enum class enum_block_cmilliseconds_e {
 		RO_DRAW_LAST_FRAME,				// last frame change (related to double FRAMES_PER_SECOND)

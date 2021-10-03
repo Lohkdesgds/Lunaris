@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../sprite.h"
-#include "../transform.h"
-#include "../font.h"
-#include "../../Utility/safe_data.h"
+#include <Lunaris/__macro/macros.h>
+#include <Lunaris/Graphics/sprite.h>
+#include <Lunaris/Graphics/transform.h>
+#include <Lunaris/Graphics/font.h>
+#include <Lunaris/Utility/safe_data.h>
 
 #include <vector>
 #include <shared_mutex>

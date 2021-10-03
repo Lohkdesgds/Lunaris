@@ -2,31 +2,31 @@
 
 namespace Lunaris {
 
-	void __keyboard_allegro_start()
+	LUNARIS_DECL void __keyboard_allegro_start()
 	{
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
 		if (!al_is_keyboard_installed() && !al_install_keyboard()) throw std::runtime_error("Can't start Keyboard!");
 	}
 
-	void __mouse_allegro_start()
+	LUNARIS_DECL void __mouse_allegro_start()
 	{
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
 		if (!al_is_mouse_installed() && !al_install_mouse()) throw std::runtime_error("Can't start Mouse!");
 	}
 
-	void __joystick_allegro_start()
+	LUNARIS_DECL void __joystick_allegro_start()
 	{
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
 		if (!al_is_joystick_installed() && !al_install_joystick()) throw std::runtime_error("Can't start Joystick!");
 	}
 
-	void __touch_allegro_start()
+	LUNARIS_DECL void __touch_allegro_start()
 	{
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
 		if (!al_is_touch_input_installed() && !al_install_touch_input()) throw std::runtime_error("Can't start Touch!");
 	}
 
-	void __common_event::running_thread()
+	LUNARIS_DECL void __common_event::running_thread()
 	{
 		thread_working = true;
 		while (keep_running) {
@@ -54,7 +54,7 @@ namespace Lunaris {
 		thread_working = false;
 	}
 
-	void __common_event::start()
+	LUNARIS_DECL void __common_event::start()
 	{
 		if (ev_qu) return;// throw std::runtime_error("Tried to start twice?");
 
@@ -67,7 +67,7 @@ namespace Lunaris {
 		thr = std::thread([&] {running_thread(); });
 	}
 
-	void __common_event::stop()
+	LUNARIS_DECL void __common_event::stop()
 	{
 		if (ev_qu) {
 			keep_running = false;
@@ -79,23 +79,23 @@ namespace Lunaris {
 		}
 	}
 
-	std::unique_lock<std::recursive_mutex> __common_event::get_lock(const bool deferred)
+	LUNARIS_DECL std::unique_lock<std::recursive_mutex> __common_event::get_lock(const bool deferred)
 	{
 		if (deferred) return std::unique_lock<std::recursive_mutex>(safety, std::defer_lock);
 		return std::unique_lock<std::recursive_mutex>(safety);
 	}
 
-	ALLEGRO_EVENT_QUEUE* __common_event::get_event_queue() const
+	LUNARIS_DECL ALLEGRO_EVENT_QUEUE* __common_event::get_event_queue() const
 	{
 		return ev_qu;
 	}
 
-	__common_event::__common_event()
+	LUNARIS_DECL __common_event::__common_event()
 	{
 		start();
 	}
 
-	__common_event::~__common_event()
+	LUNARIS_DECL __common_event::~__common_event()
 	{
 		stop();
 	}

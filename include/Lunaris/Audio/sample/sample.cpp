@@ -2,7 +2,7 @@
 
 namespace Lunaris {
 
-	bool sample::set(ALLEGRO_SAMPLE* sp)
+	LUNARIS_DECL bool sample::set(ALLEGRO_SAMPLE* sp)
 	{
 		if (sp) {
 			destroy();
@@ -12,35 +12,35 @@ namespace Lunaris {
 		return false;
 	}
 
-	sample::sample()
+	LUNARIS_DECL sample::sample()
 	{
 		__audio_allegro_start(); // from voice.h
 	}
 
-	sample::~sample()
+	LUNARIS_DECL sample::~sample()
 	{
 		destroy();
 	}
 
-	sample::sample(sample&& sp) noexcept
+	LUNARIS_DECL sample::sample(sample&& sp) noexcept
 		: file_sample(sp.file_sample)
 	{
 		sp.file_sample = nullptr;
 	}
 
-	void sample::operator=(sample&& sp) noexcept
+	LUNARIS_DECL void sample::operator=(sample&& sp) noexcept
 	{
 		destroy();
 		file_sample = sp.file_sample;
 		sp.file_sample = nullptr;
 	}
 
-	bool sample::load(const std::string& str)
+	LUNARIS_DECL bool sample::load(const std::string& str)
 	{
 		return set(al_load_sample(str.c_str()));
 	}
 
-	void sample::destroy()
+	LUNARIS_DECL void sample::destroy()
 	{
 		if (file_sample) {
 			al_destroy_sample(file_sample);
@@ -48,12 +48,12 @@ namespace Lunaris {
 		}
 	}
 
-	bool sample::operator==(const sample& sp) const
+	LUNARIS_DECL bool sample::operator==(const sample& sp) const
 	{
 		return file_sample == sp.file_sample;
 	}
 
-	bool sample::exists() const
+	LUNARIS_DECL bool sample::exists() const
 	{
 		return file_sample != nullptr;
 	}

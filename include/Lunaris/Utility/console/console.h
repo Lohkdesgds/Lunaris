@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Lunaris/__macro/macros.h>
+
 // POSSIBLE CUSTOMIZATIONS:
 // - LUNARIS_IO_NO_NEW_LINE						: Disables automatic new line after each cout << ... call
 // - LUNARIS_IO_DO_NOT_RESET_COLOR_EACH_LINE		: Disables automatic color reset after each cout << ... call

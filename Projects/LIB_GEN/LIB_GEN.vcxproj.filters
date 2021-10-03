@@ -157,6 +157,9 @@
     <Filter Include="include\Lunaris\Imported\__impl\algif5">
       <UniqueIdentifier>{6b2ca46b-e21d-49ec-b7a7-c74e0bdd77c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\__macros">
+      <UniqueIdentifier>{30922e66-4450-407f-aa7c-d3bd5de9b67b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -399,6 +402,12 @@
     <ClInclude Include="..\..\include\Lunaris\Imported\algif5.h">
       <Filter>include\Lunaris\Imported\__include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\__macro\macros.h">
+      <Filter>include\Lunaris\__macros</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\all.h">
+      <Filter>include\Lunaris\__include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">
@@ -482,5 +491,10 @@
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\algif.cpp">
       <Filter>include\Lunaris\Imported\__impl\algif5</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\include\Lunaris\_readme.txt">
+      <Filter>include\Lunaris\__include</Filter>
+    </Text>
   </ItemGroup>
 </Project>
