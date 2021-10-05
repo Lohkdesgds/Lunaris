@@ -21,6 +21,11 @@ namespace Lunaris {
 		int width = 0;
 		int height = 0;
 		std::string path;
+
+		texture_config& set_format(const int);
+		texture_config& set_flags(const int);
+		texture_config& set_width(const int);
+		texture_config& set_height(const int);
 	};
 
 	class texture {

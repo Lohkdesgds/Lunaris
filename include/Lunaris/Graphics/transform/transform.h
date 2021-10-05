@@ -44,6 +44,17 @@ namespace Lunaris {
 		void build_classic_fixed_proportion(const int, const int, const float = 16.0f / 9.0f, const float = 1.0f);
 
 		/// <summary>
+		/// <para>Build a camera that keeps fixed proportion for the drawing.</para>
+		/// <para>This means proportions different than the float there will "extend" the borders. There will be always a safe area with that proportion in the center.</para>
+		/// <para>The safe area goes from -1.0 to 1.0.</para>
+		/// <para>The auto part means it tries to get current target display. Returns false if failed.</para>
+		/// </summary>
+		/// <param name="{float}">Proportion in the middle (defaults to 16:9).</param>
+		/// <param name="{float}">Zoom (defaults to 1:1).</param>
+		/// <returns>{bool} True if got things right.</returns>
+		bool build_classic_fixed_proportion_auto(const float = 16.0f / 9.0f, const float = 1.0f);
+
+		/// <summary>
 		/// <para>Builds a transform based on common properties.</para>
 		/// </summary>
 		/// <param name="{float}">Position X.</param>

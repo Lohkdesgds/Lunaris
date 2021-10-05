@@ -9,6 +9,30 @@ namespace Lunaris {
 		if (!al_is_image_addon_initialized() && !al_init_image_addon()) throw std::runtime_error("Can't start Image!");
 	}
 
+	LUNARIS_DECL texture_config& texture_config::set_format(const int var)
+	{
+		format = var;
+		return *this;
+	}
+
+	LUNARIS_DECL texture_config& texture_config::set_flags(const int var)
+	{
+		flags = var;
+		return *this;
+	}
+
+	LUNARIS_DECL texture_config& texture_config::set_width(const int var)
+	{
+		width = var;
+		return *this;
+	}
+
+	LUNARIS_DECL texture_config& texture_config::set_height(const int var)
+	{
+		height = var;
+		return *this;
+	}
+
 	LUNARIS_DECL bool texture::check_ready() const
 	{
 		if (!bitmap) return false;

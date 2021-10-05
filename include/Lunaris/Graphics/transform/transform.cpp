@@ -38,6 +38,14 @@ namespace Lunaris {
 		}
 	}
 
+	LUNARIS_DECL bool transform::build_classic_fixed_proportion_auto(const float scal_def, const float zoom)
+	{
+		auto* ptr = al_get_current_display();
+		if (!ptr) return false;
+		build_classic_fixed_proportion(al_get_display_width(ptr), al_get_display_height(ptr), scal_def, zoom);
+		return true;
+	}
+
 	LUNARIS_DECL void transform::build_transform(const float x, const float y, const float sx, const float sy, const float th)
 	{
 		al_build_transform(&t, x, y, sx, sy, th);

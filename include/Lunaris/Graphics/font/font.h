@@ -20,6 +20,12 @@ namespace Lunaris {
 		bool ttf = true;
 		int resolution = 50;
 		std::string path;
+
+		font_config& set_bitmap_flags(const int);
+		font_config& set_font_flags(const int);
+		font_config& set_is_ttf(const bool);
+		font_config& set_resolution(const int);
+		font_config& set_path(const std::string&);
 	};
 
 	class font {
@@ -41,6 +47,10 @@ namespace Lunaris {
 
 		bool load(const font_config&);
 		bool load(const std::string&, const bool);
+
+		ALLEGRO_FONT* get_raw_font() const;
+
+		bool empty() const;
 
 		void destroy();
 

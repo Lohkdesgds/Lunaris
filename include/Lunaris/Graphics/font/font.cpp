@@ -10,6 +10,36 @@ namespace Lunaris {
 		if (!al_is_ttf_addon_initialized() && !al_init_ttf_addon()) throw std::runtime_error("Can't start TTF Font!");
 	}
 
+	LUNARIS_DECL font_config& font_config::set_bitmap_flags(const int var)
+	{
+		bmp_flags = var;
+		return *this;
+	}
+
+	LUNARIS_DECL font_config& font_config::set_font_flags(const int var)
+	{
+		font_flags = var;
+		return *this;
+	}
+
+	LUNARIS_DECL font_config& font_config::set_is_ttf(const bool var)
+	{
+		ttf = var;
+		return *this;
+	}
+
+	LUNARIS_DECL font_config& font_config::set_resolution(const int var)
+	{
+		resolution = var;
+		return *this;
+	}
+
+	LUNARIS_DECL font_config& font_config::set_path(const std::string& var)
+	{
+		path = var;
+		return *this;
+	}
+
 	LUNARIS_DECL bool font::check_ready() const
 	{
 		return font_ptr != nullptr;
@@ -76,6 +106,16 @@ namespace Lunaris {
 		conf.path = path;
 		conf.ttf = ttf;
 		return load(conf);
+	}
+
+	LUNARIS_DECL ALLEGRO_FONT* font::get_raw_font() const
+	{
+		return font_ptr;
+	}
+
+	LUNARIS_DECL bool font::empty() const
+	{
+		return font_ptr != nullptr;
 	}
 
 	LUNARIS_DECL void font::destroy()
