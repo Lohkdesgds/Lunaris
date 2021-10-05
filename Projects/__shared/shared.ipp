@@ -841,6 +841,8 @@ int graphics_test()
 		topleft_dc.set<float>(enum_sprite_float_e::POS_Y, -0.7f);
 		topleft_dc.set<float>(enum_sprite_float_e::SCALE_G, 0.4f);
 		topleft_dc.set<float>(enum_sprite_float_e::SCALE_X, 1.2f);
+		topleft_dc.set<color>(enum_sprite_color_e::DRAW_TINT, color(0.7f, 0.7f, 0.7f, 0.7f));
+		topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_USE_COLOR, true);
 		//topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
 		//topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
 	}

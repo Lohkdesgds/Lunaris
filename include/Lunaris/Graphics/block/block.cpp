@@ -24,11 +24,23 @@ namespace Lunaris {
 		const float dsx = 1.0f * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_X)) * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_G)) * (1.0f / bmpx);
 		const float dsy = 1.0f * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_Y)) * static_cast<float>(get<float>(enum_sprite_float_e::SCALE_G)) * (1.0f / bmpy);
 
-		bmp.draw_scaled_rotated_at(
-			get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X), get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y),
-			0.0f, 0.0f,
-			dsx, dsy,
-			0.0f);
+		const double& is_tinted = get<bool>(enum_sprite_boolean_e::DRAW_USE_COLOR);
+
+		if (is_tinted) {
+			bmp.draw_tinted_scaled_rotated_at(
+				get<color>(enum_sprite_color_e::DRAW_TINT),
+				get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X), get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y),
+				0.0f, 0.0f,
+				dsx, dsy,
+				0.0f);
+		}
+		else {
+			bmp.draw_scaled_rotated_at(
+				get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X), get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y),
+				0.0f, 0.0f,
+				dsx, dsy,
+				0.0f);
+		}
 	}
 
 	LUNARIS_DECL void block::draw_task(transform transf, transform transf2, const float& limit_x, const float& limit_y)
