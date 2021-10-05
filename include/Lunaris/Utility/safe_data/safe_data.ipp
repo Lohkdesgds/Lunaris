@@ -1,3 +1,4 @@
+#include "safe_data.h"
 #pragma once
 
 namespace Lunaris {
@@ -39,6 +40,22 @@ namespace Lunaris {
 	{
 		std::shared_lock<std::shared_mutex> luck(shrmtx);
 		return data;
+	}
+
+	template<typename T>
+	inline void safe_data<T>::csafe(const std::function<void(const T&)> f)
+	{
+		if (!f) return;
+		std::shared_lock<std::shared_mutex> luck(shrmtx);
+		f(data);
+	}
+
+	template<typename T>
+	inline void safe_data<T>::safe(const std::function<void(T&)> f)
+	{
+		if (!f) return;
+		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		f(data);
 	}
 
 	template<typename T>
@@ -99,6 +116,110 @@ namespace Lunaris {
 	{
 		std::unique_lock<std::shared_mutex> luck(shrmtx);
 		data = var;
+	}
+
+	template<typename T>
+	inline safe_vector<T>::safe_vector(const safe_vector& var)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::lock(luck1, luck2);
+
+		data = var.data;
+	}
+
+	template<typename T>
+	inline safe_vector<T>::safe_vector(safe_vector&& var)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::lock(luck1, luck2);
+
+		data = std::move(var.data);
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::operator=(const safe_vector& var)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::lock(luck1, luck2);
+
+		data = var.data;
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::operator=(safe_vector&& var)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::lock(luck1, luck2);
+
+		data = std::move(var.data);
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::push_back(T&& var)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		data.push_back(std::move(var));
+	}
+
+	template<typename T>
+	inline const T& safe_vector<T>::index(const size_t& var) const
+	{
+		std::shared_lock<std::shared_mutex> luck1(shrmtx);
+		return data[var];
+	}
+
+	template<typename T>
+	inline T& safe_vector<T>::index(const size_t& var)
+	{
+		std::shared_lock<std::shared_mutex> luck1(shrmtx);
+		return data[var];
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::csafe(const std::function<void(const std::vector<T>&)> f)
+	{
+		if (!f) return;
+		std::shared_lock<std::shared_mutex> luck1(shrmtx);
+		f(data);
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::safe(const std::function<void(std::vector<T>&)> f)
+	{
+		if (!f) return;
+		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		f(data);
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::erase(const size_t& var)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		data.erase(data.begin() + var);
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::erase(const size_t& var, const size_t& var2)
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		data.erase(data.begin() + var, data.begin() + var2);
+	}
+
+	template<typename T>
+	inline void safe_vector<T>::clear()
+	{
+		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		data.clear();
+	}
+
+	template<typename T>
+	inline size_t safe_vector<T>::size() const
+	{
+		return data.size();
 	}
 
 }

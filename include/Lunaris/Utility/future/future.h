@@ -135,7 +135,7 @@ namespace Lunaris {
 		/// <summary>
 		/// <para>Get future so next value is saved somewhere.</para>
 		/// </summary>
-		/// <returns>{future<T>} Future ready linked to this promise.</returns>
+		/// <returns>{future&lt;T&gt;} Future ready linked to this promise.</returns>
 		future<T> get_future();
 
 		/// <summary>

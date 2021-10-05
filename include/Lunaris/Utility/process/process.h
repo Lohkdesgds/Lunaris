@@ -11,13 +11,16 @@
 namespace Lunaris {
 
 	class process {
+	public:
+		enum class message_type {START /*Started process signal*/, APP_OUTPUT /*Each message*/, ENDED /*Ended process signal*/ };
+	private:
 		HANDLE g_hChildStd_OUT_Rd = nullptr;
 		HANDLE g_hChildStd_OUT_Wr = nullptr;
 		SECURITY_ATTRIBUTES saAttr{};
 		PROCESS_INFORMATION piProcInfo{}; // handle = piProcInfo.hProcess
 
 		mutable std::mutex safe_log;
-		std::function<void(const std::string&)> log_func;
+		std::function<void(const std::string&, const message_type&)> log_func;
 		std::thread thr_read;
 		bool keep_running = false;
 		bool is_running = false;
@@ -37,7 +40,7 @@ namespace Lunaris {
 		STARTUPINFO siStartInfo{};
 #endif
 
-		void log(const std::string&) const;
+		void log(const std::string&, const message_type&) const;
 		void thr_read_output();
 	public:
 		~process();
@@ -47,7 +50,7 @@ namespace Lunaris {
 		/// <para>This will be triggered every breakline.</para>
 		/// </summary>
 		/// <param name="{std::function}">The function to handle task output.</param>
-		void hook_stdout(std::function<void(const std::string&)>);
+		void hook_stdout(std::function<void(const std::string&, const message_type&)>);
 
 		/// <summary>
 		/// <para>Launchs a executable.</para>

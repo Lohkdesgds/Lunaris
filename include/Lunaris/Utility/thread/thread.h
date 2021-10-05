@@ -2,6 +2,7 @@
 
 #include <Lunaris/__macro/macros.h>
 
+#include <Windows.h>
 #include <thread>
 #include <functional>
 #include <memory>

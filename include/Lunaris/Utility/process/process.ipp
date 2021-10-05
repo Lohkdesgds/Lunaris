@@ -2,15 +2,15 @@
 
 namespace Lunaris {
 
-    inline void process::log(const std::string& msg) const
+    inline void process::log(const std::string& msg, const message_type& typ) const
     {
         std::lock_guard<std::mutex> l(safe_log);
-        if (log_func) log_func(msg);
+        if (log_func) log_func(msg, typ);
     }
 
     inline void process::thr_read_output()
 	{
-        log("Process #" + std::to_string((uintptr_t)piProcInfo.hProcess) + " started.");
+        log("Process #" + std::to_string((uintptr_t)piProcInfo.hProcess) + " started.", message_type::START);
         is_running = true;
         has_run_once = true;
 
@@ -24,7 +24,7 @@ namespace Lunaris {
                 char& ch = td.buffer[td.p_ar];
                 switch (ch) {
                 case '\n':
-                    log(td.block);
+                    log(td.block, message_type::APP_OUTPUT);
                     td.block.clear();
                     break;
                 default:
@@ -34,7 +34,7 @@ namespace Lunaris {
             }
         }
 
-        log("Process #" + std::to_string((uintptr_t)piProcInfo.hProcess) + " closed successfully.");
+        log("Process #" + std::to_string((uintptr_t)piProcInfo.hProcess) + " closed successfully.", message_type::ENDED);
 
         CloseHandle(piProcInfo.hProcess);
         is_running = false;
@@ -45,7 +45,7 @@ namespace Lunaris {
         stop();
     }
 
-    inline void process::hook_stdout(std::function<void(const std::string&)> fun)
+    inline void process::hook_stdout(std::function<void(const std::string&, const message_type&)> fun)
     {
         std::lock_guard<std::mutex> l(safe_log);
         log_func = fun;
@@ -125,7 +125,7 @@ namespace Lunaris {
                 TerminateThread(thr_read.native_handle(), 0);
                 is_running = false;
 
-                log("Last process was killed after timeout.");
+                log("Last process was killed after timeout.", message_type::ENDED);
             }
             else if (thr_read.joinable()) thr_read.join();
         }

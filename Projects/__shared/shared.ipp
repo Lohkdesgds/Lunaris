@@ -8,6 +8,7 @@
 using namespace Lunaris;
 
 #define TESTLU(X, ERRMSG) if (run_and_test([&]{return X;}, ERRMSG) != 0) return 1;
+#define AUTOEXCEPT(X) [&]{try {auto v = X; return v; } catch (const std::exception& e) { cout << console::color::RED << "EXCEPTION: " << e.what(); } catch(...) {cout << console::color::RED << "EXCEPTION: UNCAUGHT!";} return 0; }()
 
 const std::string fixed_audio_src_url = "https://cdn.discordapp.com/attachments/888270629990707331/888270836677607425/music_01.ogg";
 const std::string fixed_image_src_url = "https://media.discordapp.net/attachments/888270629990707331/888272596720844850/3.jpg?width=918&height=612";
@@ -37,10 +38,10 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	if (utility_test(currpath) != 0) return 1;
-	if (audio_test() != 0) return 1;
-	if (events_test() != 0) return 1;
-	if (graphics_test() != 0) return 1; // todo
+	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+	if (AUTOEXCEPT(audio_test()) != 0) return 1;
+	if (AUTOEXCEPT(events_test()) != 0) return 1;
+	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
 }
 
 void hold_user()
@@ -444,8 +445,18 @@ int utility_test(const std::string& self_path)
 		process proc;
 		bool had_any_output = false;
 
-		proc.hook_stdout([&](const std::string& out) {
-			cout << console::color::DARK_GREEN << "= " << out;
+		proc.hook_stdout([&](const std::string& out, const process::message_type& typ) {
+			switch (typ) {
+			case process::message_type::START:
+				cout << console::color::DARK_GREEN << "[BEGIN] " << out;
+			break;
+			case process::message_type::APP_OUTPUT:
+				cout << console::color::DARK_GREEN << "[RUNNG] " << out;
+			break;
+			case process::message_type::ENDED:
+				cout << console::color::DARK_GREEN << "[ENDED] " << out;
+			break;
+			}
 			had_any_output = true;
 		});
 		
@@ -785,7 +796,7 @@ int graphics_test()
 	std::atomic<bool> keep_running_things = true;
 	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
-	display my_display;
+	display_async my_display;
 	file fp; // random file
 	thread blocks_col;
 	mouse mousing(my_display);
@@ -802,7 +813,7 @@ int graphics_test()
 
 	cout << "Creating display...";
 
-	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1280).set_height(720)).set_window_title("GRAPHICS TEST").set_self_draw(true).set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE)), "Failed to create the display");
+	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1280).set_height(720)).set_window_title("GRAPHICS TEST").set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE)), "Failed to create the display");
 
 	{
 		texture_gif* oop = (texture_gif*)giffye.get();
@@ -821,7 +832,7 @@ int graphics_test()
 		cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
 		fp.flush();
 
-
+		
 		TESTLU(oop->load(fp.get_current_path()), "Could not load GIF");
 
 		topleft_dc.texture_insert(giffye);
@@ -872,14 +883,12 @@ int graphics_test()
 	cout << "Loading texture in video memory and default font...";
 
 	{
-		bool good = false, dod = false;
-		my_display.add_run_once_in_drawing_thread([&] {
-			good = /*random_texture->load(fp.get_current_path()) && */font_u->create_builtin_font();
-			dod = true;
+		auto dod = my_display.add_run_once_in_drawing_thread([&] {
+			return /*random_texture->load(fp.get_current_path()) && */font_u->create_builtin_font();
 		});
 
-		while (!dod) std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		TESTLU(good, "Couldn't load texture/font for test!");
+		dod.wait();
+		TESTLU(dod.get(), "Couldn't load texture/font for test!");
 	}
 
 	cout << "Hooking mouse to a sprite...";
@@ -901,7 +910,7 @@ int graphics_test()
 
 
 
-	my_display.hook_draw_function([&] {
+	my_display.hook_draw_function([&](const auto& _u) {
 		al_clear_to_color(al_map_rgb(
 			cos(al_get_time() * 0.4111) * 100 + 150,
 			sin(al_get_time() * 0.2432) * 100 + 150,

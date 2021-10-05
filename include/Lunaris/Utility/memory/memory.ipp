@@ -78,13 +78,13 @@ namespace Lunaris {
 	template<typename T>
 	inline bool hybrid_memory<T>::valid() const
 	{
-		return get() != nullptr;
+		return m_ptr && get() != nullptr;
 	}
 
 	template<typename T>
 	inline bool hybrid_memory<T>::empty() const
 	{
-		return get() == nullptr;
+		return !m_ptr || get() == nullptr;
 	}
 
 	template<typename T>
