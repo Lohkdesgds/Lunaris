@@ -115,7 +115,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL bool font::empty() const
 	{
-		return font_ptr != nullptr;
+		return font_ptr == nullptr;
 	}
 
 	LUNARIS_DECL void font::destroy()
