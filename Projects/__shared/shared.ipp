@@ -445,8 +445,18 @@ int utility_test(const std::string& self_path)
 		process proc;
 		bool had_any_output = false;
 
-		proc.hook_stdout([&](const std::string& out) {
-			cout << console::color::DARK_GREEN << "= " << out;
+		proc.hook_stdout([&](const std::string& out, const process::message_type& typ) {
+			switch (typ) {
+			case process::message_type::START:
+				cout << console::color::DARK_GREEN << "[BEGIN] " << out;
+			break;
+			case process::message_type::APP_OUTPUT:
+				cout << console::color::DARK_GREEN << "[RUNNG] " << out;
+			break;
+			case process::message_type::ENDED:
+				cout << console::color::DARK_GREEN << "[ENDED] " << out;
+			break;
+			}
 			had_any_output = true;
 		});
 		

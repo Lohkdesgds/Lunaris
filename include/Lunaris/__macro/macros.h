@@ -7,7 +7,7 @@ This is a tool for every include thing in the Lunaris lib.
 #define WIN32_LEAN_AND_MEAN
 
 // This is set by BUILDCOUNTER
-#define LUNARIS_BUILD_NUMBER 115
+#define LUNARIS_BUILD_NUMBER 126
 
 #ifdef LUNARIS_HEADER_ONLY
 // -- HEADER ONLY -- //
