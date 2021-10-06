@@ -80,6 +80,13 @@ namespace Lunaris {
 		display(const display&) = delete;
 		void operator=(const display&) = delete;
 
+		// check if there's any clipboard
+		bool check_has_clipboard() const;
+		// this will cut your clipboard!
+		std::string get_clipboard() const;
+		// this will set your clipboard!
+		bool set_clipboard(const std::string&) const;
+
 		bool create(const display_config& = {});
 		bool create(const int, const int, const int = 0);
 		bool create(const std::string&, const int, const int, const int = 0);

@@ -194,6 +194,28 @@ namespace Lunaris {
 		destroy();
 	}
 
+	LUNARIS_DECL bool display::check_has_clipboard() const
+	{
+		return window ? al_clipboard_has_text(window) : false;
+	}
+
+	LUNARIS_DECL std::string display::get_clipboard() const
+	{
+		if (!window) return {};
+		std::string cpy;
+		char* buf = al_get_clipboard_text(window);
+		if (!buf) return {};
+		cpy = buf;
+		al_free(buf);
+		al_set_clipboard_text(window, nullptr);
+		return cpy;
+	}
+
+	LUNARIS_DECL bool display::set_clipboard(const std::string& var) const
+	{
+		return window ? al_set_clipboard_text(window, var.c_str()) : false;
+	}
+
 	LUNARIS_DECL bool display::create(const display_config& conf)
 	{
 		destroy();
