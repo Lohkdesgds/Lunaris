@@ -137,8 +137,8 @@ namespace Lunaris {
 
 	template<typename T> hybrid_memory<T> make_hybrid();
 	template<typename T, typename K> hybrid_memory<T> make_hybrid_derived();
-	template<typename T, typename... Args> hybrid_memory<T> make_hybrid(Args...);
-	template<typename T, typename K, typename... Args> hybrid_memory<T> make_hybrid_derived(Args...);
+	template<typename T, typename... Args> hybrid_memory<T> make_hybrid(Args&&...);
+	template<typename T, typename K, typename... Args> hybrid_memory<T> make_hybrid_derived(Args&&...);
 }
 
 #include "memory.ipp"

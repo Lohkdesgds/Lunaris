@@ -246,7 +246,7 @@ int utility_test(const std::string& self_path)
 
 				std::this_thread::sleep_for(std::chrono::seconds(5));
 
-				cout << console::color::YELLOW << "PASSED! (timedout user, so assuming good)";
+				cout << console::color::GREEN << "PASSED! (timedout user, so assuming good)";
 			}
 
 			cout << console::color::LIGHT_PURPLE << "Testing 'safe_data'...";
@@ -798,7 +798,7 @@ int graphics_test()
 	text txt_main;
 	display_async my_display;
 	file fp; // random file
-	thread blocks_col;
+	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
 	collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
@@ -997,9 +997,16 @@ int graphics_test()
 	});
 
 
-	blocks_col.task_async([&] {
+	col_and_tools.task_async([&] {
 
 		work_all_auto(std::begin(cols), std::end(cols));
+
+		// just clipboard.
+		//if (my_display.check_has_clipboard()) {
+		//	std::string cpy = my_display.get_clipboard();
+		//
+		//	cout << console::color::GREEN << "CLIPBOARD!: " << cpy;
+		//}
 
 		///cols[0].reset();
 		///cols[1].reset();
@@ -1058,7 +1065,7 @@ int graphics_test()
 
 	cout << console::color::DARK_GRAY << "Detected end! Closing stuff...";
 
-	blocks_col.join();
+	col_and_tools.join();
 	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Closing..."));
 	my_display.destroy();
 	// the rest should be fine.
