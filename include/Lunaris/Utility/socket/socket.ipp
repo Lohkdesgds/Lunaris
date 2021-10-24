@@ -1,8 +1,11 @@
 #pragma once
+#include "socket.h"
 
 namespace Lunaris {
 
+#ifdef _WIN32
 	inline socket_core::_data socket_core::data;
+#endif
 
 	inline std::string socket_config::format() const
 	{
@@ -31,7 +34,7 @@ namespace Lunaris {
 		ip_address = var;
 		return *this;
 	}
-
+#ifdef _WIN32
 	inline socket_core::_data::_data()
 	{
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) { // wake up
@@ -43,53 +46,62 @@ namespace Lunaris {
 	{
 		WSACleanup(); // end
 	}
-
-	inline SOCKET socket_core::gen_client(const char* addr, const u_short port, const int protocol, const int family)
+#endif
+	inline SocketType socket_core::gen_client(const char* addr, const u_short port, const int protocol, const int family)
 	{
 		char Port[8]{};
-		ADDRINFO Hints;
-		ADDRINFO* AddrInfo = nullptr;
-
+		SocketAddrInfo Hints;
+		SocketAddrInfo* AddrInfo = nullptr;
+#ifdef _WIN32
 		sprintf_s(Port, "%hu", port);
 		ZeroMemory(&Hints, sizeof(Hints));
+#else
+		sprintf(Port, "%hu", port);
+		memset(&Hints, 0, sizeof(Hints));
+#endif
 
 		Hints.ai_family = static_cast<int>(family);
 		Hints.ai_socktype = protocol;
 
-		if (getaddrinfo(addr ? addr : "localhost", Port, &Hints, &AddrInfo) != 0) return INVALID_SOCKET;
+		if (getaddrinfo(addr ? addr : "localhost", Port, &Hints, &AddrInfo) != 0) return SocketInvalid;
 
-		for (ADDRINFO* AI = AddrInfo; AI != nullptr; AI = AI->ai_next)
+		for (SocketAddrInfo* AI = AddrInfo; AI != nullptr; AI = AI->ai_next)
 		{
-			SOCKET sock = INVALID_SOCKET;
+			SocketType sock = SocketInvalid;
 
-			if ((sock = ::socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol)) == INVALID_SOCKET) continue;
+			if ((sock = ::socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol)) == SocketInvalid) continue;
 
-			if (::connect(sock, AI->ai_addr, (int)AI->ai_addrlen) == SOCKET_ERROR) {
-				::closesocket(sock);
+			if (::connect(sock, AI->ai_addr, (int)AI->ai_addrlen) == SocketError) {
+				closeSocket(sock);
 				continue;
 			}
-		
+
 			freeaddrinfo(AddrInfo);
 
-			if (AI == NULL) return INVALID_SOCKET;
+			if (AI == NULL) return SocketInvalid;
 
 			return sock;
 		}
 
 		freeaddrinfo(AddrInfo);
-		return INVALID_SOCKET;
+		return SocketInvalid;
 	}
 
-	inline std::vector<SOCKET> socket_core::gen_host(const u_short port, const int protocol, const int family)
+	inline std::vector<SocketType> socket_core::gen_host(const u_short port, const int protocol, const int family)
 	{
-		std::vector<SOCKET> sockets;
+		std::vector<SocketType> sockets;
 
 		char Port[8]{};
-		ADDRINFO Hints;
-		ADDRINFO* AddrInfo = nullptr;
+		SocketAddrInfo Hints;
+		SocketAddrInfo* AddrInfo = nullptr;
 
+#ifdef _WIN32
 		sprintf_s(Port, "%hu", port);
 		ZeroMemory(&Hints, sizeof(Hints));
+#else
+		sprintf(Port, "%hu", port);
+		memset(&Hints, 0, sizeof(Hints));
+#endif
 
 		Hints.ai_family = static_cast<int>(family);
 		Hints.ai_socktype = static_cast<int>(protocol);
@@ -97,24 +109,24 @@ namespace Lunaris {
 
 		if (getaddrinfo(nullptr, Port, &Hints, &AddrInfo) != 0) return {};
 
-		ADDRINFO* AI = AddrInfo;
+		SocketAddrInfo* AI = AddrInfo;
 		for (int i = 0; AI != nullptr && i != FD_SETSIZE; AI = AI->ai_next)
 		{
-			if ((AI->ai_family != PF_INET) && (AI->ai_family != PF_INET6)) continue;
+			if ((AI->ai_family != static_cast<int>(socket_config::e_family::IPV4)) && (AI->ai_family != static_cast<int>(socket_config::e_family::IPV6))) continue;
 
-			SOCKET newcon = INVALID_SOCKET;
+			SocketType newcon = SocketInvalid;
 
-			if ((newcon = ::socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol)) == INVALID_SOCKET) continue;
-		
-			if (::bind(newcon, AI->ai_addr, (int)AI->ai_addrlen) == SOCKET_ERROR) {
-				closesocket(newcon);
+			if ((newcon = ::socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol)) == SocketInvalid) continue;
+
+			if (::bind(newcon, AI->ai_addr, (int)AI->ai_addrlen) == SocketError) {
+				closeSocket(newcon);
 				continue;
 			}
 
 			// Specific for TCP
 			if (protocol == SOCK_STREAM) {
-				if (::listen(newcon, 5) == SOCKET_ERROR) {
-					closesocket(newcon);
+				if (::listen(newcon, 5) == SocketError) {
+					closeSocket(newcon);
 					continue;
 				}
 			}
@@ -128,7 +140,7 @@ namespace Lunaris {
 		return sockets;
 	}
 
-	inline SOCKET socket_core::common_select(std::vector<SOCKET>& servers, const long to)
+	inline SocketType socket_core::common_select(std::vector<SocketType>& servers, const long to)
 	{
 		size_t i = 0;
 		fd_set SockSet{};
@@ -139,7 +151,7 @@ namespace Lunaris {
 		timeout_time.tv_usec = 0;
 
 		if (!NumSocks) {
-			return INVALID_SOCKET;
+			return SocketInvalid;
 		}
 
 		FD_ZERO(&SockSet);
@@ -151,8 +163,9 @@ namespace Lunaris {
 		if (i == NumSocks) {
 			for (i = 0; i < NumSocks; i++)
 				FD_SET(servers[i], &SockSet);
-			if (select(static_cast<int>(NumSocks), &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr)) == SOCKET_ERROR) {
-				return INVALID_SOCKET;
+			int thussock = ::select(static_cast<int>(NumSocks), &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr));
+			if (thussock == SocketError || thussock == SocketTimeout) {
+				return SocketInvalid;
 			}
 		}
 		for (i = 0; i < NumSocks; i++) {
@@ -162,7 +175,7 @@ namespace Lunaris {
 			}
 		}
 
-		if (i >= servers.size()) return INVALID_SOCKET;
+		if (i >= servers.size()) return SocketInvalid;
 
 		return servers[i];
 	}
@@ -174,15 +187,15 @@ namespace Lunaris {
 		if (has_socket()) close_socket();
 
 		if (host) {
-			std::vector<SOCKET> res = gen_host(config.port, protocol, static_cast<int>(config.family));
+			std::vector<SocketType> res = gen_host(config.port, protocol, static_cast<int>(config.family));
 			if (!res.empty()) {
-				for(auto& i : res) add_socket(i);
+				for (auto& i : res) add_socket(i);
 				return true;
 			}
 		}
 		else {
-			SOCKET res = gen_client(config.ip_address.empty() ? nullptr : config.ip_address.c_str(), config.port, protocol, static_cast<int>(config.family));
-			if (res != INVALID_SOCKET) {
+			SocketType res = gen_client(config.ip_address.empty() ? nullptr : config.ip_address.c_str(), config.port, protocol, static_cast<int>(config.family));
+			if (res != SocketInvalid) {
 				add_socket(res);
 				return true;
 			}
@@ -191,7 +204,7 @@ namespace Lunaris {
 	}
 
 	template<int protocol, bool host>
-	inline bool socket<protocol, host>::convert_from(socket_config& conf, const SOCKADDR_STORAGE& addr)
+	inline bool socket<protocol, host>::convert_from(socket_config& conf, const SocketStorage& addr)
 	{
 		const auto fun_get_in_addr = [&]() -> void* {
 			const sockaddr* sa = (struct sockaddr*)(&addr);
@@ -200,7 +213,7 @@ namespace Lunaris {
 			// else IPv6 address
 			return &(((struct sockaddr_in6*)sa)->sin6_addr);
 		};
-		const auto fun_get_in_port = [&]() -> USHORT {
+		const auto fun_get_in_port = [&]() -> unsigned short {
 			const sockaddr* sa = (struct sockaddr*)(&addr);
 			if (sa->sa_family == AF_INET)
 				return (((struct sockaddr_in*)sa)->sin_port); // IPv4 address
@@ -223,12 +236,12 @@ namespace Lunaris {
 	template<int protocol, bool host>
 	inline void socket_client<protocol, host>::close_socket()
 	{
-		if (data->connection != INVALID_SOCKET) ::closesocket(data->connection);
-		data->connection = INVALID_SOCKET;
+		if (data->connection != SocketInvalid) closeSocket(data->connection);
+		data->connection = SocketInvalid;
 	}
 
 	template<int protocol, bool host>
-	inline void socket_client<protocol, host>::add_socket(SOCKET conn)
+	inline void socket_client<protocol, host>::add_socket(SocketType conn)
 	{
 		close_socket();
 		data->connection = conn;
@@ -237,13 +250,13 @@ namespace Lunaris {
 	template<int protocol, bool host>
 	inline bool socket_client<protocol, host>::has_socket()
 	{
-		return data->connection != INVALID_SOCKET;
+		return data->connection != SocketInvalid;
 	}
 
 	template<int protocol, bool host>
-	inline socket_client<protocol, host>::socket_client(SOCKET socket, const SOCKADDR_STORAGE& addr)
+	inline socket_client<protocol, host>::socket_client(SocketType socket, const SocketStorage& addr)
 	{
-		if (socket == INVALID_SOCKET) throw std::runtime_error("Invalid socket!");
+		if (socket == SocketInvalid) throw std::runtime_error("Invalid socket!");
 		data->connection = socket;
 		data->info_host = addr;
 	}
@@ -252,14 +265,14 @@ namespace Lunaris {
 	template<int protocol, bool host>
 	inline void socket_host<protocol, host>::close_socket()
 	{
-		for (auto& i : data->listeners) { if (i != INVALID_SOCKET) ::closesocket(i); }
+		for (auto& i : data->listeners) { if (i != SocketInvalid) closeSocket(i); }
 		data->listeners.clear();
 	}
 
 	template<int protocol, bool host>
-	inline void socket_host<protocol, host>::add_socket(SOCKET conn)
+	inline void socket_host<protocol, host>::add_socket(SocketType conn)
 	{
-		if (conn != INVALID_SOCKET) data->listeners.push_back(conn);
+		if (conn != SocketInvalid) data->listeners.push_back(conn);
 	}
 
 	template<int protocol, bool host>
@@ -290,7 +303,7 @@ namespace Lunaris {
 		std::vector<char> raw;
 
 		u_long iMode = (wait && amount != static_cast<size_t>(-1)) ? 0 : 1; // 0 blocks
-		if (ioctlsocket(data->connection, FIONBIO, &iMode) != 0) throw std::runtime_error("Can't set socket property properly");
+		if (ioctlSocket(data->connection, FIONBIO, &iMode) != 0) throw std::runtime_error("Can't set socket property properly");
 
 		size_t blocks_tries = 0;
 
@@ -302,16 +315,16 @@ namespace Lunaris {
 			int res = ::recv(data->connection, buf, static_cast<int>((get_rn > socket_default_tcp_buffer_size) ? socket_default_tcp_buffer_size : (get_rn)), 0);
 
 			if (res < 0) {
-				int err = WSAGetLastError();
+				int err = theSocketError;
 				switch (err) {
-				case WSAEWOULDBLOCK: // no data to read
+				case SocketWOULDBLOCK: // no data to read
 				{
 					if (raw.size() && ++blocks_tries > 3) return raw;
 					std::this_thread::yield();
 					continue;
 				}
-				case WSAENETRESET: // failed in the middle of something
-				case WSAECONNRESET: // still offline or became offline right now
+				case SocketNETRESET: // failed in the middle of something
+				case SocketCONNRESET: // still offline or became offline right now
 					this->close_socket();
 					return raw;
 				}
@@ -331,24 +344,23 @@ namespace Lunaris {
 
 	inline TCP_client TCP_host::listen(const long to)
 	{
-		SOCKET selected = INVALID_SOCKET;
-		while (1) {
+		SocketType selected = SocketInvalid;
+		do {
 			selected = common_select(data->listeners, to);
-			if (selected == INVALID_SOCKET) {
+			if (selected == SocketInvalid) {
 				std::this_thread::yield();
 				continue;
 			}
 
-			SOCKADDR_STORAGE From{};
-			socklen_t FromLen = sizeof(SOCKADDR_STORAGE);
+			SocketStorage From{};
+			socklen_t FromLen = sizeof(SocketStorage);
 
-			SOCKET sock = INVALID_SOCKET;
+			SocketType sock = SocketInvalid;
 
-			if (sock = accept(selected, (LPSOCKADDR)&From, &FromLen); sock == INVALID_SOCKET) continue;
+			if (sock = accept(selected, (SocketSockAddrPtr)&From, &FromLen); sock == SocketInvalid) continue;
 
-		
 			return TCP_client{ sock, From };
-		}
+		} while (to == 0);
 		return {};
 	}
 
@@ -369,7 +381,7 @@ namespace Lunaris {
 		std::vector<char> raw;
 
 		u_long iMode = (wait && amount != static_cast<size_t>(-1)) ? 0 : 1; // 0 blocks
-		if (ioctlsocket(data->connection, FIONBIO, &iMode) != 0) throw std::runtime_error("Can't set socket property properly");
+		if (ioctlSocket(data->connection, FIONBIO, &iMode) != 0) throw std::runtime_error("Can't set socket property properly");
 
 		const int expected = static_cast<int>(amount > socket_maximum_udp_buffer_size ? socket_maximum_udp_buffer_size : amount);
 
@@ -377,21 +389,21 @@ namespace Lunaris {
 
 		for (size_t blocks_tries = 0; blocks_tries < 3; blocks_tries++) {
 
-			SOCKADDR_STORAGE _temp{};
-			int _temp_len = sizeof(SOCKADDR_STORAGE);
+			SocketStorage _temp{};
+			socklen_t _temp_len = sizeof(SocketStorage);
 
 			int res = ::recvfrom(data->connection, raw.data(), expected, 0, (sockaddr*)&_temp, &_temp_len);
 
 			if (res < 0) {
-				int err = WSAGetLastError();
+				int err = theSocketError;
 				switch (err) {
-				case WSAEWOULDBLOCK: // no data to read
+				case SocketWOULDBLOCK: // no data to read
 				{
 					std::this_thread::yield();
 					continue;
 				}
-				case WSAENETRESET: // failed in the middle of something
-				case WSAECONNRESET: // still offline or became offline right now
+				case SocketNETRESET: // failed in the middle of something
+				case SocketCONNRESET: // still offline or became offline right now
 					this->close_socket();
 					return raw;
 				}
@@ -425,15 +437,15 @@ namespace Lunaris {
 		const int expected = static_cast<int>(amount > socket_maximum_udp_buffer_size ? socket_maximum_udp_buffer_size : amount);
 		raw.resize(expected);
 
-		SOCKADDR_STORAGE From{};
-		socklen_t FromLen = sizeof(SOCKADDR_STORAGE);
+		SocketStorage From{};
+		socklen_t FromLen = sizeof(SocketStorage);
 
-		SOCKET selected = common_select(data->listeners, to);
+		SocketType selected = common_select(data->listeners, to);
 
-		if (selected == INVALID_SOCKET) return UDP_host_handler();
+		if (selected == SocketInvalid) return UDP_host_handler();
 
-		SOCKADDR_STORAGE _temp{};
-		int _temp_len = sizeof(SOCKADDR_STORAGE);
+		SocketStorage _temp{};
+		socklen_t _temp_len = sizeof(SocketStorage);
 
 		int res = ::recvfrom(selected, raw.data(), expected, 0, (sockaddr*)&_temp, &_temp_len);
 		if (res != expected) return UDP_host_handler();
@@ -441,7 +453,7 @@ namespace Lunaris {
 		return UDP_host_handler(selected, _temp, std::move(raw));
 	}
 
-	inline UDP_host::UDP_host_handler::UDP_host_handler(SOCKET sock, const SOCKADDR_STORAGE& ad, std::vector<char>&& raw)
+	inline UDP_host::UDP_host_handler::UDP_host_handler(SocketType sock, const SocketStorage& ad, std::vector<char>&& raw)
 		: socket(sock), addr(ad), data(std::move(raw))
 	{
 		if (!socket::convert_from(conf, addr)) throw std::runtime_error("Could not get info properly! Data may be corrupted!");
@@ -449,7 +461,7 @@ namespace Lunaris {
 
 	inline bool UDP_host::UDP_host_handler::valid() const
 	{
-		return socket != INVALID_SOCKET;
+		return socket != SocketInvalid;
 	}
 
 	inline const std::vector<char>& UDP_host::UDP_host_handler::get() const // not recv
@@ -461,12 +473,12 @@ namespace Lunaris {
 	{
 		if (raw.size() > socket_maximum_udp_buffer_size) return false;
 
-		int res = ::sendto(socket, raw.data(), static_cast<int>(raw.size()), 0, (sockaddr*)(&addr), sizeof(SOCKADDR_STORAGE));
+		int res = ::sendto(socket, raw.data(), static_cast<int>(raw.size()), 0, (sockaddr*)(&addr), sizeof(SocketStorage));
 
 		return res == raw.size();
 	}
 
-	inline SOCKADDR_STORAGE UDP_host::UDP_host_handler::address() const
+	inline SocketStorage UDP_host::UDP_host_handler::address() const
 	{
 		return addr;
 	}

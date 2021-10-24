@@ -5,8 +5,19 @@
 #include <allegro5/allegro5.h>
 #include <stdexcept>
 #include <string>
+#if (_WIN32)
+#include <Windows.h>
+#endif
 
 namespace Lunaris {
+
+#ifdef _WIN32
+#ifdef UNICODE
+	using WINSTRING = LPWSTR;
+#else
+	using WINSTRING = LPSTR;
+#endif
+#endif
 
 	void __file_allegro_start();
 
@@ -45,4 +56,9 @@ namespace Lunaris {
 
 		operator const ALLEGRO_FILE* () const;
 	};
+
+#ifdef _WIN32 // && _MSC_VER
+	// resource.h defined value like IDR_TTF1, its name as string, expected extension (".jpg", ".png", ...)
+	file get_executable_resource_as_file(const int, const WINSTRING, const std::string&);
+#endif
 }

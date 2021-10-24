@@ -125,4 +125,31 @@ namespace Lunaris {
 		return fp;
 	}
 
+#if (_MSC_VER && _WIN32)
+	LUNARIS_DECL file get_executable_resource_as_file(const int id, const WINSTRING type, const std::string& extn)
+	{
+		HRSRC src = FindResource(NULL, MAKEINTRESOURCE(id), type);
+		if (src != NULL) {
+			unsigned int myResourceSize = ::SizeofResource(NULL, src);
+			HGLOBAL myResourceData = LoadResource(NULL, src);
+
+			if (myResourceData != NULL) {
+				void* pMyBinaryData = LockResource(myResourceData);
+
+				file fp;
+				if (!fp.open_temp("theblast_temp_XXXX" + extn, "wb+")) {
+					FreeResource(myResourceData);
+					return {};
+				}
+				fp.write((char*)pMyBinaryData, myResourceSize);
+				fp.flush();
+
+				FreeResource(myResourceData);
+
+				return fp;
+			}
+		}
+		return {};
+	}
+#endif
 }
