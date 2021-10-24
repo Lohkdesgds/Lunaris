@@ -118,6 +118,11 @@ namespace Lunaris {
 
 			if ((newcon = ::socket(AI->ai_family, AI->ai_socktype, AI->ai_protocol)) == SocketInvalid) continue;
 
+			{
+				int on = 1;
+				setsockopt(newcon, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on));
+			}
+
 			if (::bind(newcon, AI->ai_addr, (int)AI->ai_addrlen) == SocketError) {
 				closeSocket(newcon);
 				continue;
@@ -142,42 +147,70 @@ namespace Lunaris {
 
 	inline SocketType socket_core::common_select(std::vector<SocketType>& servers, const long to)
 	{
-		size_t i = 0;
-		fd_set SockSet{};
-		size_t NumSocks = servers.size();
+		// Before POLL, only works on WINDOWS:
+		// 
+		//size_t i = 0;
+		//fd_set SockSet{};
+		//size_t NumSocks = servers.size();
+		//
+		//timeval timeout_time;
+		//timeout_time.tv_sec = to;
+		//timeout_time.tv_usec = 0;
+		//
+		//if (!NumSocks) {
+		//	return SocketInvalid;
+		//}
+		//
+		//FD_ZERO(&SockSet);
+		//
+		//for (i = 0; i < NumSocks; i++) {
+		//	if (FD_ISSET(servers[i], &SockSet))
+		//		break;
+		//}
+		//if (i == NumSocks) {
+		//	for (i = 0; i < NumSocks; i++)
+		//		FD_SET(servers[i], &SockSet);
+		//	int thussock = ::select(static_cast<int>(NumSocks), &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr));
+		//	if (thussock == SocketError || thussock == SocketTimeout) {
+		//		return SocketInvalid;
+		//	}
+		//}
+		//for (i = 0; i < NumSocks; i++) {
+		//	if (FD_ISSET(servers[i], &SockSet)) {
+		//		FD_CLR(servers[i], &SockSet);
+		//		break;
+		//	}
+		//}
+		//
+		//if (i >= servers.size()) return SocketInvalid;
+		//
+		//return servers[i];
 
-		timeval timeout_time;
-		timeout_time.tv_sec = to;
-		timeout_time.tv_usec = 0;
+		if (servers.size() == 0) return SocketInvalid;
 
-		if (!NumSocks) {
+		const unsigned long nfds = static_cast<unsigned long>(servers.size());
+
+		std::unique_ptr<SocketPollFD[]> pul(new SocketPollFD[nfds]);
+		memset(pul.get(), 0, sizeof(SocketPollFD) * nfds);
+
+		for (size_t p = 0; p < nfds; p++) {
+			pul[p].events = SocketPOLLIN; // SocketPOLLIN = check data to read
+			pul[p].fd = servers[p];
+		}
+
+		int res = pollSocket(pul.get(), nfds, to);
+
+		if (res < 0) {
 			return SocketInvalid;
 		}
 
-		FD_ZERO(&SockSet);
-
-		for (i = 0; i < NumSocks; i++) {
-			if (FD_ISSET(servers[i], &SockSet))
-				break;
-		}
-		if (i == NumSocks) {
-			for (i = 0; i < NumSocks; i++)
-				FD_SET(servers[i], &SockSet);
-			int thussock = ::select(static_cast<int>(NumSocks), &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr));
-			if (thussock == SocketError || thussock == SocketTimeout) {
-				return SocketInvalid;
-			}
-		}
-		for (i = 0; i < NumSocks; i++) {
-			if (FD_ISSET(servers[i], &SockSet)) {
-				FD_CLR(servers[i], &SockSet);
-				break;
-			}
+		for (size_t pp = 0; pp < nfds; pp++) {
+			auto& it = pul[pp];
+			if (it.revents != SocketPOLLIN) continue; // not "read data available"
+			if (std::find(servers.begin(), servers.end(), it.fd) != servers.end()) return it.fd; // this is the one.
 		}
 
-		if (i >= servers.size()) return SocketInvalid;
-
-		return servers[i];
+		return SocketInvalid;
 	}
 
 
@@ -297,6 +330,21 @@ namespace Lunaris {
 		return true;
 	}
 
+	inline bool TCP_client::send(const char* raw, const size_t len)
+	{
+		if (!has_socket()) return false;
+
+		for (size_t remaining = 0; remaining < len;)
+		{
+			const size_t sending_size = len - remaining;
+			int res = ::send(data->connection, raw + remaining, static_cast<int>((sending_size > socket_default_tcp_buffer_size) ? socket_default_tcp_buffer_size : sending_size), 0);
+			if (res <= 0) return false;
+			remaining += res;
+		}
+
+		return true;
+	}
+
 	inline std::vector<char> TCP_client::recv(const size_t amount, const bool wait)
 	{
 		if (!has_socket()) return {};
@@ -341,13 +389,26 @@ namespace Lunaris {
 		return raw;
 	}
 
+	template<typename T, std::enable_if_t<std::is_pod_v<T>, int>>
+	inline bool TCP_client::recv(T& var, const bool wait)
+	{
+		auto vec = this->recv(sizeof(T), wait);
+		if (vec.size() != sizeof(T)) return false;
+#ifdef _WIN32
+		return memcpy_s(&var, sizeof(var), vec.data(), vec.size()) == 0;
+#else
+		return memcpy(&var, vec.data(), vec.size()) != nullptr;
+#endif
+	}
+
 
 	inline TCP_client TCP_host::listen(const long to)
 	{
 		SocketType selected = SocketInvalid;
 		do {
 			selected = common_select(data->listeners, to);
-			if (selected == SocketInvalid) {
+			//selected = data->listeners.size() ? data->listeners[0] : SocketInvalid;
+			if (selected == SocketInvalid || selected == SocketError) {
 				std::this_thread::yield();
 				continue;
 			}
@@ -373,6 +434,16 @@ namespace Lunaris {
 		if (res < 0) close_socket();
 
 		return res == raw.size();
+	}
+
+	inline bool UDP_client::send(const char* raw, const size_t len)
+	{
+		if (!has_socket() || len > socket_maximum_udp_buffer_size) return false;
+
+		int res = ::send(data->connection, raw, static_cast<int>(len), 0);
+		if (res < 0) close_socket();
+
+		return res == len;
 	}
 
 	inline std::vector<char> UDP_client::recv(const size_t amount, const bool wait)
@@ -426,6 +497,18 @@ namespace Lunaris {
 		return raw;
 	}
 
+	template<typename T, std::enable_if_t<std::is_pod_v<T>, int>>
+	inline bool UDP_client::recv(T& var, const bool wait)
+	{
+		auto vec = this->recv(sizeof(T), wait);
+		if (vec.size() != sizeof(T)) return false;
+#ifdef _WIN32
+		return memcpy_s(&var, sizeof(var), vec.data(), vec.size()) == 0;
+#else
+		return memcpy(&var, vec.data(), vec.size()) != nullptr;
+#endif
+	}
+
 	inline const socket_config& UDP_client::last_recv_info() const
 	{
 		return conf;
@@ -469,6 +552,17 @@ namespace Lunaris {
 		return data;
 	}
 
+	template<typename T, std::enable_if_t<std::is_pod_v<T>, int>>
+	inline bool Lunaris::UDP_host::UDP_host_handler::get_as(T& var)
+	{
+		if (data.size() != sizeof(T)) return false;
+#ifdef _WIN32
+		return memcpy_s(&var, sizeof(var), data.data(), data.size()) == 0;
+#else
+		return memcpy(&var, data.data(), data.size()) != nullptr;
+#endif
+	}
+
 	inline bool UDP_host::UDP_host_handler::send(const std::vector<char>& raw)
 	{
 		if (raw.size() > socket_maximum_udp_buffer_size) return false;
@@ -476,6 +570,15 @@ namespace Lunaris {
 		int res = ::sendto(socket, raw.data(), static_cast<int>(raw.size()), 0, (sockaddr*)(&addr), sizeof(SocketStorage));
 
 		return res == raw.size();
+	}
+
+	inline bool UDP_host::UDP_host_handler::send(const char* raw, const size_t len)
+	{
+		if (len > socket_maximum_udp_buffer_size) return false;
+
+		int res = ::sendto(socket, raw, static_cast<int>(len), 0, (sockaddr*)(&addr), sizeof(SocketStorage));
+
+		return res == len;
 	}
 
 	inline SocketStorage UDP_host::UDP_host_handler::address() const

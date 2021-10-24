@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -33,29 +34,35 @@ using SocketType = SOCKET;
 using SocketStorage = SOCKADDR_STORAGE;
 using SocketAddrInfo = ADDRINFO;
 using SocketSockAddrPtr = LPSOCKADDR;
+using SocketPollFD = WSAPOLLFD;
 constexpr SocketType SocketInvalid = INVALID_SOCKET;
 constexpr int SocketError = SOCKET_ERROR;
 constexpr int SocketTimeout = 0;
 #define closeSocket(...) ::closesocket(__VA_ARGS__)
 #define ioctlSocket(...) ::ioctlsocket(__VA_ARGS__)
+#define pollSocket(...) ::WSAPoll(__VA_ARGS__)
 #define theSocketError WSAGetLastError()
 #define SocketWOULDBLOCK WSAEWOULDBLOCK
 #define SocketNETRESET WSAENETRESET
 #define SocketCONNRESET WSAECONNRESET
+#define SocketPOLLIN POLLRDNORM
 #else
 using SocketType = int;
 using SocketStorage = sockaddr_storage;
 using SocketAddrInfo = addrinfo;
 using SocketSockAddrPtr = sockaddr*;
+using SocketPollFD = pollfd;
 constexpr SocketType SocketInvalid = -1;
 constexpr int SocketError = -1;
 constexpr int SocketTimeout = 0;
 #define closeSocket(...) ::close(__VA_ARGS__)
 #define ioctlSocket(...) ::ioctl(__VA_ARGS__)
+#define pollSocket(...) ::poll(__VA_ARGS__)
 #define theSocketError errno
 #define SocketWOULDBLOCK EWOULDBLOCK
 #define SocketNETRESET ENETRESET
 #define SocketCONNRESET ECONNRESET
+#define SocketPOLLIN POLLIN
 #endif
 
 
@@ -161,7 +168,11 @@ namespace Lunaris {
 		using socket_client<SOCK_STREAM, false>::close_socket;
 
 		bool send(const std::vector<char>&);
+		bool send(const char*, const size_t);
 		std::vector<char> recv(const size_t = static_cast<size_t>(-1), const bool = true);
+
+		template<typename T, std::enable_if_t<std::is_pod_v<T>, int> = 0>
+		bool recv(T&, const bool = true);
 	};
 
 
@@ -179,7 +190,11 @@ namespace Lunaris {
 		using socket_client<SOCK_DGRAM, false>::close_socket;
 
 		bool send(const std::vector<char>&);
+		bool send(const char*, const size_t);
 		std::vector<char> recv(const size_t = static_cast<size_t>(-1), const bool = true);
+
+		template<typename T, std::enable_if_t<std::is_pod_v<T>, int> = 0>
+		bool recv(T&, const bool = true);
 
 		const socket_config& last_recv_info() const;
 	};
@@ -203,8 +218,14 @@ namespace Lunaris {
 		UDP_host_handler() = default;
 	public:
 		bool valid() const;
+
 		const std::vector<char>& get() const; // not recv
+
+		template<typename T, std::enable_if_t<std::is_pod_v<T>, int> = 0>
+		bool get_as(T&);
+
 		bool send(const std::vector<char>&);
+		bool send(const char*, const size_t);
 		SocketStorage address() const;
 
 		const socket_config& info() const; // read only, this shouldn't work as a config itself.
