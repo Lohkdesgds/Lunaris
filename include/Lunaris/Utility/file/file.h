@@ -3,8 +3,10 @@
 #include <Lunaris/__macro/macros.h>
 
 #include <allegro5/allegro5.h>
+#include <allegro5/allegro_memfile.h>
 #include <stdexcept>
 #include <string>
+#include <memory>
 #if (_WIN32)
 #include <Windows.h>
 #endif
@@ -45,12 +47,13 @@ namespace Lunaris {
 	void __file_allegro_start();
 
 	class file {
+	protected:
 		ALLEGRO_FILE* fp = nullptr;
 		std::string last_path;
 		bool is_temp = false;
 	public:
 		file() = default;
-		~file();
+		virtual ~file();
 
 		file(const file&) = delete;
 		void operator=(const file&) = delete;
@@ -66,23 +69,53 @@ namespace Lunaris {
 
 		const std::string& get_current_path() const;
 
-		void close();
+		virtual void close();
 
-		size_t read(char*, const size_t);
-		size_t write(const char*, const size_t);
-		size_t tell();
-		bool seek(const int64_t, const ALLEGRO_SEEK);
-		bool flush();
-		size_t size() const;
+		virtual size_t read(char*, const size_t);
+		virtual size_t write(const char*, const size_t);
+		virtual size_t tell();
+		virtual bool seek(const int64_t, const ALLEGRO_SEEK);
+		virtual bool flush();
+		virtual size_t size() const;
 
-		void delete_and_close();
+		virtual void delete_and_close();
 
 		operator const ALLEGRO_FILE* () const;
 	};
 
+	class memfile : protected file {
+		std::unique_ptr<char[]> mem;
+	public:
+		using file::operator const ALLEGRO_FILE*;
+		using file::read;
+		using file::write;
+		using file::tell;
+		using file::seek;
+		using file::flush;
+		using file::size;
+
+		memfile() = default;
+		~memfile();
+
+		memfile(const memfile&) = delete;
+		void operator=(const memfile&) = delete;
+
+		memfile(memfile&&) noexcept;
+		void operator=(memfile&&) noexcept;
+
+		bool open(const size_t);
+
+		void close();
+	};
+
 #ifdef _WIN32 // && _MSC_VER
-	// resource.h defined value like IDR_TTF1, its name as string, expected extension (".jpg", ".png", ...)
+	// resource.h defined value like IDR_TTF1, id, expected extension (".jpg", ".png", ...)
 	file __get_executable_resource_as_file(const int, const WinString, const std::string&);
+	// resource.h defined value like IDR_TTF1, id as enum, expected extension (".jpg", ".png", ...)
 	file get_executable_resource_as_file(const int, const resource_type_e, const std::string&);
+	// resource.h defined value like IDR_TTF1, id
+	memfile __get_executable_resource_as_memfile(const int, const WinString);
+	// resource.h defined value like IDR_TTF1, id as enum
+	memfile get_executable_resource_as_memfile(const int, const resource_type_e);
 #endif
 }

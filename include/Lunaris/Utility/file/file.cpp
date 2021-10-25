@@ -125,6 +125,36 @@ namespace Lunaris {
 		return fp;
 	}
 
+	LUNARIS_DECL memfile::~memfile()
+	{
+		close();
+	}
+
+	LUNARIS_DECL memfile::memfile(memfile&& oth) noexcept
+		: file(std::move(oth)), mem(std::move(oth.mem))
+	{
+		oth.fp = nullptr;
+	}
+
+	LUNARIS_DECL void memfile::operator=(memfile&& oth) noexcept
+	{
+		this->file::operator=(std::move(oth));
+		mem = std::move(oth.mem);
+	}
+
+	LUNARIS_DECL bool memfile::open(const size_t len)
+	{
+		if (mem.get()) close();
+		mem = std::unique_ptr<char[]>(new char[len]);
+		return (fp = al_open_memfile(mem.get(), len, "rw")) != nullptr; // open is different, r/w
+	}
+
+	LUNARIS_DECL void memfile::close()
+	{
+		this->file::close();
+		mem.reset();
+	}
+
 #if (_MSC_VER && _WIN32)
 	LUNARIS_DECL file __get_executable_resource_as_file(const int id, const WinString type, const std::string& extn)
 	{
@@ -155,6 +185,37 @@ namespace Lunaris {
 	LUNARIS_DECL file get_executable_resource_as_file(const int id, const resource_type_e type, const std::string& extn)
 	{
 		return __get_executable_resource_as_file(id, (WinString)((ULONG_PTR)((WORD)(type))), extn);
+	}
+
+	LUNARIS_DECL memfile __get_executable_resource_as_memfile(const int id, const WinString type)
+	{
+		HRSRC src = FindResource(NULL, MAKEINTRESOURCE(id), type);
+		if (src != NULL) {
+			unsigned int myResourceSize = ::SizeofResource(NULL, src);
+			HGLOBAL myResourceData = LoadResource(NULL, src);
+
+			if (myResourceData != NULL) {
+				void* pMyBinaryData = LockResource(myResourceData);
+
+				memfile fp;
+				if (!fp.open(myResourceSize)) {
+					FreeResource(myResourceData);
+					return {};
+				}
+				fp.write((char*)pMyBinaryData, myResourceSize);
+				fp.flush();
+
+				FreeResource(myResourceData);
+
+				return fp;
+			}
+		}
+		return {};
+	}
+
+	LUNARIS_DECL memfile get_executable_resource_as_memfile(const int id, const resource_type_e type)
+	{
+		return __get_executable_resource_as_memfile(id, (WinString)((ULONG_PTR)((WORD)(type))));
 	}
 #endif
 }

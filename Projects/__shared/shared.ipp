@@ -136,13 +136,13 @@ int utility_test(const std::string& self_path)
 
 		cout << "Downloaded " << console::color::AQUA << down.bytes_read() << console::color::GRAY << " byte(s)";
 		TESTLU((down.bytes_read() > 0), "Zero bytes is a issue.");
-		
+
 		cout << console::color::GREEN << "PASSED!";
 
 		cout << console::color::LIGHT_PURPLE << "Testing 'hash'...";
 
 		cout << "Testing hash on this file...";
-	
+
 		const auto _res = sha256(down.read());
 
 		cout << "SHA256 of this file: " << console::color::AQUA << _res;
@@ -195,6 +195,60 @@ int utility_test(const std::string& self_path)
 			cout << console::color::GREEN << "PASSED!";
 
 			fp.delete_and_close();
+		}
+
+
+		{
+			cout << console::color::LIGHT_PURPLE << "Testing 'memfile'...";
+			cout << "Creating memfile...";
+
+			const size_t randomsize = 1024 * 1024;
+			memfile memfp;
+			std::string memmycpy;
+			TESTLU(memfp.open(randomsize), "Failed to create a memfile.");
+
+			cout << console::color::GREEN << "PASSED!";
+
+			cout << "Writing data to memfile...";
+
+			for (size_t p = 0; p < randomsize; p++) {
+				char ch = '0' + random() % 10;
+				memfp.write(&ch, 1);
+				memmycpy += ch;
+			}
+
+			TESTLU(memfp.flush(), "Couldn't flush memfile after write.");
+			memfp.seek(0, ALLEGRO_SEEK_SET);
+
+			cout << console::color::GREEN << "PASSED!";
+
+			{
+				std::vector<char> _tmpvec;
+				char buftemp[256];
+				while (1) {
+					size_t ree = memfp.read(buftemp, 256);
+					if (ree > 256) {
+						cout << console::color::RED << "FATAL ERROR! Read more than asked?!";
+						return 1;
+					}
+					else if (ree > 0) _tmpvec.insert(_tmpvec.end(), std::begin(buftemp), std::begin(buftemp) + ree);
+					else break;
+				}
+
+				cout << console::color::GREEN << "PASSED!";
+
+				cout << "Comparing data read from memfile...";
+
+				const auto _res3 = sha256(_tmpvec);
+				const auto _res4 = sha256(memmycpy);
+
+				cout << "SHA256 of this random stuff: " << console::color::AQUA << _res3;
+				TESTLU(_res3 == _res4, "Hash don't match expected? Bad thing!");
+
+				cout << console::color::GREEN << "PASSED!";
+
+				memfp.close();
+			}
 		}
 	}
 
