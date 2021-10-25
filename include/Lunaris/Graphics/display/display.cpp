@@ -261,7 +261,22 @@ namespace Lunaris {
 		}
 		return false;
 	}
-
+#ifdef _WIN32
+	LUNARIS_DECL bool display::set_icon_from_icon_resource(const int id)
+	{
+		if (!window) return false;
+		HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(id), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+		if (icon) {
+			HWND winhandle = al_get_win_window_handle(window);
+			SetClassLongPtr(winhandle, GCLP_HICON, (LONG_PTR)icon);
+			SetClassLongPtr(winhandle, GCLP_HICONSM, (LONG_PTR)icon);
+			if (last_icon_handle) DestroyIcon(last_icon_handle);
+			last_icon_handle = icon;
+			return true;
+		}
+		return false;
+	}
+#endif
 	LUNARIS_DECL bool display::get_is_economy_mode_activated() const
 	{
 		return economy_mode;
@@ -283,6 +298,12 @@ namespace Lunaris {
 			al_destroy_display(window);
 			window = nullptr;
 		}
+#ifdef _WIN32
+		if (last_icon_handle) {
+			DestroyIcon(last_icon_handle);
+			last_icon_handle = nullptr;
+		}
+#endif
 		hooked_events.reset();
 	}
 
