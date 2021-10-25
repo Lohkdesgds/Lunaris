@@ -164,6 +164,11 @@ namespace Lunaris {
 		return bitmap;
 	}
 
+	LUNARIS_DECL texture::operator ALLEGRO_BITMAP* () const
+	{
+		return get_raw_bitmap();
+	}
+
 	LUNARIS_DECL bool texture::empty() const
 	{
 		return bitmap == nullptr;

@@ -104,6 +104,8 @@ namespace Lunaris {
 
 		void toggle_flag(const int);
 
+		bool set_icon(ALLEGRO_BITMAP*);
+
 		// only if use_basic_internal_event_system is enabled
 		bool get_is_economy_mode_activated() const;
 

@@ -60,6 +60,7 @@ namespace Lunaris {
 		int get_flags() const;
 
 		virtual ALLEGRO_BITMAP* get_raw_bitmap() const;
+		operator ALLEGRO_BITMAP* () const;
 
 		virtual bool empty() const;
 

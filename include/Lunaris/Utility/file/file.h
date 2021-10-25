@@ -13,9 +13,11 @@ namespace Lunaris {
 
 #ifdef _WIN32
 #ifdef UNICODE
-	using WINSTRING = LPWSTR;
+	using WinString = std::wstring;
+	using WinStringAlt = std::string;
 #else
-	using WINSTRING = LPSTR;
+	using WinString = std::string;
+	using WinStringAlt = std::wstring;
 #endif
 #endif
 
@@ -59,6 +61,7 @@ namespace Lunaris {
 
 #ifdef _WIN32 // && _MSC_VER
 	// resource.h defined value like IDR_TTF1, its name as string, expected extension (".jpg", ".png", ...)
-	file get_executable_resource_as_file(const int, const WINSTRING, const std::string&);
+	file get_executable_resource_as_file(const int, const WinString&, const std::string&);
+	file get_executable_resource_as_file(const int, const WinStringAlt&, const std::string&);
 #endif
 }

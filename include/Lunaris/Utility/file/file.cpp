@@ -126,9 +126,9 @@ namespace Lunaris {
 	}
 
 #if (_MSC_VER && _WIN32)
-	LUNARIS_DECL file get_executable_resource_as_file(const int id, const WINSTRING type, const std::string& extn)
+	LUNARIS_DECL file get_executable_resource_as_file(const int id, const WinString& type, const std::string& extn)
 	{
-		HRSRC src = FindResource(NULL, MAKEINTRESOURCE(id), type);
+		HRSRC src = FindResource(NULL, MAKEINTRESOURCE(id), type.c_str());
 		if (src != NULL) {
 			unsigned int myResourceSize = ::SizeofResource(NULL, src);
 			HGLOBAL myResourceData = LoadResource(NULL, src);
@@ -150,6 +150,12 @@ namespace Lunaris {
 			}
 		}
 		return {};
+	}
+
+	LUNARIS_DECL file get_executable_resource_as_file(const int id, const WinStringAlt& type, const std::string& extn)
+	{
+		WinString str(type.begin(), type.end());
+		return get_executable_resource_as_file(id, str, extn);
 	}
 #endif
 }

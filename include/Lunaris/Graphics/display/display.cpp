@@ -90,12 +90,6 @@ namespace Lunaris {
 		return *this;
 	}
 
-	//LUNARIS_DECL display_config& display_config::set_self_draw(const bool var)
-	//{
-	//	self_draw = var;
-	//	return *this;
-	//}
-	//
 	LUNARIS_DECL std::vector<display_options> get_current_modes(const int index)
 	{
 		__display_allegro_start();
@@ -118,71 +112,6 @@ namespace Lunaris {
 	
 		return opts;
 	}
-	//
-	//LUNARIS_DECL void display::self_draw_block::thr_drawing()
-	//{
-	//	is_drawing = true;
-	//	while (keep_drawing)
-	//	{
-	//		if (!safer.can_run()) continue;
-	//		try {
-	//			if (once_funcs.size()) {
-	//				std::lock_guard<std::mutex> luck(once_funcs_safer);
-	//				for (const auto& i : once_funcs) i();
-	//				once_funcs.clear();
-	//			}
-	//			draw_func(); // no check, faster.
-	//			std::this_thread::yield(); // no 100% CPU usage, this helps balancing CPU stuff.
-	//		}
-	//		catch (...) {
-	//			_exception_stored = std::current_exception();
-	//			had_exception = true;
-	//		}
-	//	}
-	//	is_drawing = false;
-	//}
-	//
-	//LUNARIS_DECL display::self_draw_block::self_draw_block()
-	//{
-	//	keep_drawing = true;
-	//	is_drawing = false;
-	//	thr = std::thread([this] {thr_drawing(); });
-	//	while (!is_drawing) std::this_thread::sleep_for(std::chrono::milliseconds(10)); // wait thread start.
-	//}
-	//
-	//LUNARIS_DECL display::self_draw_block::~self_draw_block()
-	//{
-	//	if (!is_drawing) return;
-	//	keep_drawing = false;
-	//	while (is_drawing) std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	//	if (thr.joinable()) thr.join();
-	//	rethrow_any_exception(); // if there
-	//}
-	//
-	//LUNARIS_DECL void display::self_draw_block::add_run_once(const std::function<void(void)> f)
-	//{
-	//	if (!f) return;
-	//	std::lock_guard<std::mutex> luck(once_funcs_safer);
-	//	once_funcs.push_back(f);
-	//}
-	//
-	//LUNARIS_DECL void display::self_draw_block::set_function(const std::function<void(void)> f)
-	//{
-	//	if (!f) return;
-	//	safer.lock(!is_drawing);
-	//	draw_func = f;
-	//	safer.unlock();
-	//}
-	//
-	//LUNARIS_DECL void display::self_draw_block::rethrow_any_exception()
-	//{
-	//	if (!had_exception) return;
-	//	safer.lock(!is_drawing);
-	//	std::exception_ptr _mov = _exception_stored;
-	//	had_exception = false;
-	//	safer.unlock();
-	//	std::rethrow_exception(_mov);
-	//}
 
 	LUNARIS_DECL display::display(const display_config& conf)
 	{
@@ -322,6 +251,15 @@ namespace Lunaris {
 			al_toggle_display_flag(window, flg, !(al_get_display_flags(window) & flg));
 			acknowledge_resize();
 		}
+	}
+
+	LUNARIS_DECL bool display::set_icon(ALLEGRO_BITMAP* bmp)
+	{
+		if (window && bmp) {
+			al_set_display_icon(window, bmp);
+			return true;
+		}
+		return false;
 	}
 
 	LUNARIS_DECL bool display::get_is_economy_mode_activated() const
