@@ -37,9 +37,19 @@ namespace Lunaris {
 	LUNARIS_DECL font_config& font_config::set_path(const std::string& var)
 	{
 		path = var;
+#ifdef LUNARIS_ALPHA_TESTING
+		fileref.reset_this();
+#endif
 		return *this;
 	}
-
+#ifdef LUNARIS_ALPHA_TESTING
+	LUNARIS_DECL font_config& font_config::set_file(const hybrid_memory<file>& var)
+	{
+		fileref = var;
+		path.clear();
+		return *this;
+	}
+#endif
 	LUNARIS_DECL bool font::check_ready() const
 	{
 		return font_ptr != nullptr;
@@ -47,10 +57,14 @@ namespace Lunaris {
 
 	LUNARIS_DECL font::font(const font_config& conf)
 	{
-		if (conf.path.empty()) {
-			if (!create_builtin_font()) throw std::runtime_error("Can't create builtin font!");
+		if ((!conf.path.empty()) 
+#ifdef LUNARIS_ALPHA_TESTING
+			|| (!conf.fileref.empty() && conf.fileref->size() > 0)
+#endif
+			) {
+			if (!load(conf)) throw std::runtime_error("Can't create font!");
 		}
-		else if (!load(conf)) throw std::runtime_error("Can't create font!");
+		else if (!create_builtin_font()) throw std::runtime_error("Can't create builtin font!");
 	}
 
 	LUNARIS_DECL font::~font()
@@ -59,14 +73,21 @@ namespace Lunaris {
 	}
 
 	LUNARIS_DECL font::font(font&& oth) noexcept
+#ifdef LUNARIS_ALPHA_TESTING
+		: font_ptr(oth.font_ptr), fileref(std::move(oth.fileref))
+#else
 		: font_ptr(oth.font_ptr)
-	{
+#endif
+	{		
 		oth.font_ptr = nullptr;
 	}
 
 	LUNARIS_DECL void font::operator=(font&& oth) noexcept
 	{
 		destroy();
+#ifdef LUNARIS_ALPHA_TESTING
+		fileref = std::move(oth.fileref);
+#endif
 		font_ptr = oth.font_ptr;
 		oth.font_ptr = nullptr;
 	}
@@ -84,17 +105,23 @@ namespace Lunaris {
 		__font_allegro_start();
 		destroy();
 
-		if (conf.path.empty() || conf.resolution == 0) 
-			return false;
+//		if (conf.path->empty() || conf.resolution == 0) 
+//			return false;
 
 		if (conf.bmp_flags != 0)
 			al_set_new_bitmap_flags(conf.bmp_flags);
 
 		if (conf.ttf) {
-			font_ptr = al_load_ttf_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+			if (!conf.path.empty()) font_ptr = al_load_ttf_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+#ifdef LUNARIS_ALPHA_TESTING
+			else if (!conf.fileref.empty() && conf.fileref->size() > 0) { fileref = conf.fileref; fileref->modify_no_destroy(true); al_load_ttf_font_f(fileref->get_fp(), "", conf.resolution, conf.font_flags); }
+#endif
 		}
 		else {
-			font_ptr = al_load_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+			if (!conf.path.empty()) font_ptr = al_load_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+#ifdef LUNARIS_ALPHA_TESTING
+			//else if (conf.fileref && conf.fileref->get().size() > 0) font_ptr = al_grab_font_from_bitmap() // al_load_font_f is not supported
+#endif
 		}
 
 		return font_ptr != nullptr;
@@ -107,7 +134,15 @@ namespace Lunaris {
 		conf.ttf = ttf;
 		return load(conf);
 	}
-
+#ifdef LUNARIS_ALPHA_TESTING
+	LUNARIS_DECL bool font::load(const hybrid_memory<file>& ref)
+	{
+		font_config conf;
+		conf.fileref = ref;
+		conf.ttf = true;
+		return load(conf);
+	}
+#endif
 	LUNARIS_DECL ALLEGRO_FONT* font::get_raw_font() const
 	{
 		return font_ptr;

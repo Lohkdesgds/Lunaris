@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include <functional>
 #if (_WIN32)
 #include <Windows.h>
 #endif
@@ -46,73 +47,103 @@ namespace Lunaris {
 
 	void __file_allegro_start();
 
-	class file {
+	class file : private NonCopyable {
+	public:
+		enum class open_mode_e {
+			READ_TRY,				// rb
+			WRITE_REPLACE,			// wb
+			READWRITE_REPLACE,		// wb+
+			READWRITE_KEEP			// ab+
+		};
+		enum class seek_mode_e {
+			BEGIN	= ALLEGRO_SEEK_SET,
+			END		= ALLEGRO_SEEK_END,
+			CURRENT	= ALLEGRO_SEEK_CUR,
+		};
 	protected:
-		ALLEGRO_FILE* fp = nullptr;
-		std::string last_path;
-		bool is_temp = false;
+		std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)> fp{ nullptr, nullptr };
+		std::string path;
+
+		std::string transl(const open_mode_e&);
 	public:
 		file() = default;
+		file(file&&);
+		virtual void operator=(file&&) noexcept;
 		virtual ~file();
 
-		file(const file&) = delete;
-		void operator=(const file&) = delete;
-
-		file(file&&) noexcept;
-		void operator=(file&&) noexcept;
-
-		// path, mode
-		bool open(const std::string&, const std::string&);
-
-		// template, mode
-		bool open_temp(const std::string&, const std::string&);
-
-		const std::string& get_current_path() const;
-
+		virtual bool open(const std::string&, const open_mode_e&);
 		virtual void close();
 
-		virtual size_t read(char*, const size_t);
-		virtual size_t write(const char*, const size_t);
-		virtual size_t tell();
-		virtual bool seek(const int64_t, const ALLEGRO_SEEK);
-		virtual bool flush();
-		virtual size_t size() const;
+#ifdef LUNARIS_ALPHA_TESTING
+		/// <summary>
+		/// <para>in very very specific cases sometimes you don't want the ALLEGRO_FILE to be destroyed. This unset/set current rule. Default is to destroy.</para>
+		/// <para>Example: loading font from file.</para>
+		/// <para>TRUE results in NO DESTRUCTION!</para>
+		/// </summary>
+		/// <param name=""></param>
+		void modify_no_destroy(const bool);
+#endif
 
-		virtual void delete_and_close();
+		const std::string& get_path();
+		ALLEGRO_FILE* get_fp() const;
+		operator ALLEGRO_FILE*() const;
 
-		operator const ALLEGRO_FILE* () const;
+		size_t read(char*, const size_t);
+		size_t write(const char*, const size_t);
+		size_t tell();
+		bool seek(const int64_t, const seek_mode_e);
+		bool flush();
+		size_t size() const;
 	};
 
-	class memfile : protected file {
-		std::unique_ptr<char[]> mem;
+	class tempfile : public file {
 	public:
-		using file::operator const ALLEGRO_FILE*;
+		tempfile() = default;
+		tempfile(tempfile&&) noexcept;
+		void operator=(tempfile&&) noexcept;
+		~tempfile();
+
+		bool open(const std::string&);
+		void close();
+
+		using file::get_path;
+		using file::get_fp;
+		using file::operator ALLEGRO_FILE*;
 		using file::read;
 		using file::write;
 		using file::tell;
 		using file::seek;
 		using file::flush;
 		using file::size;
+	};
 
+	class memfile : public file {
+		std::unique_ptr<char[]> mem;
+	public:
 		memfile() = default;
-		~memfile();
-
-		memfile(const memfile&) = delete;
-		void operator=(const memfile&) = delete;
-
 		memfile(memfile&&) noexcept;
 		void operator=(memfile&&) noexcept;
+		~memfile();
 
 		bool open(const size_t);
-
 		void close();
+
+		using file::get_path;
+		using file::get_fp;
+		using file::operator ALLEGRO_FILE*;
+		using file::read;
+		using file::write;
+		using file::tell;
+		using file::seek;
+		using file::flush;
+		using file::size;
 	};
 
 #ifdef _WIN32 // && _MSC_VER
 	// resource.h defined value like IDR_TTF1, id, expected extension (".jpg", ".png", ...)
-	file __get_executable_resource_as_file(const int, const WinString, const std::string&);
+	tempfile __get_executable_resource_as_file(const int, const WinString, const std::string&);
 	// resource.h defined value like IDR_TTF1, id as enum, expected extension (".jpg", ".png", ...)
-	file get_executable_resource_as_file(const int, const resource_type_e, const std::string&);
+	tempfile get_executable_resource_as_file(const int, const resource_type_e, const std::string&);
 	// resource.h defined value like IDR_TTF1, id
 	memfile __get_executable_resource_as_memfile(const int, const WinString);
 	// resource.h defined value like IDR_TTF1, id as enum

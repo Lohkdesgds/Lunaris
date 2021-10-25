@@ -1,7 +1,6 @@
-#include <Lunaris/utility.h>
-#include <Lunaris/graphics.h>
-#include <Lunaris/events.h>
-#include <Lunaris/audio.h>
+//#define LUNARIS_ALPHA_TESTING
+//#define LUNARIS_HEADER_ONLY
+#include <Lunaris/all.h>
 
 #include <iterator>
 
@@ -14,7 +13,7 @@ const std::string fixed_audio_src_url = "https://cdn.discordapp.com/attachments/
 const std::string fixed_image_src_url = "https://media.discordapp.net/attachments/888270629990707331/888272596720844850/3.jpg?width=918&height=612";
 const std::string fixed_image_src_url_sha256_precalc = "e02e1baec55f8e37b5a5b3ef29d403fc2a2084267f05dfc75d723536081aff10";
 const std::string temp_local_file_path = "lunaris_temp_local.tmp";
-const std::string random_img_url =  "https://picsum.photos/1024"; // "https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
+const std::string random_img_url = "https://picsum.photos/1024"; //"https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
 const std::string fixed_my_catto_GIF_url = "https://media.discordapp.net/attachments/888270629990707331/892966440431403029/cat.gif";
 
 constexpr size_t num_of_entities_in_package_test = 1000;
@@ -38,9 +37,9 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
-	if (AUTOEXCEPT(audio_test()) != 0) return 1;
-	if (AUTOEXCEPT(events_test()) != 0) return 1;
+	//if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+	//if (AUTOEXCEPT(audio_test()) != 0) return 1;
+	//if (AUTOEXCEPT(events_test()) != 0) return 1;
 	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
 }
 
@@ -154,7 +153,7 @@ int utility_test(const std::string& self_path)
 		cout << "Creating temporary local file...";
 
 		file fp;
-		TESTLU(fp.open(temp_local_file_path, "wb"), "Failed to create a local file.");
+		TESTLU(fp.open(temp_local_file_path, file::open_mode_e::READWRITE_REPLACE), "Failed to create a local file.");
 
 		cout << console::color::GREEN << "PASSED!";
 
@@ -168,7 +167,7 @@ int utility_test(const std::string& self_path)
 
 		cout << "Reopening, reading and checking...";
 
-		TESTLU(fp.open(temp_local_file_path, "rb"), "Failed to open the local file.");
+		TESTLU(fp.open(temp_local_file_path, file::open_mode_e::READ_TRY), "Failed to open the local file.");
 
 		{
 			std::vector<char> _tmpvec;
@@ -194,7 +193,7 @@ int utility_test(const std::string& self_path)
 
 			cout << console::color::GREEN << "PASSED!";
 
-			fp.delete_and_close();
+			fp.close();
 		}
 
 
@@ -218,7 +217,7 @@ int utility_test(const std::string& self_path)
 			}
 
 			TESTLU(memfp.flush(), "Couldn't flush memfile after write.");
-			memfp.seek(0, ALLEGRO_SEEK_SET);
+			memfp.seek(0, file::seek_mode_e::BEGIN);
 
 			cout << console::color::GREEN << "PASSED!";
 
@@ -637,9 +636,9 @@ int audio_test()
 	cout << console::color::DARK_BLUE << "======================================";
 
 	downloader download_audio;
-	file audio_file;
+	tempfile audio_file;
 
-	TESTLU(audio_file.open_temp("lunaris_debug_XXXXX.ogg", "wb+"), "Can't create temporary file for Audio testing!");
+	TESTLU(audio_file.open("lunaris_debug_XXXXX.ogg"), "Can't create temporary file for Audio testing!");
 
 	TESTLU(download_audio.get_store(fixed_audio_src_url, [&audio_file](const char* buf, const size_t siz) { if (!audio_file.write(buf, siz)) { cout << console::color::RED << "Failed once writing in temporary file!"; }}), "Can't download temporary file!");
 
@@ -674,7 +673,7 @@ int audio_test()
 
 	cout << "Loading Sample...";
 
-	TESTLU(my_sample.load(audio_file.get_current_path()), "Could not load temporary audio file named '" + audio_file.get_current_path() + "'!");
+	TESTLU(my_sample.load(audio_file.get_path()), "Could not load temporary audio file named '" + audio_file.get_path() + "'!");
 
 	cout << console::color::GREEN << "PASSED!";
 
@@ -851,7 +850,6 @@ int graphics_test()
 	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
 	display_async my_display;
-	file fp; // random file
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
@@ -862,7 +860,12 @@ int graphics_test()
 	const color mouse_has_collision = color(255, 127, 255);
 	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
+	auto bmppp = make_hybrid<texture>();
 	auto giffye = make_hybrid_derived<texture, texture_gif>();
+	auto tempfp = make_hybrid_derived<file, tempfile>(); // random file
+	tempfile* fp = (tempfile*)tempfp.get();
+	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
+	tempfile* fp2 = (tempfile*)tempfp2.get();
 	
 
 	cout << "Creating display...";
@@ -874,27 +877,42 @@ int graphics_test()
 
 		cout << "Opening temporary file for temporary GIF...'";
 
-		TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
+		TESTLU(fp->open("lunaris_XXXXX.gif"), "Failed to open temp file.");
+		TESTLU(fp2->open("lunaris_XXXXX.jpg"), "Failed to open temp file.");
 
 		cout << "Downloading random image from '" << fixed_my_catto_GIF_url << "'";
 
 		{
 			downloader down;
-			TESTLU(down.get_store(fixed_my_catto_GIF_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+			TESTLU(down.get_store(fixed_my_catto_GIF_url, [&](const char* buf, size_t len) { if (!fp->write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
 		}
 
-		cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
-		fp.flush();
+		cout << "Downloading random image from '" << random_img_url << "'";
 
-		
-		TESTLU(oop->load(fp.get_current_path()), "Could not load GIF");
+		{
+			downloader down;
+			TESTLU(down.get_store(random_img_url, [&](const char* buf, size_t len) { if (!fp2->write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+		}
+
+		cout << "Temporary image files perfectly saved at '" << fp->get_path() << "' and '" << fp2->get_path() << "'";
+		TESTLU(tempfp->flush(), "Cannot flush GIF file");
+		TESTLU(tempfp2->flush(), "Cannot flush JPG file");
+
+
+		cout << "Loading image like memory...";
+		TESTLU(oop->load(tempfp->get_path()), "Could not load GIF");
+		TESTLU(bmppp->load(tempfp2->get_path()), "Could not load JPG");
+
+		cout << "GIF has avg=" << oop->get_interval_average() * 1000.0 << "ms;max=" << oop->get_interval_longest() * 1000.0 << "ms;min=" << oop->get_interval_shortest() * 1000.0 << "ms interval info.";
 
 		topleft_dc.texture_insert(giffye);
+		topleft_dc.texture_insert(bmppp);
 		//topleft_dc.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(1.0f, 1.0f, 1.0f, 0.01f));
 		topleft_dc.set<float>(enum_sprite_float_e::POS_X, 0.7f);
 		topleft_dc.set<float>(enum_sprite_float_e::POS_Y, -0.7f);
 		topleft_dc.set<float>(enum_sprite_float_e::SCALE_G, 0.4f);
 		topleft_dc.set<float>(enum_sprite_float_e::SCALE_X, 1.2f);
+		topleft_dc.set<double>(enum_block_double_e::DRAW_FRAMES_PER_SECOND, 3.0);
 		topleft_dc.set<color>(enum_sprite_color_e::DRAW_TINT, color(0.7f, 0.7f, 0.7f, 0.7f));
 		topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_USE_COLOR, true);
 		//topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);

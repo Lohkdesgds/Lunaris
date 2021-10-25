@@ -54,6 +54,8 @@ LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file) {
     if (!file)
         return nullptr;
 
+    al_fseek(file, 0, ALLEGRO_SEEK_SET);
+
     int version;
     ALGIF_BITMAP *bmp = nullptr;
     int i, j;

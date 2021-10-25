@@ -33,6 +33,23 @@ namespace Lunaris {
 		return *this;
 	}
 
+	LUNARIS_DECL texture_config& texture_config::set_path(const std::string& str)
+	{
+		path = str;
+#ifdef LUNARIS_ALPHA_TESTING
+		fileref.reset_this();
+#endif
+		return *this;
+	}
+#ifdef LUNARIS_ALPHA_TESTING
+	LUNARIS_DECL texture_config& texture_config::set_file(const hybrid_memory<file>& fp)
+	{
+		fileref = fp;
+		path.clear();
+		return *this;
+	}
+#endif
+
 	LUNARIS_DECL bool texture::check_ready() const
 	{
 		if (!bitmap) return false;
@@ -56,8 +73,12 @@ namespace Lunaris {
 	}
 
 	LUNARIS_DECL texture::texture(texture&& oth) noexcept
+#ifdef LUNARIS_ALPHA_TESTING
+		: bitmap(oth.bitmap), fileref(std::move(oth.fileref))
+#else
 		: bitmap(oth.bitmap)
-	{
+#endif
+	{		
 		oth.bitmap = nullptr;
 	}
 
@@ -65,11 +86,14 @@ namespace Lunaris {
 	{
 		destroy();
 		bitmap = oth.bitmap;
+#ifdef LUNARIS_ALPHA_TESTING
+		fileref = std::move(oth.fileref);
+#endif
 		oth.bitmap = nullptr;
 	}
 
 	LUNARIS_DECL bool texture::create(const texture_config& conf)
-	{
+	{		
 		__bitmap_allegro_start();
 		destroy();
 
@@ -81,6 +105,20 @@ namespace Lunaris {
 		if (!conf.path.empty()) {
 			bitmap = al_load_bitmap(conf.path.c_str());
 		}
+#ifdef LUNARIS_ALPHA_TESTING
+		else if (!conf.fileref.empty() && conf.fileref->size() > 0) {
+			fileref = conf.fileref;
+			//fileref->modify_no_destroy(true); // unhappy
+			const auto* ident = al_identify_bitmap_f(fileref->get_fp());
+			if (!ident) { // direct raw test, what if.
+				if (!(bitmap = al_load_bitmap_f(fileref->get_fp(), ".png")))
+					if (!(bitmap = al_load_bitmap_f(fileref->get_fp(), ".jpg")))
+						if (!(bitmap = al_load_bitmap_f(fileref->get_fp(), ".webp")))
+							bitmap = al_load_bitmap_f(fileref->get_fp(), ".bmp");
+			}
+			else bitmap = al_load_bitmap_f(fileref->get_fp(), ident);
+		}
+#endif
 		else if (conf.width > 0 && conf.height > 0) {
 			bitmap = al_create_bitmap(conf.width, conf.height);
 		}
@@ -115,7 +153,14 @@ namespace Lunaris {
 		conf.path = path;
 		return create(conf);
 	}
-
+#ifdef LUNARIS_ALPHA_TESTING
+	LUNARIS_DECL bool texture::load(hybrid_memory<file> ref)
+	{
+		texture_config conf;
+		conf.fileref = ref;
+		return create(conf);
+	}
+#endif
 	LUNARIS_DECL texture texture::duplicate()
 	{
 		ALLEGRO_BITMAP* bmp = get_raw_bitmap();
@@ -270,6 +315,9 @@ namespace Lunaris {
 		: animation(oth.animation)
 	{
 		bitmap = oth.bitmap;
+#ifdef LUNARIS_ALPHA_TESTING
+		fileref = std::move(oth.fileref);
+#endif
 		oth.animation = nullptr;
 		oth.bitmap = nullptr;
 	}
@@ -280,6 +328,9 @@ namespace Lunaris {
 
 		animation = oth.animation;
 		bitmap = oth.bitmap;
+#ifdef LUNARIS_ALPHA_TESTING
+		fileref = std::move(oth.fileref);
+#endif
 		oth.animation = nullptr;
 		oth.bitmap = nullptr;
 	}
@@ -287,6 +338,7 @@ namespace Lunaris {
 	LUNARIS_DECL bool texture_gif::load(const std::string& path)
 	{
 		__bitmap_allegro_start();
+		destroy();
 
 		if (path.empty()) return false;
 		if (!(animation = algif_load_animation(path.c_str()))) return false;
@@ -297,7 +349,26 @@ namespace Lunaris {
 
 		return bitmap != nullptr;
 	}
+#ifdef LUNARIS_ALPHA_TESTING
+	LUNARIS_DECL bool texture_gif::load(const hybrid_memory<file>& fp)
+	{
+		__bitmap_allegro_start();
+		destroy();
 
+		if (fp.empty() || fp->size() == 0) return false;
+		fileref = fp;
+
+		if (!(animation = algif_load_animation_f(fileref->get_fp()))) return false;
+		fileref->modify_no_destroy(true); // unhappy
+
+		start_time = al_get_time();
+
+		bitmap = get_raw_bitmap();
+
+		return bitmap != nullptr;
+		return false;
+	}
+#endif
 	LUNARIS_DECL int texture_gif::get_width() const
 	{
 		return animation ? animation->width : 0;
@@ -325,6 +396,51 @@ namespace Lunaris {
 			bitmap = nullptr;
 			animation = nullptr;
 		}
+	}
+
+	LUNARIS_DECL double texture_gif::get_interval_average() const
+	{
+		if (!animation) return 0.0;
+		if (animation->frames_count == 0) return 0.0;
+
+		double total = 0.0;
+
+		for (int p = 0; p < animation->frames_count; p++) {
+			total += algif_get_frame_duration(animation, p);
+		}
+
+		total /= 1.0 *animation->frames_count;
+		return total;
+	}
+
+	LUNARIS_DECL double texture_gif::get_interval_longest() const
+	{
+		if (!animation) return 0.0;
+		if (animation->frames_count == 0) return 0.0;
+
+		double total = 0.0;
+
+		for (int p = 0; p < animation->frames_count; p++) {
+			const double rn = algif_get_frame_duration(animation, p);
+			if (rn > total) total = rn;
+		}
+
+		return total;
+	}
+
+	LUNARIS_DECL double texture_gif::get_interval_shortest() const
+	{
+		if (!animation) return 0.0;
+		if (animation->frames_count == 0) return 0.0;
+
+		double total = algif_get_frame_duration(animation, 0);
+
+		for (int p = 0; p < animation->frames_count; p++) {
+			const double rn = algif_get_frame_duration(animation, p);
+			if (rn < total) total = rn;
+		}
+
+		return total;
 	}
 
 }
