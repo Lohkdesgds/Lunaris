@@ -88,6 +88,11 @@ namespace Lunaris {
 		void work();
 		void set_work(const std::function<void(result, sprite&)>);
 
+		// simple true/false point collision check
+		raw_result quick_one_point_overlap(const float, const float);
+		// simple true/false sprite collision check
+		result quick_one_sprite_overlap(const collisionable&);
+
 		// if true, if there are more than 1 collision cases, work() will be called multiple times, else only once with a random option
 		void set_work_works_all_cases(const bool);
 	};

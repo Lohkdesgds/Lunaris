@@ -465,6 +465,16 @@ namespace Lunaris {
 		workar = f;
 	}
 
+	LUNARIS_DECL collisionable::raw_result collisionable::quick_one_point_overlap(const float px, const float py)
+	{
+		return each_pt_col(px, py, *this);
+	}
+
+	LUNARIS_DECL collisionable::result collisionable::quick_one_sprite_overlap(const collisionable& oth)
+	{
+		return combine_to(oth);
+	}
+
 	LUNARIS_DECL void collisionable::set_work_works_all_cases(const bool var)
 	{
 		work_all = var;
