@@ -1053,10 +1053,10 @@ int graphics_test()
 		one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
 		//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
 		if (res.dir_to != 0) {
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
 			one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
 		}
 		//if (res.dir_to != 0) {

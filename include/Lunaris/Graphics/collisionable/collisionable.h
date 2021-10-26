@@ -47,22 +47,20 @@ namespace Lunaris {
 	};
 
 	class collisionable {
-	private:
-		enum class direction_index { NONE = -1, NORTH, SOUTH, EAST, WEST, _MAX };
 	public:
-		enum class direction_op { DIR_NONE = 0, DIR_NORTH = 1 << 0, DIR_SOUTH = 1 << 1, DIR_EAST = 1 << 2, DIR_WEST = 1 << 3 };
+		enum class direction_index { NONE = -1, NORTH, SOUTH, EAST, WEST, _MAX };
+		enum class direction_combo { DIR_NONE = 0, DIR_NORTH = 1 << 0, DIR_SOUTH = 1 << 1, DIR_EAST = 1 << 2, DIR_WEST = 1 << 3 };
 		struct result {
 			float moment_dir = 0.0f;
 			int dir_to = 0;
 
-			bool is_dir(const direction_op&);
+			bool is_dir(const direction_combo&);
+		};
+		struct each_result {
+			float moment_dir = 0.0f;
+			direction_index one_direction = direction_index::NONE;
 		};
 	private:
-		struct raw_result {
-			float moment_dir = 0.0f;
-			direction_index dir_to_raw = direction_index::NONE;
-		};
-
 		std::vector<result> cases;
 
 		sprite& wrap;
@@ -72,13 +70,13 @@ namespace Lunaris {
 		bool work_all = true;
 		const float &nwx, &nwy, &nex, &ney, &swx, &swy, &sex, &sey, &cx, &cy, &speedx, &speedy, &rot;
 
-		raw_result each_pt_col(const float&, const float&, const collisionable&) const;
+		each_result each_pt_col(const float&, const float&, const collisionable&) const;
 		result combine_to(const collisionable&);
 
 		direction_index fix_index_rot(const direction_index) const; // expects direction_index
 		direction_index fix_index_inverse(const direction_index) const;
-		int fix_op_rot_each(const direction_op); // expects direction_op unique
-		int fix_op_rot(const int); // expects direction_op combo
+		int fix_op_rot_each(const direction_combo); // expects direction_combo unique
+		int fix_op_rot(const int); // expects direction_combo combo
 		int fix_op_invert(const int); // just north <-> south etc
 	public:
 		collisionable(sprite&);
@@ -89,7 +87,7 @@ namespace Lunaris {
 		void set_work(const std::function<void(result, sprite&)>);
 
 		// simple true/false point collision check
-		raw_result quick_one_point_overlap(const float, const float);
+		each_result quick_one_point_overlap(const float, const float);
 		// simple true/false sprite collision check
 		result quick_one_sprite_overlap(const collisionable&);
 

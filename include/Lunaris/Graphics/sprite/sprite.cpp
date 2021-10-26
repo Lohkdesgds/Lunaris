@@ -59,7 +59,6 @@ namespace Lunaris {
 		const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
 		const float& scale_y = get<float>(enum_sprite_float_e::SCALE_Y);
 		double& last_draw_v = get<double>(enum_sprite_double_e::RO_DRAW_LAST_DRAW);
-		const bool& deform_coords = get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE); // [-1,1] goes like [-limit_x,limit_x]
 
 		// refs to smoothing algorithms
 		const float& target_pos_x = get<float>(enum_sprite_float_e::POS_X); // target posx
