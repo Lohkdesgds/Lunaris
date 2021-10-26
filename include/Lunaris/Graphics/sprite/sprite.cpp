@@ -138,12 +138,6 @@ namespace Lunaris {
 
 	LUNARIS_DECL void sprite::think()
 	{
-		// not used
-		//float limit_x = -1.f, limit_y = -1.f;
-		//m_assist_transform.transform_inverse_coords(limit_x, limit_y);
-		//limit_x = fabsf(limit_x); // maximum X position that it can draw with current transformation
-		//limit_y = fabsf(limit_y); // maximum Y position that it can draw with current transformation
-
 		const float& elasticity = get<float>(enum_sprite_float_e::THINK_ELASTIC_SPEED_PROP);
 		double& last_think_v = get<double>(enum_sprite_double_e::RO_THINK_LAST_THINK);
 		double& think_delta_v = get<double>(enum_sprite_double_e::RO_THINK_DELTA_THINKS);
@@ -198,10 +192,16 @@ namespace Lunaris {
 		float __rot = get<float>(enum_sprite_float_e::ROTATION);
 		//while (__rot > ALLEGRO_PI * 2.0f) __rot -= ALLEGRO_PI * 2.0f;
 
+		//if (get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE)) {
+		//	const float real_posx = get_real_pos_x();
+		//	const float real_posy = get_real_pos_y();
+		//}
+
 		transform _temp;
 		_temp.identity();
 		_temp.rotate(__rot);
-		_temp.translate(curr_pos_x, curr_pos_y);
+		//_temp.translate(curr_pos_x, curr_pos_y);
+		_temp.translate(get_real_pos_x(), get_real_pos_y());
 		_temp.compose(m_assist_transform);
 
 		// top left
