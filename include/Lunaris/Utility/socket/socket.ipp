@@ -13,7 +13,7 @@ namespace Lunaris {
 		case socket_config::e_family::IPV4:
 			return ip_address + ":" + std::to_string(port);
 		default:
-			return "[" + ip_address + "]:" + std::to_string(port);
+			return (ip_address.length() ? ("[" + ip_address + "]:") : "[::1]:") + std::to_string(port);
 		}
 	}
 
@@ -34,6 +34,41 @@ namespace Lunaris {
 		ip_address = var;
 		return *this;
 	}
+
+	inline bool socket_config::parse(const SocketStorage& addr)
+	{
+		const auto fun_get_in_addr = [&]() -> void* {
+			const sockaddr* sa = (struct sockaddr*)(&addr);
+			if (sa->sa_family == AF_INET) // IPv4 address
+				return &(((struct sockaddr_in*)sa)->sin_addr);
+			// else IPv6 address
+			return &(((struct sockaddr_in6*)sa)->sin6_addr);
+		};
+		const auto fun_get_in_port = [&]() -> unsigned short {
+			const sockaddr* sa = (struct sockaddr*)(&addr);
+			if (sa->sa_family == AF_INET)
+				return (((struct sockaddr_in*)sa)->sin_port); // IPv4 address
+			return (((struct sockaddr_in6*)sa)->sin6_port);// else IPv6 address		
+		};
+
+		// reset
+		ip_address.clear();
+		family = e_family::ANY;
+		port = 0;
+
+		char name[INET6_ADDRSTRLEN + 1]{};
+		socklen_t sockaddrlen = sizeof(addr);
+		const sockaddr* sockaddr = (struct sockaddr*)(&addr);
+
+		if (inet_ntop(sockaddr->sa_family, fun_get_in_addr(), name, INET6_ADDRSTRLEN * sizeof(char)) == NULL) return false;
+
+		ip_address = name;
+		family = sockaddr->sa_family == AF_INET ? socket_config::e_family::IPV4 : socket_config::e_family::IPV6;
+		port = ntohs(fun_get_in_port());
+
+		return true;
+	}
+
 #ifdef _WIN32
 	inline socket_core::_data::_data()
 	{
@@ -147,45 +182,6 @@ namespace Lunaris {
 
 	inline SocketType socket_core::common_select(std::vector<SocketType>& servers, const long to)
 	{
-		// Before POLL, only works on WINDOWS:
-		// 
-		//size_t i = 0;
-		//fd_set SockSet{};
-		//size_t NumSocks = servers.size();
-		//
-		//timeval timeout_time;
-		//timeout_time.tv_sec = to;
-		//timeout_time.tv_usec = 0;
-		//
-		//if (!NumSocks) {
-		//	return SocketInvalid;
-		//}
-		//
-		//FD_ZERO(&SockSet);
-		//
-		//for (i = 0; i < NumSocks; i++) {
-		//	if (FD_ISSET(servers[i], &SockSet))
-		//		break;
-		//}
-		//if (i == NumSocks) {
-		//	for (i = 0; i < NumSocks; i++)
-		//		FD_SET(servers[i], &SockSet);
-		//	int thussock = ::select(static_cast<int>(NumSocks), &SockSet, nullptr, nullptr, ((to > 0) ? &timeout_time : nullptr));
-		//	if (thussock == SocketError || thussock == SocketTimeout) {
-		//		return SocketInvalid;
-		//	}
-		//}
-		//for (i = 0; i < NumSocks; i++) {
-		//	if (FD_ISSET(servers[i], &SockSet)) {
-		//		FD_CLR(servers[i], &SockSet);
-		//		break;
-		//	}
-		//}
-		//
-		//if (i >= servers.size()) return SocketInvalid;
-		//
-		//return servers[i];
-
 		if (servers.size() == 0) return SocketInvalid;
 
 		const unsigned long nfds = static_cast<unsigned long>(servers.size());
@@ -237,36 +233,6 @@ namespace Lunaris {
 	}
 
 	template<int protocol, bool host>
-	inline bool socket<protocol, host>::convert_from(socket_config& conf, const SocketStorage& addr)
-	{
-		const auto fun_get_in_addr = [&]() -> void* {
-			const sockaddr* sa = (struct sockaddr*)(&addr);
-			if (sa->sa_family == AF_INET) // IPv4 address
-				return &(((struct sockaddr_in*)sa)->sin_addr);
-			// else IPv6 address
-			return &(((struct sockaddr_in6*)sa)->sin6_addr);
-		};
-		const auto fun_get_in_port = [&]() -> unsigned short {
-			const sockaddr* sa = (struct sockaddr*)(&addr);
-			if (sa->sa_family == AF_INET)
-				return (((struct sockaddr_in*)sa)->sin_port); // IPv4 address
-			return (((struct sockaddr_in6*)sa)->sin6_port);// else IPv6 address		
-		};
-
-		char name[INET6_ADDRSTRLEN + 1]{};
-		socklen_t sockaddrlen = sizeof(addr);
-		const sockaddr* sockaddr = (struct sockaddr*)(&addr);
-
-		if (inet_ntop(sockaddr->sa_family, fun_get_in_addr(), name, INET6_ADDRSTRLEN * sizeof(char)) == NULL) return false;
-
-		conf.ip_address = name;
-		conf.family = sockaddr->sa_family == AF_INET ? socket_config::e_family::IPV4 : socket_config::e_family::IPV6;
-		conf.port = ntohs(fun_get_in_port());
-
-		return true;
-	}
-
-	template<int protocol, bool host>
 	inline void socket_client<protocol, host>::close_socket()
 	{
 		if (data->connection != SocketInvalid) closeSocket(data->connection);
@@ -292,6 +258,15 @@ namespace Lunaris {
 		if (socket == SocketInvalid) throw std::runtime_error("Invalid socket!");
 		data->connection = socket;
 		data->info_host = addr;
+	}
+
+	template<int protocol, bool host>
+	inline socket_config socket_client<protocol, host>::info() const
+	{
+		if (!data) return {};
+		socket_config conf;
+		if (!conf.parse(data->info_host)) return {};
+		return conf;
 	}
 
 
@@ -407,7 +382,7 @@ namespace Lunaris {
 		SocketType selected = SocketInvalid;
 		do {
 			selected = common_select(data->listeners, to);
-			//selected = data->listeners.size() ? data->listeners[0] : SocketInvalid;
+
 			if (selected == SocketInvalid || selected == SocketError) {
 				std::this_thread::yield();
 				continue;
@@ -484,14 +459,11 @@ namespace Lunaris {
 				raw.clear();
 				return raw;
 			}
-			/*else if (std::memcmp(&_temp, &data->info_host, _temp_len) != 0) {
-				throw std::runtime_error("Unexpected elsewhere sending data to this!");
-			}*/
 			else if (res != expected) {
 				throw std::runtime_error("Unexpected recv size!");
 			}
 
-			socket::convert_from(conf, _temp);
+			conf.parse(_temp);
 			break;
 		}
 		return raw;
@@ -509,7 +481,7 @@ namespace Lunaris {
 #endif
 	}
 
-	inline const socket_config& UDP_client::last_recv_info() const
+	inline const socket_config& UDP_client::info() const
 	{
 		return conf;
 	}
@@ -539,7 +511,7 @@ namespace Lunaris {
 	inline UDP_host::UDP_host_handler::UDP_host_handler(SocketType sock, const SocketStorage& ad, std::vector<char>&& raw)
 		: socket(sock), addr(ad), data(std::move(raw))
 	{
-		if (!socket::convert_from(conf, addr)) throw std::runtime_error("Could not get info properly! Data may be corrupted!");
+		if (!conf.parse(addr)) throw std::runtime_error("Could not get info properly! Data may be corrupted!");
 	}
 
 	inline bool UDP_host::UDP_host_handler::valid() const

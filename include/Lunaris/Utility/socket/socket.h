@@ -84,6 +84,8 @@ namespace Lunaris {
 		socket_config& set_family(const e_family&);
 		socket_config& set_port(const u_short&);
 		socket_config& set_ip_address(const std::string&);
+
+		bool parse(const SocketStorage&);
 	};
 
 	// start WSA / stop WSA
@@ -119,8 +121,6 @@ namespace Lunaris {
 		socket() = default;
 
 		bool setup(const socket_config&);
-
-		static bool convert_from(socket_config&, const SocketStorage&);
 	};
 
 	template<int protocol, bool host>
@@ -141,6 +141,8 @@ namespace Lunaris {
 
 		socket_client() = default;
 		socket_client(SocketType, const SocketStorage&);
+
+		socket_config info() const;
 	};
 
 	template<int protocol, bool host>
@@ -166,6 +168,7 @@ namespace Lunaris {
 		using socket_client<SOCK_STREAM, false>::socket_client;
 		using socket_client<SOCK_STREAM, false>::has_socket;
 		using socket_client<SOCK_STREAM, false>::close_socket;
+		using socket_client<SOCK_STREAM, false>::info;
 
 		bool send(const std::vector<char>&);
 		bool send(const char*, const size_t);
@@ -196,7 +199,7 @@ namespace Lunaris {
 		template<typename T, std::enable_if_t<std::is_pod_v<T>, int> = 0>
 		bool recv(T&, const bool = true);
 
-		const socket_config& last_recv_info() const;
+		const socket_config& info() const;
 	};
 
 

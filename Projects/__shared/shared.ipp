@@ -270,12 +270,14 @@ int utility_test(const std::string& self_path)
 			thread tcp_thread([&] {
 				//while(!tcp_host_client.has_socket())
 				tcp_host_client = tcp_host.listen();
+				cout << "Host's client got connection info: " << tcp_host_client.info().format();
 			}, thread::speed::ONCE);
 
 			cout << "Trying to connect to host...";
 
 			TESTLU(tcp_client.setup(socket_config().set_family(socket_config::e_family::IPV4).set_port(12345)), "Can't connect to itself!");
 
+			cout << "Main client got connection info: " << tcp_client.info().format();
 			cout << "Connected. Syncing threads...";
 
 			while (!tcp_host_client.has_socket()) std::this_thread::sleep_for(std::chrono::milliseconds(50));

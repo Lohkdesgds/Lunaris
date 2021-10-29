@@ -192,7 +192,7 @@ namespace Lunaris {
 		close();
 
 		this->mem = std::unique_ptr<char[]>(new char[len]);
-		this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(al_open_memfile(mem.get(), len, "wb+"), al_fclose);
+		this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(al_open_memfile(mem.get(), len, "wr"), al_fclose);
 
 		seek(0, seek_mode_e::BEGIN);
 
