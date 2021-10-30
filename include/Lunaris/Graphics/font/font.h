@@ -23,25 +23,19 @@ namespace Lunaris {
 		bool ttf = true;
 		int resolution = 50;
 		std::string path;
-#ifdef LUNARIS_ALPHA_TESTING
 		hybrid_memory<file> fileref;
-#endif
 
 		font_config& set_bitmap_flags(const int);
 		font_config& set_font_flags(const int);
 		font_config& set_is_ttf(const bool);
 		font_config& set_resolution(const int);
 		font_config& set_path(const std::string&);
-#ifdef LUNARIS_ALPHA_TESTING
 		font_config& set_file(const hybrid_memory<file>&);
-#endif
 	};
 
 	class font {
 		ALLEGRO_FONT* font_ptr = nullptr;
-#ifdef LUNARIS_ALPHA_TESTING
 		hybrid_memory<file> fileref;
-#endif
 
 		bool check_ready() const;
 	public:
@@ -59,10 +53,8 @@ namespace Lunaris {
 
 		bool load(const font_config&);
 		bool load(const std::string&, const bool);
-#ifdef LUNARIS_ALPHA_TESTING
 		// assume TTF
 		bool load(const hybrid_memory<file>&);
-#endif
 
 		ALLEGRO_FONT* get_raw_font() const;
 

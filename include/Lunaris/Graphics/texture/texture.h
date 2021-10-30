@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <string>
 
+
 namespace Lunaris {
 
 	void __bitmap_allegro_start();
@@ -23,26 +24,20 @@ namespace Lunaris {
 		int width = 0;
 		int height = 0;
 		std::string path;
-#ifdef LUNARIS_ALPHA_TESTING
 		hybrid_memory<file> fileref;
-#endif
 
 		texture_config& set_format(const int);
 		texture_config& set_flags(const int);
 		texture_config& set_width(const int);
 		texture_config& set_height(const int);
 		texture_config& set_path(const std::string&);
-#ifdef LUNARIS_ALPHA_TESTING
 		texture_config& set_file(const hybrid_memory<file>&);
-#endif
 	};
 
 	class texture {
 	protected:
 		ALLEGRO_BITMAP* bitmap = nullptr;
-#ifdef LUNARIS_ALPHA_TESTING
 		hybrid_memory<file> fileref;
-#endif
 
 		virtual bool check_ready() const;
 	public:
@@ -62,9 +57,7 @@ namespace Lunaris {
 
 		bool load(const texture_config&);
 		virtual bool load(const std::string&);
-#ifdef LUNARIS_ALPHA_TESTING
 		virtual bool load(hybrid_memory<file>);
-#endif
 
 		texture duplicate();
 		texture create_sub(const int, const int, const int, const int);
@@ -238,9 +231,7 @@ namespace Lunaris {
 		void operator=(const texture_gif&) = delete;
 
 		bool load(const std::string&);
-#ifdef LUNARIS_ALPHA_TESTING
 		bool load(const hybrid_memory<file>&);
-#endif
 
 		int get_width() const;
 		int get_height() const;

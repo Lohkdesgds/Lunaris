@@ -65,6 +65,15 @@ namespace Lunaris {
 		std::string path;
 
 		std::string transl(const open_mode_e&);
+
+		friend class font; // font has to be able to "own" the file.
+		/// <summary>
+		/// <para>in very very specific cases sometimes you don't want the ALLEGRO_FILE to be destroyed. This unset/set current rule. Default is to destroy.</para>
+		/// <para>Example: loading font from file.</para>
+		/// <para>TRUE results in NO DESTRUCTION!</para>
+		/// </summary>
+		/// <param name=""></param>
+		void modify_no_destroy(const bool);
 	public:
 		file() = default;
 		file(file&&);
@@ -73,16 +82,6 @@ namespace Lunaris {
 
 		virtual bool open(const std::string&, const open_mode_e&);
 		virtual void close();
-
-#ifdef LUNARIS_ALPHA_TESTING
-		/// <summary>
-		/// <para>in very very specific cases sometimes you don't want the ALLEGRO_FILE to be destroyed. This unset/set current rule. Default is to destroy.</para>
-		/// <para>Example: loading font from file.</para>
-		/// <para>TRUE results in NO DESTRUCTION!</para>
-		/// </summary>
-		/// <param name=""></param>
-		void modify_no_destroy(const bool);
-#endif
 
 		const std::string& get_path();
 		ALLEGRO_FILE* get_fp() const;

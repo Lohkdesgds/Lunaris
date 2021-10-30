@@ -50,7 +50,7 @@ LUNARIS_DECL void deinterlace(ALGIF_BITMAP *bmp)
     algif_destroy_bitmap(n);
 }
 
-LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file) {
+LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file, const bool del_fp) {
     if (!file)
         return nullptr;
 
@@ -62,8 +62,8 @@ LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file) {
     ALGIF_ANIMATION *gif = (ALGIF_ANIMATION*)calloc(1, sizeof(ALGIF_ANIMATION));
     ALGIF_FRAME frame;
 
-    const auto freeup = [&] {
-        if (file)
+    const auto freeup = [&, del_fp] {
+        if (file && del_fp)
             al_fclose(file);
         if (gif)
             algif_destroy_animation(gif);
@@ -211,7 +211,7 @@ LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file) {
             break;
         case 0x3b:
             /* GIF Trailer. */
-            al_fclose(file);
+            if (del_fp) al_fclose(file);
             return gif;
         }
     } while (true);

@@ -163,7 +163,8 @@ namespace Lunaris {
 
 		future<bool> add_run_once_in_drawing_thread(std::function<void(void)>);
 
-		void destroy();
+		// skip exceptions?
+		void destroy(const bool = false);
 
 		using display::set_window_title;
 		using display::hook_event_handler;

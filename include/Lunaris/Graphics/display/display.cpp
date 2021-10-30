@@ -496,9 +496,9 @@ namespace Lunaris {
 		return fn2;
 	}
 
-	LUNARIS_DECL void display_async::destroy()
+	LUNARIS_DECL void display_async::destroy(const bool skip_except)
 	{
-		thr.join();
+		thr.join(skip_except);
 		this->display::destroy();
 	}
 

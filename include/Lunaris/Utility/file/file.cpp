@@ -15,11 +15,18 @@ namespace Lunaris {
 		case file::open_mode_e::WRITE_REPLACE:
 			return "wb";
 		case file::open_mode_e::READWRITE_REPLACE:
-			return "wb+";
+			return "w+b";
 		case file::open_mode_e::READWRITE_KEEP:
-			return "ab+";
+			return "a+b";
 		}
 		return "";
+	}
+
+	LUNARIS_DECL void file::modify_no_destroy(const bool nodestr)
+	{
+		ALLEGRO_FILE* tmpfp = this->fp.release();
+		if (!nodestr)   this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(tmpfp, al_fclose);
+		else	        this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(tmpfp, [](ALLEGRO_FILE*) {return true; });
 	}
 
 	LUNARIS_DECL file::file(file&& oth)
@@ -60,14 +67,7 @@ namespace Lunaris {
 			path.clear();
 		}
 	}
-#ifdef LUNARIS_ALPHA_TESTING
-	LUNARIS_DECL void file::modify_no_destroy(const bool nodestr)
-	{
-		ALLEGRO_FILE* tmpfp = this->fp.release();
-		if (!nodestr)   this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(tmpfp, al_fclose);
-		else	        this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(tmpfp, [](ALLEGRO_FILE*) {return true; });
-	}
-#endif
+
 	LUNARIS_DECL const std::string& file::get_path()
 	{
 		return path;
@@ -149,7 +149,7 @@ namespace Lunaris {
 		al_destroy_path(var);
 		al_fclose(tmpfp);
 
-		this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(al_fopen(path.c_str(), "wb+"), al_fclose);
+		this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(al_fopen(path.c_str(), "w+b"), al_fclose);
 
 		seek(0, seek_mode_e::BEGIN);
 

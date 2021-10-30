@@ -4,6 +4,12 @@
 
 #include <iterator>
 
+//#define ENABLE_ALPHA_TESTING_HARD
+
+#ifdef ENABLE_ALPHA_TESTING_HARD
+#include <Psapi.h>
+#endif
+
 using namespace Lunaris;
 
 #define TESTLU(X, ERRMSG) if (run_and_test([&]{return X;}, ERRMSG) != 0) return 1;
@@ -15,6 +21,9 @@ const std::string fixed_image_src_url_sha256_precalc = "e02e1baec55f8e37b5a5b3ef
 const std::string temp_local_file_path = "lunaris_temp_local.tmp";
 const std::string random_img_url = "https://picsum.photos/1024"; //"https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
 const std::string fixed_my_catto_GIF_url = "https://media.discordapp.net/attachments/888270629990707331/892966440431403029/cat.gif";
+#ifdef ENABLE_ALPHA_TESTING_HARD
+const std::string fixed_random_font_url = "https://cdn.discordapp.com/attachments/632626072478810128/904055227567722616/Lobster_1.3.ttf";
+#endif
 
 constexpr size_t num_of_entities_in_package_test = 1000;
 
@@ -24,7 +33,92 @@ int run_and_test(std::function<bool(void)>, const std::string&);
 int utility_test(const std::string&); // GOOD 100%
 int audio_test(); // GOOD 100%
 int events_test(); // GOOD (enough)
-int graphics_test(); // TODO
+int graphics_test(); 
+
+#ifdef ENABLE_ALPHA_TESTING_HARD
+void hard_test()
+{
+	display disp;
+	font foont;
+	downloader down;
+
+	cout << console::color::DARK_PURPLE << "Initializing ALPHA test...";
+
+	bool good = disp.create(display_config().set_display_mode(display_options().set_width(800).set_height(600)).set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE).set_fullscreen(false).set_use_basic_internal_event_system(true).set_window_title("Memory test"));
+	if (!good) {
+		cout << console::color::RED << "Bad news disp.";
+		std::terminate();
+	}
+	
+	{
+		good = down.get(fixed_random_font_url);
+		if (!good) {
+			cout << console::color::RED << "Bad news downloading.";
+			disp.destroy();
+			std::terminate();
+		}
+	}
+
+	const size_t iterations = 100000;
+	const size_t to_mega = 1024 * 1024;
+	const color blackkk(0, 0, 0);
+	const double difftime = 0.125;
+	size_t counter = 0, pp = 0;
+
+	const auto print_info_console = [&] {
+		PROCESS_MEMORY_COUNTERS_EX rawmemusage;
+		rawmemusage.cb = sizeof(rawmemusage);
+		auto gud = GetProcessMemoryInfo(GetCurrentProcess(), (PPROCESS_MEMORY_COUNTERS)&rawmemusage, sizeof(rawmemusage));
+		if (!gud) {
+			cout << console::color::RED << "Issue getting current memory information.";
+		}
+
+		printf_s("TIME:%08.3lf | IT@%020zu > MemPeak: %08.6lf MB | Now: %08.6lf MB | Charge: %08.6lf MB  %c", counter * difftime, pp, rawmemusage.PeakWorkingSetSize * 1.0 / to_mega, rawmemusage.WorkingSetSize * 1.0 / to_mega, rawmemusage.PagefileUsage * 1.0 / to_mega, ((counter % 20) == 0) ? '\n' : '\r');
+		++counter;
+	};
+
+	thread monitor(print_info_console, thread::speed::INTERVAL, difftime);
+
+	disp.hook_event_handler([&](const ALLEGRO_EVENT& ev) {
+		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			pp = iterations;
+		}
+	});
+
+	for (pp = 0; pp < iterations && !disp.empty(); pp++) {
+
+		auto tempmemfp = make_hybrid<file>();
+		if (!(tempmemfp->open("lunaris_alpha_test_XXXX.ttf", file::open_mode_e::READWRITE_REPLACE))) {
+			cout << console::color::RED << "Could not create tempfile. Trying again...";
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			continue;
+		}
+
+		if (tempmemfp->write(down.read().data(), down.read().size()) != down.read().size()) {
+			cout << console::color::RED << "Could not write tempfile. Trying again...";
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			continue;
+		}
+		tempmemfp->flush();
+
+		if (!foont.load(tempmemfp)) {
+			cout << console::color::RED << "Could not load texture. Trying again...";
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			continue;
+		}
+
+		blackkk.clear_to_this();
+		foont.draw(color(200, 200, 200), random() % 20, random() % 20, 0, ("Hello there #" + std::to_string(pp)));
+		disp.flip();
+
+		foont.destroy();
+		tempmemfp.reset_shared();
+	}
+
+	monitor.join();
+}
+#endif
+
 
 int main(int argc, char* argv[]) {
 	TESTLU(argc >= 1, "IRREGULAR STARTUP! Can't proceed.");
@@ -36,6 +130,11 @@ int main(int argc, char* argv[]) {
 		cout << "Have a great day! Exiting the app...";
 		return 0;
 	}
+
+#ifdef ENABLE_ALPHA_TESTING_HARD
+	hard_test();
+	return 0;
+#endif
 
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
@@ -902,8 +1001,8 @@ int graphics_test()
 
 
 		cout << "Loading image like memory...";
-		TESTLU(oop->load(tempfp->get_path()), "Could not load GIF");
-		TESTLU(bmppp->load(tempfp2->get_path()), "Could not load JPG");
+		TESTLU(oop->load(tempfp), "Could not load GIF");
+		TESTLU(bmppp->load(tempfp2), "Could not load JPG");
 
 		cout << "GIF has avg=" << oop->get_interval_average() * 1000.0 << "ms;max=" << oop->get_interval_longest() * 1000.0 << "ms;min=" << oop->get_interval_shortest() * 1000.0 << "ms interval info.";
 
@@ -1141,6 +1240,15 @@ int graphics_test()
 
 	col_and_tools.join();
 	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Closing..."));
+
+	my_display.hook_draw_function([](const auto&) {std::this_thread::sleep_for(std::chrono::milliseconds(100)); }); // change
+	my_display.add_run_once_in_drawing_thread([&] {
+		font_u->destroy();
+		bmppp->destroy();
+		giffye->destroy();
+	}).wait();
+
+
 	my_display.destroy();
 	// the rest should be fine.
 
