@@ -1,9 +1,14 @@
-#include <Lunaris/utility.h>
-#include <Lunaris/graphics.h>
-#include <Lunaris/events.h>
-#include <Lunaris/audio.h>
+//#define LUNARIS_ALPHA_TESTING
+//#define LUNARIS_HEADER_ONLY
+#include <Lunaris/all.h>
 
 #include <iterator>
+
+//#define ENABLE_ALPHA_TESTING_HARD
+
+#ifdef ENABLE_ALPHA_TESTING_HARD
+#include <Psapi.h>
+#endif
 
 using namespace Lunaris;
 
@@ -14,8 +19,11 @@ const std::string fixed_audio_src_url = "https://cdn.discordapp.com/attachments/
 const std::string fixed_image_src_url = "https://media.discordapp.net/attachments/888270629990707331/888272596720844850/3.jpg?width=918&height=612";
 const std::string fixed_image_src_url_sha256_precalc = "e02e1baec55f8e37b5a5b3ef29d403fc2a2084267f05dfc75d723536081aff10";
 const std::string temp_local_file_path = "lunaris_temp_local.tmp";
-const std::string random_img_url =  "https://picsum.photos/1024"; // "https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
+const std::string random_img_url = "https://picsum.photos/1024"; //"https://www.dropbox.com/s/nnl1tbypldv1un6/Photo_fur_2018.jpg?dl=1"; 
 const std::string fixed_my_catto_GIF_url = "https://media.discordapp.net/attachments/888270629990707331/892966440431403029/cat.gif";
+#ifdef ENABLE_ALPHA_TESTING_HARD
+const std::string fixed_random_font_url = "https://cdn.discordapp.com/attachments/632626072478810128/904055227567722616/Lobster_1.3.ttf";
+#endif
 
 constexpr size_t num_of_entities_in_package_test = 1000;
 
@@ -25,7 +33,92 @@ int run_and_test(std::function<bool(void)>, const std::string&);
 int utility_test(const std::string&); // GOOD 100%
 int audio_test(); // GOOD 100%
 int events_test(); // GOOD (enough)
-int graphics_test(); // TODO
+int graphics_test(); 
+
+#ifdef ENABLE_ALPHA_TESTING_HARD
+void hard_test()
+{
+	display disp;
+	font foont;
+	downloader down;
+
+	cout << console::color::DARK_PURPLE << "Initializing ALPHA test...";
+
+	bool good = disp.create(display_config().set_display_mode(display_options().set_width(800).set_height(600)).set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE).set_fullscreen(false).set_use_basic_internal_event_system(true).set_window_title("Memory test"));
+	if (!good) {
+		cout << console::color::RED << "Bad news disp.";
+		std::terminate();
+	}
+	
+	{
+		good = down.get(fixed_random_font_url);
+		if (!good) {
+			cout << console::color::RED << "Bad news downloading.";
+			disp.destroy();
+			std::terminate();
+		}
+	}
+
+	const size_t iterations = 100000;
+	const size_t to_mega = 1024 * 1024;
+	const color blackkk(0, 0, 0);
+	const double difftime = 0.125;
+	size_t counter = 0, pp = 0;
+
+	const auto print_info_console = [&] {
+		PROCESS_MEMORY_COUNTERS_EX rawmemusage;
+		rawmemusage.cb = sizeof(rawmemusage);
+		auto gud = GetProcessMemoryInfo(GetCurrentProcess(), (PPROCESS_MEMORY_COUNTERS)&rawmemusage, sizeof(rawmemusage));
+		if (!gud) {
+			cout << console::color::RED << "Issue getting current memory information.";
+		}
+
+		printf_s("TIME:%08.3lf | IT@%020zu > MemPeak: %08.6lf MB | Now: %08.6lf MB | Charge: %08.6lf MB  %c", counter * difftime, pp, rawmemusage.PeakWorkingSetSize * 1.0 / to_mega, rawmemusage.WorkingSetSize * 1.0 / to_mega, rawmemusage.PagefileUsage * 1.0 / to_mega, ((counter % 20) == 0) ? '\n' : '\r');
+		++counter;
+	};
+
+	thread monitor(print_info_console, thread::speed::INTERVAL, difftime);
+
+	disp.hook_event_handler([&](const ALLEGRO_EVENT& ev) {
+		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			pp = iterations;
+		}
+	});
+
+	for (pp = 0; pp < iterations && !disp.empty(); pp++) {
+
+		auto tempmemfp = make_hybrid<file>();
+		if (!(tempmemfp->open("lunaris_alpha_test_XXXX.ttf", file::open_mode_e::READWRITE_REPLACE))) {
+			cout << console::color::RED << "Could not create tempfile. Trying again...";
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			continue;
+		}
+
+		if (tempmemfp->write(down.read().data(), down.read().size()) != down.read().size()) {
+			cout << console::color::RED << "Could not write tempfile. Trying again...";
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			continue;
+		}
+		tempmemfp->flush();
+
+		if (!foont.load(tempmemfp)) {
+			cout << console::color::RED << "Could not load texture. Trying again...";
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			continue;
+		}
+
+		blackkk.clear_to_this();
+		foont.draw(color(200, 200, 200), random() % 20, random() % 20, 0, ("Hello there #" + std::to_string(pp)));
+		disp.flip();
+
+		foont.destroy();
+		tempmemfp.reset_shared();
+	}
+
+	monitor.join();
+}
+#endif
+
 
 int main(int argc, char* argv[]) {
 	TESTLU(argc >= 1, "IRREGULAR STARTUP! Can't proceed.");
@@ -37,6 +130,11 @@ int main(int argc, char* argv[]) {
 		cout << "Have a great day! Exiting the app...";
 		return 0;
 	}
+
+#ifdef ENABLE_ALPHA_TESTING_HARD
+	hard_test();
+	return 0;
+#endif
 
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
@@ -136,13 +234,13 @@ int utility_test(const std::string& self_path)
 
 		cout << "Downloaded " << console::color::AQUA << down.bytes_read() << console::color::GRAY << " byte(s)";
 		TESTLU((down.bytes_read() > 0), "Zero bytes is a issue.");
-		
+
 		cout << console::color::GREEN << "PASSED!";
 
 		cout << console::color::LIGHT_PURPLE << "Testing 'hash'...";
 
 		cout << "Testing hash on this file...";
-	
+
 		const auto _res = sha256(down.read());
 
 		cout << "SHA256 of this file: " << console::color::AQUA << _res;
@@ -154,7 +252,7 @@ int utility_test(const std::string& self_path)
 		cout << "Creating temporary local file...";
 
 		file fp;
-		TESTLU(fp.open(temp_local_file_path, "wb"), "Failed to create a local file.");
+		TESTLU(fp.open(temp_local_file_path, file::open_mode_e::READWRITE_REPLACE), "Failed to create a local file.");
 
 		cout << console::color::GREEN << "PASSED!";
 
@@ -168,7 +266,7 @@ int utility_test(const std::string& self_path)
 
 		cout << "Reopening, reading and checking...";
 
-		TESTLU(fp.open(temp_local_file_path, "rb"), "Failed to open the local file.");
+		TESTLU(fp.open(temp_local_file_path, file::open_mode_e::READ_TRY), "Failed to open the local file.");
 
 		{
 			std::vector<char> _tmpvec;
@@ -194,7 +292,61 @@ int utility_test(const std::string& self_path)
 
 			cout << console::color::GREEN << "PASSED!";
 
-			fp.delete_and_close();
+			fp.close();
+		}
+
+
+		{
+			cout << console::color::LIGHT_PURPLE << "Testing 'memfile'...";
+			cout << "Creating memfile...";
+
+			const size_t randomsize = 1024 * 1024;
+			memfile memfp;
+			std::string memmycpy;
+			TESTLU(memfp.open(randomsize), "Failed to create a memfile.");
+
+			cout << console::color::GREEN << "PASSED!";
+
+			cout << "Writing data to memfile...";
+
+			for (size_t p = 0; p < randomsize; p++) {
+				char ch = '0' + random() % 10;
+				memfp.write(&ch, 1);
+				memmycpy += ch;
+			}
+
+			TESTLU(memfp.flush(), "Couldn't flush memfile after write.");
+			memfp.seek(0, file::seek_mode_e::BEGIN);
+
+			cout << console::color::GREEN << "PASSED!";
+
+			{
+				std::vector<char> _tmpvec;
+				char buftemp[256];
+				while (1) {
+					size_t ree = memfp.read(buftemp, 256);
+					if (ree > 256) {
+						cout << console::color::RED << "FATAL ERROR! Read more than asked?!";
+						return 1;
+					}
+					else if (ree > 0) _tmpvec.insert(_tmpvec.end(), std::begin(buftemp), std::begin(buftemp) + ree);
+					else break;
+				}
+
+				cout << console::color::GREEN << "PASSED!";
+
+				cout << "Comparing data read from memfile...";
+
+				const auto _res3 = sha256(_tmpvec);
+				const auto _res4 = sha256(memmycpy);
+
+				cout << "SHA256 of this random stuff: " << console::color::AQUA << _res3;
+				TESTLU(_res3 == _res4, "Hash don't match expected? Bad thing!");
+
+				cout << console::color::GREEN << "PASSED!";
+
+				memfp.close();
+			}
 		}
 	}
 
@@ -217,12 +369,14 @@ int utility_test(const std::string& self_path)
 			thread tcp_thread([&] {
 				//while(!tcp_host_client.has_socket())
 				tcp_host_client = tcp_host.listen();
+				cout << "Host's client got connection info: " << tcp_host_client.info().format();
 			}, thread::speed::ONCE);
 
 			cout << "Trying to connect to host...";
 
 			TESTLU(tcp_client.setup(socket_config().set_family(socket_config::e_family::IPV4).set_port(12345)), "Can't connect to itself!");
 
+			cout << "Main client got connection info: " << tcp_client.info().format();
 			cout << "Connected. Syncing threads...";
 
 			while (!tcp_host_client.has_socket()) std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -583,9 +737,9 @@ int audio_test()
 	cout << console::color::DARK_BLUE << "======================================";
 
 	downloader download_audio;
-	file audio_file;
+	tempfile audio_file;
 
-	TESTLU(audio_file.open_temp("lunaris_debug_XXXXX.ogg", "wb+"), "Can't create temporary file for Audio testing!");
+	TESTLU(audio_file.open("lunaris_debug_XXXXX.ogg"), "Can't create temporary file for Audio testing!");
 
 	TESTLU(download_audio.get_store(fixed_audio_src_url, [&audio_file](const char* buf, const size_t siz) { if (!audio_file.write(buf, siz)) { cout << console::color::RED << "Failed once writing in temporary file!"; }}), "Can't download temporary file!");
 
@@ -620,7 +774,7 @@ int audio_test()
 
 	cout << "Loading Sample...";
 
-	TESTLU(my_sample.load(audio_file.get_current_path()), "Could not load temporary audio file named '" + audio_file.get_current_path() + "'!");
+	TESTLU(my_sample.load(audio_file.get_path()), "Could not load temporary audio file named '" + audio_file.get_path() + "'!");
 
 	cout << console::color::GREEN << "PASSED!";
 
@@ -797,7 +951,6 @@ int graphics_test()
 	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
 	display_async my_display;
-	file fp; // random file
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
@@ -808,7 +961,12 @@ int graphics_test()
 	const color mouse_has_collision = color(255, 127, 255);
 	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
+	auto bmppp = make_hybrid<texture>();
 	auto giffye = make_hybrid_derived<texture, texture_gif>();
+	auto tempfp = make_hybrid_derived<file, tempfile>(); // random file
+	tempfile* fp = (tempfile*)tempfp.get();
+	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
+	tempfile* fp2 = (tempfile*)tempfp2.get();
 	
 
 	cout << "Creating display...";
@@ -820,27 +978,42 @@ int graphics_test()
 
 		cout << "Opening temporary file for temporary GIF...'";
 
-		TESTLU(fp.open_temp("lunaris_XXXXX.tmp", "wb+"), "Failed to open temp file.");
+		TESTLU(fp->open("lunaris_XXXXX.gif"), "Failed to open temp file.");
+		TESTLU(fp2->open("lunaris_XXXXX.jpg"), "Failed to open temp file.");
 
 		cout << "Downloading random image from '" << fixed_my_catto_GIF_url << "'";
 
 		{
 			downloader down;
-			TESTLU(down.get_store(fixed_my_catto_GIF_url, [&](const char* buf, size_t len) { if (!fp.write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+			TESTLU(down.get_store(fixed_my_catto_GIF_url, [&](const char* buf, size_t len) { if (!fp->write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
 		}
 
-		cout << "Temporary image file perfectly saved at '" << fp.get_current_path() << "'";
-		fp.flush();
+		cout << "Downloading random image from '" << random_img_url << "'";
 
-		
-		TESTLU(oop->load(fp.get_current_path()), "Could not load GIF");
+		{
+			downloader down;
+			TESTLU(down.get_store(random_img_url, [&](const char* buf, size_t len) { if (!fp2->write(buf, len)) { cout << console::color::RED << "FATAL ERROR WRITING TO FILE! ABORT!"; std::terminate(); } }), "Failed to download random image.");
+		}
+
+		cout << "Temporary image files perfectly saved at '" << fp->get_path() << "' and '" << fp2->get_path() << "'";
+		TESTLU(tempfp->flush(), "Cannot flush GIF file");
+		TESTLU(tempfp2->flush(), "Cannot flush JPG file");
+
+
+		cout << "Loading image like memory...";
+		TESTLU(oop->load(tempfp), "Could not load GIF");
+		TESTLU(bmppp->load(tempfp2), "Could not load JPG");
+
+		cout << "GIF has avg=" << oop->get_interval_average() * 1000.0 << "ms;max=" << oop->get_interval_longest() * 1000.0 << "ms;min=" << oop->get_interval_shortest() * 1000.0 << "ms interval info.";
 
 		topleft_dc.texture_insert(giffye);
+		topleft_dc.texture_insert(bmppp);
 		//topleft_dc.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(1.0f, 1.0f, 1.0f, 0.01f));
 		topleft_dc.set<float>(enum_sprite_float_e::POS_X, 0.7f);
 		topleft_dc.set<float>(enum_sprite_float_e::POS_Y, -0.7f);
 		topleft_dc.set<float>(enum_sprite_float_e::SCALE_G, 0.4f);
 		topleft_dc.set<float>(enum_sprite_float_e::SCALE_X, 1.2f);
+		topleft_dc.set<double>(enum_block_double_e::DRAW_FRAMES_PER_SECOND, 3.0);
 		topleft_dc.set<color>(enum_sprite_color_e::DRAW_TINT, color(0.7f, 0.7f, 0.7f, 0.7f));
 		topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_USE_COLOR, true);
 		//topleft_dc.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, true);
@@ -981,10 +1154,10 @@ int graphics_test()
 		one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
 		//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
 		if (res.dir_to != 0) {
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_op::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
+			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
 			one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
 		}
 		//if (res.dir_to != 0) {
@@ -1067,6 +1240,15 @@ int graphics_test()
 
 	col_and_tools.join();
 	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Closing..."));
+
+	my_display.hook_draw_function([](const auto&) {std::this_thread::sleep_for(std::chrono::milliseconds(100)); }); // change
+	my_display.add_run_once_in_drawing_thread([&] {
+		font_u->destroy();
+		bmppp->destroy();
+		giffye->destroy();
+	}).wait();
+
+
 	my_display.destroy();
 	// the rest should be fine.
 

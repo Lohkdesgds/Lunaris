@@ -94,7 +94,7 @@ namespace Lunaris {
 		al_hold_bitmap_drawing(false);
 
 		transf_back.apply();
-	}					// NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! // NOT DONE! 
+	}
 
 	LUNARIS_DECL text::text() :
 		sprite(),

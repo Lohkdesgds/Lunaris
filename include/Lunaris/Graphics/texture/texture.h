@@ -3,12 +3,15 @@
 #include <Lunaris/__macro/macros.h>
 #include <Lunaris/Graphics/color.h>
 #include <Lunaris/Imported/algif5.h>
+#include <Lunaris/Utility/file.h>
+#include <Lunaris/Utility/memory.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #include <stdexcept>
 #include <string>
+
 
 namespace Lunaris {
 
@@ -21,16 +24,20 @@ namespace Lunaris {
 		int width = 0;
 		int height = 0;
 		std::string path;
+		hybrid_memory<file> fileref;
 
 		texture_config& set_format(const int);
 		texture_config& set_flags(const int);
 		texture_config& set_width(const int);
 		texture_config& set_height(const int);
+		texture_config& set_path(const std::string&);
+		texture_config& set_file(const hybrid_memory<file>&);
 	};
 
 	class texture {
 	protected:
 		ALLEGRO_BITMAP* bitmap = nullptr;
+		hybrid_memory<file> fileref;
 
 		virtual bool check_ready() const;
 	public:
@@ -49,7 +56,8 @@ namespace Lunaris {
 		bool create(const std::string&);
 
 		bool load(const texture_config&);
-		bool load(const std::string&);
+		virtual bool load(const std::string&);
+		virtual bool load(hybrid_memory<file>);
 
 		texture duplicate();
 		texture create_sub(const int, const int, const int, const int);
@@ -60,6 +68,7 @@ namespace Lunaris {
 		int get_flags() const;
 
 		virtual ALLEGRO_BITMAP* get_raw_bitmap() const;
+		operator ALLEGRO_BITMAP* () const;
 
 		virtual bool empty() const;
 
@@ -222,6 +231,7 @@ namespace Lunaris {
 		void operator=(const texture_gif&) = delete;
 
 		bool load(const std::string&);
+		bool load(const hybrid_memory<file>&);
 
 		int get_width() const;
 		int get_height() const;
@@ -229,6 +239,10 @@ namespace Lunaris {
 		ALLEGRO_BITMAP* get_raw_bitmap() const;
 		bool empty();
 		void destroy();
+
+		double get_interval_average() const;
+		double get_interval_longest() const;
+		double get_interval_shortest() const;
 
 		using texture::duplicate;
 		using texture::draw_at;

@@ -8,6 +8,10 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
+#ifdef _WIN32
+#include <allegro5/allegro_windows.h>
+#include <Windows.h>
+#endif
 #include <vector>
 #include <stdexcept>
 #include <string>
@@ -67,6 +71,9 @@ namespace Lunaris {
 		ALLEGRO_TRANSFORM latest_transform{}; // useful elsewhere, trust me (see mouse)
 		double last_event_check = 0.0;
 		bool economy_mode = false;
+#ifdef _WIN32
+		HICON last_icon_handle = nullptr;
+#endif
 
 		safe_data<std::function<void(const ALLEGRO_EVENT&)>> hooked_events;
 	public:
@@ -103,6 +110,11 @@ namespace Lunaris {
 		int get_flags() const;
 
 		void toggle_flag(const int);
+
+		bool set_icon(ALLEGRO_BITMAP*);
+#ifdef _WIN32
+		bool set_icon_from_icon_resource(const int);
+#endif
 
 		// only if use_basic_internal_event_system is enabled
 		bool get_is_economy_mode_activated() const;
@@ -151,7 +163,8 @@ namespace Lunaris {
 
 		future<bool> add_run_once_in_drawing_thread(std::function<void(void)>);
 
-		void destroy();
+		// skip exceptions?
+		void destroy(const bool = false);
 
 		using display::set_window_title;
 		using display::hook_event_handler;

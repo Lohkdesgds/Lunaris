@@ -240,55 +240,6 @@ namespace Lunaris {
     template<typename Hint, typename... Keys>
     using multi_map_work = __multi_map_work<multi_map<Hint, Keys...>, Hint, Keys...>;
 
-
-    /*template<template <typename, typename...> class MultiMap, typename Hint, typename... Types>
-    class __multi_map_work : protected MultiMap<Hint, Types...> {
-    public:
-        using MultiMap<Hint, Types...>::MultiMap;
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0>
-        Hint& get(const O&);
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0>
-        const Hint& get(const O&) const;
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0>
-        void set(const O&, const Hint&);
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0> // O is necessary like a key so many hierarchy of same return type don't collide
-        auto& index(const size_t);
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0> // O is necessary like a key so many hierarchy of same return type don't collide
-        size_t size();
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0> // O is necessary like a key so many hierarchy of same return type don't collide
-        typename MultiMap<Hint, Types...>& self();
-    };
-
-    template<template <typename, size_t, typename...> class MultiMap, size_t siz, typename Hint, typename... Types>
-    class __fixed_multi_map_work : protected MultiMap<Hint, siz, Types...> {
-    public:
-        using MultiMap<Hint, siz, Types...>::MultiMap;
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0>
-        Hint& get(const O&);
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0>
-        const Hint& get(const O&) const;
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0>
-        void set(const O&, const Hint&);
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0> // O is necessary like a key so many hierarchy of same return type don't collide
-        auto& index(const size_t);
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0> // O is necessary like a key so many hierarchy of same return type don't collide
-        size_t size();
-
-        template<typename V, typename O, std::enable_if_t<(std::is_same_v<V, Hint> && (std::disjunction_v<std::is_same<O, Types>...>)), int> = 0> // O is necessary like a key so many hierarchy of same return type don't collide
-        typename MultiMap<Hint, siz, Types...>& self();
-    };*/
-
 }
 
 #include "multi_map.ipp"

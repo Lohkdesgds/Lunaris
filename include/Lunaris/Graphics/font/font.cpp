@@ -37,6 +37,14 @@ namespace Lunaris {
 	LUNARIS_DECL font_config& font_config::set_path(const std::string& var)
 	{
 		path = var;
+		fileref.reset_this();
+		return *this;
+	}
+
+	LUNARIS_DECL font_config& font_config::set_file(const hybrid_memory<file>& var)
+	{
+		fileref = var;
+		path.clear();
 		return *this;
 	}
 
@@ -47,10 +55,10 @@ namespace Lunaris {
 
 	LUNARIS_DECL font::font(const font_config& conf)
 	{
-		if (conf.path.empty()) {
-			if (!create_builtin_font()) throw std::runtime_error("Can't create builtin font!");
+		if ((!conf.path.empty()) || (!conf.fileref.empty() && conf.fileref->size() > 0)) {
+			if (!load(conf)) throw std::runtime_error("Can't create font!");
 		}
-		else if (!load(conf)) throw std::runtime_error("Can't create font!");
+		else if (!create_builtin_font()) throw std::runtime_error("Can't create builtin font!");
 	}
 
 	LUNARIS_DECL font::~font()
@@ -59,14 +67,15 @@ namespace Lunaris {
 	}
 
 	LUNARIS_DECL font::font(font&& oth) noexcept
-		: font_ptr(oth.font_ptr)
-	{
+		: font_ptr(oth.font_ptr), fileref(std::move(oth.fileref))
+	{		
 		oth.font_ptr = nullptr;
 	}
 
 	LUNARIS_DECL void font::operator=(font&& oth) noexcept
 	{
 		destroy();
+		fileref = std::move(oth.fileref);
 		font_ptr = oth.font_ptr;
 		oth.font_ptr = nullptr;
 	}
@@ -84,17 +93,24 @@ namespace Lunaris {
 		__font_allegro_start();
 		destroy();
 
-		if (conf.path.empty() || conf.resolution == 0) 
-			return false;
+//		if (conf.path->empty() || conf.resolution == 0) 
+//			return false;
 
 		if (conf.bmp_flags != 0)
 			al_set_new_bitmap_flags(conf.bmp_flags);
 
 		if (conf.ttf) {
-			font_ptr = al_load_ttf_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+			if (!conf.path.empty()) font_ptr = al_load_ttf_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+			else if (!conf.fileref.empty() && conf.fileref->size() > 0) {
+				fileref = conf.fileref;
+				fileref->modify_no_destroy(true); // very specific: https://www.allegro.cc/manual/5/al_load_ttf_font_f: `The file handle is owned by the returned ALLEGRO_FONT object and must not be freed by the caller, as FreeType expects to be able to read from it at a later time.`
+				fileref->seek(0, file::seek_mode_e::BEGIN);
+				font_ptr = al_load_ttf_font_f(fileref->get_fp(), fileref->get_path().c_str(), conf.resolution, conf.font_flags);
+			}
 		}
 		else {
-			font_ptr = al_load_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+			if (!conf.path.empty()) font_ptr = al_load_font(conf.path.c_str(), conf.resolution, conf.font_flags);
+			//else if (conf.fileref && conf.fileref->get().size() > 0) font_ptr = al_grab_font_from_bitmap() // al_load_font_f is not supported
 		}
 
 		return font_ptr != nullptr;
@@ -105,6 +121,14 @@ namespace Lunaris {
 		font_config conf;
 		conf.path = path;
 		conf.ttf = ttf;
+		return load(conf);
+	}
+
+	LUNARIS_DECL bool font::load(const hybrid_memory<file>& ref)
+	{
+		font_config conf;
+		conf.fileref = ref;
+		conf.ttf = true;
 		return load(conf);
 	}
 

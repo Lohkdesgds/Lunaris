@@ -2,6 +2,8 @@
 
 #include <Lunaris/__macro/macros.h>
 #include <Lunaris/Graphics/color.h>
+#include <Lunaris/Utility/file.h>
+#include <Lunaris/Utility/memory.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
@@ -9,6 +11,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <stdexcept>
 #include <string>
+#include <optional>
 
 namespace Lunaris {
 
@@ -20,16 +23,19 @@ namespace Lunaris {
 		bool ttf = true;
 		int resolution = 50;
 		std::string path;
+		hybrid_memory<file> fileref;
 
 		font_config& set_bitmap_flags(const int);
 		font_config& set_font_flags(const int);
 		font_config& set_is_ttf(const bool);
 		font_config& set_resolution(const int);
 		font_config& set_path(const std::string&);
+		font_config& set_file(const hybrid_memory<file>&);
 	};
 
 	class font {
 		ALLEGRO_FONT* font_ptr = nullptr;
+		hybrid_memory<file> fileref;
 
 		bool check_ready() const;
 	public:
@@ -47,6 +53,8 @@ namespace Lunaris {
 
 		bool load(const font_config&);
 		bool load(const std::string&, const bool);
+		// assume TTF
+		bool load(const hybrid_memory<file>&);
 
 		ALLEGRO_FONT* get_raw_font() const;
 

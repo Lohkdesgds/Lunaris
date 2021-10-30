@@ -154,14 +154,14 @@ namespace Lunaris {
 		}
 	}
 
-	LUNARIS_DECL bool collisionable::result::is_dir(const direction_op& op)
+	LUNARIS_DECL bool collisionable::result::is_dir(const direction_combo& op)
 	{
 		return (dir_to & (static_cast<int>(op))) != 0;
 	}
 
-	LUNARIS_DECL collisionable::raw_result collisionable::each_pt_col(const float& px, const float& py, const collisionable& oth) const
+	LUNARIS_DECL collisionable::each_result collisionable::each_pt_col(const float& px, const float& py, const collisionable& oth) const
 	{
-		raw_result _tmp;
+		each_result _tmp;
 
 		float area[4];
 
@@ -210,7 +210,7 @@ namespace Lunaris {
 			for (; index < 4; index++) if (_quick_small == fabsf(area[index])) break;
 			if (index == 4) return _tmp;
 
-			_tmp.dir_to_raw = static_cast<direction_index>(index);
+			_tmp.one_direction = static_cast<direction_index>(index);
 
 			const float speed_dx = speedx - oth.speedx;
 			const float speed_dy = speedy - oth.speedy;
@@ -228,7 +228,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL collisionable::result collisionable::combine_to(const collisionable& othr)
 	{
-		raw_result arr[4];
+		each_result arr[4];
 		result res;
 
 		arr[0] = each_pt_col(othr.nwx, othr.nwy, othr);
@@ -242,12 +242,12 @@ namespace Lunaris {
 		//arr[7] = othr.each_pt_col(sex, sey, *this);
 
 		//for (size_t p = 4; p < 8; p++) {
-		//	arr[p].dir_to_raw = fix_index_inverse(arr[p].dir_to_raw);
+		//	arr[p].one_direction = fix_index_inverse(arr[p].one_direction);
 		//}
 
 		unsigned opts[4] = { 0u,0u,0u,0u };
 
-		for (const auto& i : arr) { if (i.dir_to_raw != direction_index::NONE) { ++opts[static_cast<int>(i.dir_to_raw)]; res.moment_dir += i.moment_dir; } }
+		for (const auto& i : arr) { if (i.one_direction != direction_index::NONE) { ++opts[static_cast<int>(i.one_direction)]; res.moment_dir += i.moment_dir; } }
 
 		unsigned maxval = 0;
 		for (const auto& i : opts) if (maxval < i) maxval = i; // find max val
@@ -258,16 +258,16 @@ namespace Lunaris {
 			if (i == maxval) {
 				switch (p) {
 				case static_cast<int>(direction_index::NORTH):
-					res.dir_to |= static_cast<int>(direction_op::DIR_NORTH);
+					res.dir_to |= static_cast<int>(direction_combo::DIR_NORTH);
 					break;
 				case static_cast<int>(direction_index::SOUTH):
-					res.dir_to |= static_cast<int>(direction_op::DIR_SOUTH);
+					res.dir_to |= static_cast<int>(direction_combo::DIR_SOUTH);
 					break;
 				case static_cast<int>(direction_index::EAST):
-					res.dir_to |= static_cast<int>(direction_op::DIR_EAST);
+					res.dir_to |= static_cast<int>(direction_combo::DIR_EAST);
 					break;
 				case static_cast<int>(direction_index::WEST):
-					res.dir_to |= static_cast<int>(direction_op::DIR_WEST);
+					res.dir_to |= static_cast<int>(direction_combo::DIR_WEST);
 					break;
 				}
 			}
@@ -318,58 +318,58 @@ namespace Lunaris {
 		}
 	}
 
-	LUNARIS_DECL int collisionable::fix_op_rot_each(const direction_op a)
+	LUNARIS_DECL int collisionable::fix_op_rot_each(const direction_combo a)
 	{
 		switch (a) {
-		case direction_op::DIR_NORTH:
+		case direction_combo::DIR_NORTH:
 			switch (fix_index_rot(direction_index::NORTH)) {
 			case direction_index::NORTH:
-				return static_cast<int>(direction_op::DIR_NORTH);
+				return static_cast<int>(direction_combo::DIR_NORTH);
 			case direction_index::SOUTH:
-				return static_cast<int>(direction_op::DIR_SOUTH);
+				return static_cast<int>(direction_combo::DIR_SOUTH);
 			case direction_index::EAST:
-				return static_cast<int>(direction_op::DIR_EAST);
+				return static_cast<int>(direction_combo::DIR_EAST);
 			case direction_index::WEST:
-				return static_cast<int>(direction_op::DIR_WEST);
+				return static_cast<int>(direction_combo::DIR_WEST);
 			default:
 				return 0;
 			}
-		case direction_op::DIR_SOUTH:
+		case direction_combo::DIR_SOUTH:
 			switch (fix_index_rot(direction_index::SOUTH)) {
 			case direction_index::NORTH:
-				return static_cast<int>(direction_op::DIR_NORTH);
+				return static_cast<int>(direction_combo::DIR_NORTH);
 			case direction_index::SOUTH:
-				return static_cast<int>(direction_op::DIR_SOUTH);
+				return static_cast<int>(direction_combo::DIR_SOUTH);
 			case direction_index::EAST:
-				return static_cast<int>(direction_op::DIR_EAST);
+				return static_cast<int>(direction_combo::DIR_EAST);
 			case direction_index::WEST:
-				return static_cast<int>(direction_op::DIR_WEST);
+				return static_cast<int>(direction_combo::DIR_WEST);
 			default:
 				return 0;
 			}
-		case direction_op::DIR_EAST:
+		case direction_combo::DIR_EAST:
 			switch (fix_index_rot(direction_index::EAST)) {
 			case direction_index::NORTH:
-				return static_cast<int>(direction_op::DIR_NORTH);
+				return static_cast<int>(direction_combo::DIR_NORTH);
 			case direction_index::SOUTH:
-				return static_cast<int>(direction_op::DIR_SOUTH);
+				return static_cast<int>(direction_combo::DIR_SOUTH);
 			case direction_index::EAST:
-				return static_cast<int>(direction_op::DIR_EAST);
+				return static_cast<int>(direction_combo::DIR_EAST);
 			case direction_index::WEST:
-				return static_cast<int>(direction_op::DIR_WEST);
+				return static_cast<int>(direction_combo::DIR_WEST);
 			default:
 				return 0;
 			}
-		case direction_op::DIR_WEST:
+		case direction_combo::DIR_WEST:
 			switch (fix_index_rot(direction_index::WEST)) {
 			case direction_index::NORTH:
-				return static_cast<int>(direction_op::DIR_NORTH);
+				return static_cast<int>(direction_combo::DIR_NORTH);
 			case direction_index::SOUTH:
-				return static_cast<int>(direction_op::DIR_SOUTH);
+				return static_cast<int>(direction_combo::DIR_SOUTH);
 			case direction_index::EAST:
-				return static_cast<int>(direction_op::DIR_EAST);
+				return static_cast<int>(direction_combo::DIR_EAST);
 			case direction_index::WEST:
-				return static_cast<int>(direction_op::DIR_WEST);
+				return static_cast<int>(direction_combo::DIR_WEST);
 			default:
 				return 0;
 			}
@@ -381,20 +381,20 @@ namespace Lunaris {
 	LUNARIS_DECL int collisionable::fix_op_rot(const int o)
 	{
 		int res = 0;
-		if ((o & static_cast<int>(direction_op::DIR_NORTH)) != 0) res |= fix_op_rot_each(direction_op::DIR_NORTH);
-		if ((o & static_cast<int>(direction_op::DIR_SOUTH)) != 0) res |= fix_op_rot_each(direction_op::DIR_SOUTH);
-		if ((o & static_cast<int>(direction_op::DIR_EAST)) != 0)  res |= fix_op_rot_each(direction_op::DIR_EAST);
-		if ((o & static_cast<int>(direction_op::DIR_WEST)) != 0)  res |= fix_op_rot_each(direction_op::DIR_WEST);
+		if ((o & static_cast<int>(direction_combo::DIR_NORTH)) != 0) res |= fix_op_rot_each(direction_combo::DIR_NORTH);
+		if ((o & static_cast<int>(direction_combo::DIR_SOUTH)) != 0) res |= fix_op_rot_each(direction_combo::DIR_SOUTH);
+		if ((o & static_cast<int>(direction_combo::DIR_EAST)) != 0)  res |= fix_op_rot_each(direction_combo::DIR_EAST);
+		if ((o & static_cast<int>(direction_combo::DIR_WEST)) != 0)  res |= fix_op_rot_each(direction_combo::DIR_WEST);
 		return res;
 	}
 
 	LUNARIS_DECL int collisionable::fix_op_invert(const int o)
 	{
 		int res = 0;
-		if ((o & static_cast<int>(direction_op::DIR_NORTH)) != 0) res |= static_cast<int>(direction_op::DIR_SOUTH);
-		if ((o & static_cast<int>(direction_op::DIR_SOUTH)) != 0) res |= static_cast<int>(direction_op::DIR_NORTH);
-		if ((o & static_cast<int>(direction_op::DIR_EAST)) != 0)  res |= static_cast<int>(direction_op::DIR_WEST);
-		if ((o & static_cast<int>(direction_op::DIR_WEST)) != 0)  res |= static_cast<int>(direction_op::DIR_EAST);
+		if ((o & static_cast<int>(direction_combo::DIR_NORTH)) != 0) res |= static_cast<int>(direction_combo::DIR_SOUTH);
+		if ((o & static_cast<int>(direction_combo::DIR_SOUTH)) != 0) res |= static_cast<int>(direction_combo::DIR_NORTH);
+		if ((o & static_cast<int>(direction_combo::DIR_EAST)) != 0)  res |= static_cast<int>(direction_combo::DIR_WEST);
+		if ((o & static_cast<int>(direction_combo::DIR_WEST)) != 0)  res |= static_cast<int>(direction_combo::DIR_EAST);
 		return res;
 	}
 
@@ -463,6 +463,16 @@ namespace Lunaris {
 	LUNARIS_DECL void collisionable::set_work(const std::function<void(result, sprite&)> f)
 	{
 		workar = f;
+	}
+
+	LUNARIS_DECL collisionable::each_result collisionable::quick_one_point_overlap(const float px, const float py)
+	{
+		return each_pt_col(px, py, *this);
+	}
+
+	LUNARIS_DECL collisionable::result collisionable::quick_one_sprite_overlap(const collisionable& oth)
+	{
+		return combine_to(oth);
 	}
 
 	LUNARIS_DECL void collisionable::set_work_works_all_cases(const bool var)

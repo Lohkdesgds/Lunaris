@@ -57,7 +57,7 @@ int LZW_decode(ALLEGRO_FILE*, ALGIF_BITMAP*);
 void read_palette(ALLEGRO_FILE* file, ALGIF_PALETTE* palette);
 void deinterlace(ALGIF_BITMAP* bmp);
 
-ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE*);
+ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE*, const bool = true);
 ALGIF_ANIMATION* algif_load_animation_f(ALLEGRO_FILE*);
 ALGIF_ANIMATION* algif_load_animation(char const*);
 void algif_render_frame(ALGIF_ANIMATION*, int, int, int);
