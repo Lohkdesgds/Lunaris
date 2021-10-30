@@ -141,11 +141,11 @@ namespace Lunaris {
 
 #ifdef _WIN32 // && _MSC_VER
 	// resource.h defined value like IDR_TTF1, id, expected extension (".jpg", ".png", ...)
-	tempfile __get_executable_resource_as_file(const int, const WinString, const std::string&);
+	tempfile get_executable_resource_as_file(const int, const WinString&, const std::string&);
 	// resource.h defined value like IDR_TTF1, id as enum, expected extension (".jpg", ".png", ...)
 	tempfile get_executable_resource_as_file(const int, const resource_type_e, const std::string&);
 	// resource.h defined value like IDR_TTF1, id
-	memfile __get_executable_resource_as_memfile(const int, const WinString);
+	memfile get_executable_resource_as_memfile(const int, const WinString&);
 	// resource.h defined value like IDR_TTF1, id as enum
 	memfile get_executable_resource_as_memfile(const int, const resource_type_e);
 #endif

@@ -207,7 +207,7 @@ namespace Lunaris {
 
 
 #if (_MSC_VER && _WIN32)
-	LUNARIS_DECL tempfile __get_executable_resource_as_file(const int id, const WinString type, const std::string& extn)
+	LUNARIS_DECL tempfile get_executable_resource_as_file(const int id, const WinString& type, const std::string& extn)
 	{
 		HRSRC src = FindResource(NULL, MAKEINTRESOURCE(id), type);
 		if (src != NULL) {
@@ -235,10 +235,10 @@ namespace Lunaris {
 
 	LUNARIS_DECL tempfile get_executable_resource_as_file(const int id, const resource_type_e type, const std::string& extn)
 	{
-		return __get_executable_resource_as_file(id, (WinString)((ULONG_PTR)((WORD)(type))), extn);
+		return get_executable_resource_as_file(id, (WinString)((ULONG_PTR)((WORD)(type))), extn);
 	}
 
-	LUNARIS_DECL memfile __get_executable_resource_as_memfile(const int id, const WinString type)
+	LUNARIS_DECL memfile get_executable_resource_as_memfile(const int id, const WinString& type)
 	{
 		HRSRC src = FindResource(NULL, MAKEINTRESOURCE(id), type);
 		if (src != NULL) {
@@ -266,7 +266,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL memfile get_executable_resource_as_memfile(const int id, const resource_type_e type)
 	{
-		return __get_executable_resource_as_memfile(id, (WinString)((ULONG_PTR)((WORD)(type))));
+		return get_executable_resource_as_memfile(id, (WinString)((ULONG_PTR)((WORD)(type))));
 	}
 #endif
 }
