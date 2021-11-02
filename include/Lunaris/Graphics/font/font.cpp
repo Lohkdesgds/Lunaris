@@ -106,11 +106,19 @@ namespace Lunaris {
 				fileref->modify_no_destroy(true); // very specific: https://www.allegro.cc/manual/5/al_load_ttf_font_f: `The file handle is owned by the returned ALLEGRO_FONT object and must not be freed by the caller, as FreeType expects to be able to read from it at a later time.`
 				fileref->seek(0, file::seek_mode_e::BEGIN);
 				font_ptr = al_load_ttf_font_f(fileref->get_fp(), fileref->get_path().c_str(), conf.resolution, conf.font_flags);
+				if (!font_ptr) {
+					fileref->modify_no_destroy(false); // as this is not hooked like file, I think it can just die lol
+					font_ptr = al_load_ttf_font(fileref->get_path().c_str(), conf.resolution, conf.font_flags); // hacky way, file will still be there
+				}
 			}
 		}
 		else {
 			if (!conf.path.empty()) font_ptr = al_load_font(conf.path.c_str(), conf.resolution, conf.font_flags);
-			//else if (conf.fileref && conf.fileref->get().size() > 0) font_ptr = al_grab_font_from_bitmap() // al_load_font_f is not supported
+			else if (!conf.fileref.empty() && conf.fileref->size() > 0) { // as of a hacky way
+				fileref = conf.fileref;
+				fileref->seek(0, file::seek_mode_e::BEGIN);
+				font_ptr = al_load_font(fileref->get_path().c_str(), conf.resolution, conf.font_flags); // al_load_font_f is not supported
+			}
 		}
 
 		return font_ptr != nullptr;

@@ -99,16 +99,8 @@ namespace Lunaris {
 		else if (!conf.fileref.empty() && conf.fileref->size() > 0) {
 			fileref = conf.fileref;
 			fileref->seek(0, file::seek_mode_e::BEGIN);
-			//fileref->modify_no_destroy(true); // unhappy
-			//const auto* ident = al_identify_bitmap_f(fileref->get_fp());
-			//if (!ident) { // direct raw test, what if.
-			//	if (!(bitmap = al_load_bitmap_f(fileref->get_fp(), ".png")))
-			//		if (!(bitmap = al_load_bitmap_f(fileref->get_fp(), ".jpg")))
-			//			if (!(bitmap = al_load_bitmap_f(fileref->get_fp(), ".webp")))
-			//				bitmap = al_load_bitmap_f(fileref->get_fp(), ".bmp");
-			//}
-			//else bitmap = al_load_bitmap_f(fileref->get_fp(), ident);
-			bitmap = al_load_bitmap_f(fileref->get_fp(), al_identify_bitmap_f(fileref->get_fp()));
+			bitmap = al_load_bitmap_f(fileref->get_fp(), nullptr); // al_identify_bitmap_f(fileref->get_fp())
+			if (!bitmap) bitmap = al_load_bitmap(fileref->get_path().c_str()); // the path will still work while the file is hooked here lol
 		}
 		else if (conf.width > 0 && conf.height > 0) {
 			bitmap = al_create_bitmap(conf.width, conf.height);
@@ -345,7 +337,10 @@ namespace Lunaris {
 		if (fp.empty() || fp->size() == 0) return false;
 		fileref = fp;
 
-		if (!(animation = algif_load_animation_f(fileref->get_fp()))) return false;
+		if (!(animation = algif_load_animation_f(fileref->get_fp()))) {
+			if (!(animation = algif_load_animation(fileref->get_path().c_str()))) // direct path may work lol, the file will exist until the end (I think)
+				return false;
+		}
 		//fileref->modify_no_destroy(true); // unhappy
 
 		start_time = al_get_time();
