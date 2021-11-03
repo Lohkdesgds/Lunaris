@@ -42,13 +42,13 @@ namespace Lunaris {
 	template<typename T>
 	inline const T* hybrid_memory<T>::get() const
 	{
-		return m_ptr->get();
+		return m_ptr.get() ? m_ptr->get() : nullptr;
 	}
 
 	template<typename T>
 	inline T* hybrid_memory<T>::get()
 	{
-		return m_ptr->get();
+		return m_ptr.get() ? m_ptr->get() : nullptr;
 	}
 
 	template<typename T>

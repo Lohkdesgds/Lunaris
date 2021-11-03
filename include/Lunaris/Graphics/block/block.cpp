@@ -80,7 +80,7 @@ namespace Lunaris {
 
 		if (frame >= textures.size()) frame = static_cast<size_t>(textures.size() - 1);
 
-		generic_draw_no_lock(*textures[frame]);
+		if (!textures[frame].empty()) generic_draw_no_lock(*textures[frame]);
 	}
 
 	LUNARIS_DECL block::block() :
