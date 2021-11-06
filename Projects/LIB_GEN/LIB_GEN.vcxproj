@@ -19,9 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\all.h" />
     <ClInclude Include="..\..\include\Lunaris\audio.h" />
     <ClInclude Include="..\..\include\Lunaris\Audio\mixer.h" />
@@ -89,6 +86,8 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\package.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package\package.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package\package.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\path.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\path\path.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\process.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp" />
@@ -132,10 +131,14 @@
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\path\path.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\include\Lunaris\_readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

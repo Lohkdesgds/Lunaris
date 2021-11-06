@@ -165,6 +165,40 @@ int utility_test(const std::string& self_path)
 
 	cout << console::color::GREEN << "Console is probably working (you can see me, right?)";
 
+	cout << console::color::LIGHT_PURPLE << "Testing 'paths'...";
+	{
+		cout << "Checking for common paths...";
+
+		cout << "Name of the app: " << get_app_name();
+		cout << "Changing app name to 'MY APP'...";
+		set_app_name("MY APP");
+		cout << "Name of the app now: " << get_app_name();
+
+		cout << "Checking for common paths (expected: MY APP somewhere sometimes)...";
+
+		cout << "Found path: '" << get_standard_path(ALLEGRO_RESOURCES_PATH) << "'";
+		cout << "Found path: '" << get_standard_path(ALLEGRO_TEMP_PATH) << "'";
+		cout << "Found path: '" << get_standard_path(ALLEGRO_USER_DATA_PATH) << "'";
+		cout << "Found path: '" << get_standard_path(ALLEGRO_USER_HOME_PATH) << "'";
+		cout << "Found path: '" << get_standard_path(ALLEGRO_USER_SETTINGS_PATH) << "'";
+		cout << "Found path: '" << get_standard_path(ALLEGRO_USER_DOCUMENTS_PATH) << "'";
+		cout << "Found path: '" << get_standard_path(ALLEGRO_EXENAME_PATH) << "'";
+
+		cout << "Creating random paths...";
+
+		make_path(get_standard_path() + "POGGERSFOLDER/DEEP/");
+		make_path(get_standard_path() + "POGGERSFOLDER/OTHERDEEP/");
+
+		cout << "Erasing them...";
+
+		size_t amount = remove_all(get_standard_path());
+		cout << "Removed " << amount << " paths.";
+
+		TESTLU(amount == 4, "Wait, that's not right... Wrong number of paths erased!");
+		
+		cout << console::color::GREEN << "PASSED!";
+	}
+
 	cout << console::color::LIGHT_PURPLE << "Testing 'config'...";
 	{
 		const std::string temp_path_conf = "temp_conf.conf";
