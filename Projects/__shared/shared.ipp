@@ -135,6 +135,21 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
+	//{
+	//	display disp;
+	//	disp.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1000).set_height(1000)));
+	//	transform t1;
+	//	t1.build_classic_fixed_proportion_auto(1.0f, 4.0f);
+	//	t1.translate_inverse(-0.25f, 0.0f);
+	//
+	//	float sx = 0.0f, sy = 0.0f;
+	//
+	//	cout << (t1.in_range_store(0.5f, 0.5f, sx, sy, 2.0f) ? "IN RANGE" : "NOP");
+	//	cout << sx << "x; " << sy << "y";
+	//
+	//	disp.destroy();
+	//}
+	//return 0;
 
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
@@ -988,6 +1003,7 @@ int graphics_test()
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
+	float off_x = 0.0f, off_y = 0.0f, zuum = 1.0f;
 	collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
@@ -1005,7 +1021,7 @@ int graphics_test()
 
 	cout << "Creating display...";
 
-	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1280).set_height(720)).set_window_title("GRAPHICS TEST").set_extra_flags(ALLEGRO_DIRECT3D_INTERNAL | ALLEGRO_RESIZABLE)), "Failed to create the display");
+	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1800).set_height(900)).set_window_title("GRAPHICS TEST").set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)), "Failed to create the display");
 
 	{
 		texture_gif* oop = (texture_gif*)giffye.get();
@@ -1064,8 +1080,10 @@ int graphics_test()
 	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 	txt_main.set<float>(enum_sprite_float_e::SCALE_G, 0.1f);
 	txt_main.set<float>(enum_sprite_float_e::SCALE_X, 0.3f);
-	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.992f);
-	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.992f);
+	//txt_main.set<float>(enum_sprite_float_e::POS_X, -0.992f);
+	//txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.992f);
+	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.792f);
+	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.792f);
 	txt_main.set<float>(enum_sprite_float_e::DRAW_MOVEMENT_RESPONSIVENESS, 3.0f);
 	for (int __c = 1; 255 - 25 * __c > 0; __c++) {
 		int ctee = (255 - 25 * __c);
@@ -1075,17 +1093,19 @@ int graphics_test()
 	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.25f);
 	blk_mouse.set<float>(enum_sprite_float_e::POS_X, -0.3f);
 	blk_mouse.set<float>(enum_sprite_float_e::POS_Y, -0.3f);
+	blk_mouse.set<float>(enum_sprite_float_e::OUT_OF_SIGHT_POS, 0.8f);
 	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX, true);
 
 	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255,255,255));
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
 	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.5f);
+	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 
 	cout << "Applying default transformation to display...";
 
 	my_display.add_run_once_in_drawing_thread([&my_display] {
 		transform transf;
-		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 1.0f, 1.0f);
+		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 2.0f, 1.0f);
 		transf.apply();
 	});
 
@@ -1155,7 +1175,7 @@ int graphics_test()
 
 	cout << "Setting up display events function...";
 
-	my_display.hook_event_handler([&keep_running_things](const ALLEGRO_EVENT& ev) {
+	my_display.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum](const ALLEGRO_EVENT& ev) {
 		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.type << " triggered.";
 		
 		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
@@ -1165,20 +1185,65 @@ int graphics_test()
 		else if (ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE) {
 			cout << console::color::GREEN << "Screen size is now: " << ev.display.width << "x" << ev.display.height;
 			transform transf;
-			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, 1.0f, 1.0f);
+			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, 2.0f, zuum);
+			transf.translate_inverse(off_x, off_y);
+			cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 			transf.apply();
 		}
 	});
 
 	kb.hook_event([&](const keys::key_event& ev) {
-		if (ev.down && ev.key_id == ALLEGRO_KEY_F11) {
+		if (!ev.down) return;
+
+		switch(ev.key_id) {
+		case ALLEGRO_KEY_F11:
 			my_display.add_run_once_in_drawing_thread([&] {
 				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
 				transform transf;
-				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 1.0f, 1.0f);
+				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 2.0f, 1.0f);
 				transf.apply();
 			});
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			break;
+		case ALLEGRO_KEY_R:
+			cout << console::color::GREEN << "Randomizing camera...";
+			off_x = (random() % 1000) * 0.001f - 0.5f;
+			off_y = (random() % 1000) * 0.001f - 0.5f;
+			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum] {
+				transform transf;
+				transf.build_classic_fixed_proportion_auto(2.0f, zuum);
+				transf.translate_inverse(off_x, off_y);
+				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
+				transf.apply();
+			});
+			break;
+		case ALLEGRO_KEY_F:
+			cout << console::color::GREEN << "Randomizing zoom...";
+			zuum = 1.0f + (random() % 1000) * 0.002f - 0.5f;
+			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum] {
+				transform transf;
+				transf.build_classic_fixed_proportion_auto(2.0f, zuum);
+				transf.translate_inverse(off_x, off_y);
+				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
+				transf.apply();
+			});
+			break;
+		case ALLEGRO_KEY_0:
+			cout << console::color::GREEN << "Zeroing camera...";
+			off_x = 0.0f;
+			off_y = 0.0f;
+			zuum = 1.0f;
+			my_display.add_run_once_in_drawing_thread([off_x, off_y,zuum] {
+				transform transf;
+				transf.build_classic_fixed_proportion_auto(2.0f, 1.0f);
+				transf.translate_inverse(off_x, off_y);
+				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
+				float ax = -1.0f, ay = -1.0f;
+				transf.transform_inverse_coords(ax, ay);
+				cout << console::color::DARK_GREEN << "Converted inverse coords " << fabsf(ax) << " x " << fabsf(ay);
+				transf.apply();
+			});
+			break;
 		}
 	});
 

@@ -155,10 +155,11 @@ namespace Lunaris {
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_boolean_e::_SIZE), bool, enum_sprite_boolean_e>,
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_color_e::_SIZE), color, enum_sprite_color_e>
 	{
-		transform m_assist_transform{}; // it doesn't need to be created every time, and it can be shared between collision and drawing threads
+		transform m_assist_transform{}, m_assist_inuse{}; // it doesn't need to be created every time, and it can be shared between collision and drawing threads
 
-		float get_real_pos_x(const bool = false); // if DRAW_TRANSFORM_COORDS_KEEP_SCALE, it's the resulting pos. Bool: refresh m_assist_transform?
-		float get_real_pos_y(const bool = false); // if DRAW_TRANSFORM_COORDS_KEEP_SCALE, it's the resulting pos
+		//float get_real_pos_x(const bool = false); // if DRAW_TRANSFORM_COORDS_KEEP_SCALE, it's the resulting pos. Bool: refresh m_assist_transform?
+		//float get_real_pos_y(const bool = false); // if DRAW_TRANSFORM_COORDS_KEEP_SCALE, it's the resulting pos
+		//transform generate_cam() const;
 	protected:
 		// raw transform, adapted transform, limit_x, limit_y
 		virtual void draw_task(transform, transform, const float&, const float&) {}

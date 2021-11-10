@@ -2,29 +2,90 @@
 
 namespace Lunaris {
 
-	LUNARIS_DECL float sprite::get_real_pos_x(const bool refresh)
-	{
-		if (refresh) m_assist_transform.get_current_transform();
-
-		float limit_x = -1.f, limit_y = -1.f;
-		m_assist_transform.transform_inverse_coords(limit_x, limit_y);
-
-		limit_x = fabsf(limit_x); // maximum X position that it can draw with current transformation
-
-		return static_cast<float>(get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE) ? (get<float>(enum_sprite_float_e::POS_X) * static_cast<float>(limit_x)) : get<float>(enum_sprite_float_e::POS_X));
-	}
-
-	LUNARIS_DECL float sprite::get_real_pos_y(const bool refresh)
-	{
-		if (refresh) m_assist_transform.get_current_transform();
-
-		float limit_x = -1.f, limit_y = -1.f;
-		m_assist_transform.transform_inverse_coords(limit_x, limit_y);
-
-		limit_y = fabsf(limit_y); // maximum Y position that it can draw with current transformation
-
-		return static_cast<float>(get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE) ? (get<float>(enum_sprite_float_e::POS_Y) * static_cast<float>(limit_y)) : get<float>(enum_sprite_float_e::POS_Y));
-	}
+	//LUNARIS_DECL float sprite::get_real_pos_x(const bool refresh)
+	//{
+	//	if (!get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE)) return get<float>(enum_sprite_float_e::POS_X);
+	//
+	//	if (refresh) m_assist_transform.get_current_transform();
+	//
+	//	float clean_x = 0.0f, clean_y = 0.0f;
+	//	float off_x = 0.0f, off_y = 0.0f;
+	//	float times_comp[2] = { 0.0f,0.0f };
+	//
+	//	transform easy;
+	//	easy.build_classic_fixed_proportion_auto(1.0f, 1.0f);
+	//	easy.transform_inverse_coords(clean_x, clean_y);
+	//	m_assist_transform.transform_inverse_coords(off_x, off_y);
+	//	easy.compare_scale_of(m_assist_transform, times_comp[0], times_comp[1]);
+	//
+	//	return -clean_x * get<float>(enum_sprite_float_e::POS_X) + (off_x - clean_x);
+	//
+	//
+	//	//transform cpy = m_assist_transform;
+	//	//
+	//	//const float& ref = get<float>(enum_sprite_float_e::POS_X);
+	//	//
+	//	//float limits[4] = { 0.0f,0.0f,0.0f,0.0f };
+	//	//cpy.transform_inverse_coords(limits[0], limits[1]);
+	//	//cpy.translate(-100.0f, -100.0f);
+	//	//cpy.transform_inverse_coords(limits[2], limits[3]);
+	//	//const float scale_x = limits[2] - limits[0];
+	//	//const float scale_y = limits[3] - limits[1];
+	//	//const float divx = (limits[0] * 1.0f / scale_x);
+	//	//const float divy = (limits[1] * 1.0f / scale_y);
+	//	//
+	//	//const float limit_x = (fabsf(divx) - fabsf(static_cast<float>((int)divx)));
+	//	//const float limit_y = (fabsf(divy) - fabsf(static_cast<float>((int)divy)));
+	//	//
+	//	//return ref * divx - (divx + limits[0]);
+	//}
+	//
+	//LUNARIS_DECL float sprite::get_real_pos_y(const bool refresh)
+	//{
+	//	if (!get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE)) return get<float>(enum_sprite_float_e::POS_Y);
+	//
+	//	if (refresh) m_assist_transform.get_current_transform();
+	//
+	//
+	//	float clean_x = 0.0f, clean_y = 0.0f;
+	//	float off_x = 0.0f, off_y = 0.0f;
+	//	float times_comp[2] = { 0.0f,0.0f };
+	//
+	//	transform easy;
+	//	easy.build_classic_fixed_proportion_auto(1.0f, 1.0f);
+	//	easy.transform_inverse_coords(clean_x, clean_y);
+	//	m_assist_transform.transform_inverse_coords(off_x, off_y);
+	//	easy.compare_scale_of(m_assist_transform, times_comp[0], times_comp[1]);
+	//
+	//	return -clean_y * get<float>(enum_sprite_float_e::POS_Y) + (off_y - clean_y);
+	//
+	//	//transform easy;
+	//	//float propx = 1.0f, propy = 1.0f;
+	//	//
+	//	//easy.build_classic_fixed_proportion_auto(1.0f, 1.0f);
+	//	//m_assist_transform.compare_scale_of(easy, propx, propy);
+	//	//
+	//	//return propy * get<float>(enum_sprite_float_e::POS_Y);
+	//
+	//
+	//	//transform cpy = m_assist_transform;
+	//	//
+	//	//const float& ref = get<float>(enum_sprite_float_e::POS_Y);
+	//	//
+	//	//float limits[4] = { 0.0f,0.0f,0.0f,0.0f };
+	//	//cpy.transform_inverse_coords(limits[0], limits[1]);
+	//	//cpy.translate(-100.0f, -100.0f);
+	//	//cpy.transform_inverse_coords(limits[2], limits[3]);
+	//	//const float scale_x = limits[2] - limits[0];
+	//	//const float scale_y = limits[3] - limits[1];
+	//	//const float divx = (limits[0] * 1.0f / scale_x);
+	//	//const float divy = (limits[1] * 1.0f / scale_y);
+	//	//
+	//	//const float limit_x = (fabsf(divx) - fabsf(static_cast<float>((int)divx)));
+	//	//const float limit_y = (fabsf(divy) - fabsf(static_cast<float>((int)divy)));
+	//	//
+	//	//return ref * divy - (divy + limits[1]);
+	//}
 
 	LUNARIS_DECL sprite::sprite() :
 		fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>(default_sprite_float_il),
@@ -34,26 +95,63 @@ namespace Lunaris {
 	{
 	}
 
+	//transform sprite::generate_cam() const
+	//{
+	//	const float& xx = get<float>(enum_sprite_float_e::POS_X); // target posx
+	//	const float& yy = get<float>(enum_sprite_float_e::POS_Y); // target posy
+	//	const float& rr = get<float>(enum_sprite_float_e::ROTATION); // target posy
+	//	transform tmp;
+	//
+	//	if (get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE)) {
+	//		float vx = 1.0f, vy = 1.0f;
+	//		tmp.build_classic_fixed_proportion_stretched();
+	//		tmp.compare_scale_of(m_assist_transform, vx, vy); // ex: 1.777777 / 1.0
+	//		tmp.build_classic_fixed_proportion_auto(1.0f, 1.0f);
+	//		const float cam_off = vx < vy ? vx : vy;
+	//		tmp.translate_inverse(-xx * vx / cam_off, -yy * vy / cam_off);
+	//		tmp.rotate_inverse(rr);
+	//		return tmp;
+	//	}
+	//	else {
+	//		tmp.identity();
+	//		tmp.rotate(rr);
+	//		tmp.translate(xx, yy);
+	//		tmp.compose(m_assist_transform);
+	//		return tmp;
+	//	}
+	//}
+
 	LUNARIS_DECL void sprite::draw()
 	{
 		// - - - - - - - - Get current camera transform - - - - - - - - //
 		m_assist_transform.get_current_transform();
 
-		float limit_x = -1.f, limit_y = -1.f;
+		float limit_x = 0.0f, limit_y = 0.0f;
 		m_assist_transform.transform_inverse_coords(limit_x, limit_y);
-		limit_x = fabsf(limit_x); // maximum X position that it can draw with current transformation
-		limit_y = fabsf(limit_y); // maximum Y position that it can draw with current transformation
+		limit_x = fabsf(limit_x);
+		limit_y = fabsf(limit_y);
+		if (limit_x > limit_y) {
+			limit_x = 1.0f + limit_x - limit_y;
+			limit_y = 1.0f;
+		}
+		else { // limit_y > limit_x
+			limit_y = 1.0f + limit_y - limit_x;
+			limit_x = 1.0f;
+		}
 
-		const float real_posx = get_real_pos_x();
-		const float real_posy = get_real_pos_y();
+		//get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE)
+		const float& real_posx = get<float>(enum_sprite_float_e::POS_X); // get_real_pos_x();
+		const float& real_posy = get<float>(enum_sprite_float_e::POS_Y);// get_real_pos_y();
 
 
 		// - - - - - - - - Get references to work with - - - - - - - - //
 		const bool& draw_should_draw = get<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW);
+		const bool& draw_is_unaffected = get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE);
 		const bool& draw_draw_box = get<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX); // colored rectangle
 		const bool& draw_think_box = get<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX); // debug colored rectangle
 		const double& think_delta = get<double>(enum_sprite_double_e::RO_THINK_DELTA_THINKS);
 		const float& out_of_sight_prop = get<float>(enum_sprite_float_e::OUT_OF_SIGHT_POS);
+		//const float out_of_sight_prop = -1.0f;
 		const float& responsiveness = get<float>(enum_sprite_float_e::DRAW_MOVEMENT_RESPONSIVENESS);
 		const float& scale_g = get<float>(enum_sprite_float_e::SCALE_G);
 		const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
@@ -70,14 +168,54 @@ namespace Lunaris {
 		float& draw_pos_y = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_Y);
 		float& draw_rot = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION);
 
+		const auto updcam = [&](const float& xx, const float& yy, const float& rr) {
+			if (draw_is_unaffected) {
+				float vx = 1.0f, vy = 1.0f;
+				m_assist_inuse.build_classic_fixed_proportion_stretched_auto();
+				m_assist_inuse.compare_scale_of(m_assist_transform, vx, vy); // ex: 1.777777 / 1.0
+				m_assist_inuse.build_classic_fixed_proportion_auto(1.0f, 1.0f);
+				const float cam_off = vx < vy ? vx : vy;
+				m_assist_inuse.translate_inverse(-xx * vx / cam_off, -yy * vy / cam_off);
+				m_assist_inuse.rotate_inverse(rr);
+				m_assist_inuse.apply();
+			}
+			else {
+				m_assist_inuse.identity();
+				m_assist_inuse.rotate(rr);
+				m_assist_inuse.translate(xx, yy);
+				m_assist_inuse.compose(m_assist_transform);
+				m_assist_inuse.apply();
+			}
+		};
+
+		const auto buildcamlim = [&] {
+			transform _tmp;
+			if (draw_is_unaffected) {
+				float vx = 1.0f, vy = 1.0f;
+				_tmp.build_classic_fixed_proportion_stretched_auto();
+				_tmp.compare_scale_of(m_assist_transform, vx, vy); // ex: 1.777777 / 1.0
+				_tmp.build_classic_fixed_proportion_auto(1.0f, 1.0f);
+				const float cam_off = vx < vy ? vx : vy;
+				_tmp.translate_inverse(-draw_pos_x * vx / cam_off, -draw_pos_y * vy / cam_off);
+				_tmp.rotate_inverse(draw_rot);
+				return _tmp;
+			}
+			return m_assist_transform;
+		};
+
+		updcam(draw_pos_x, draw_pos_y, draw_rot);
+
+		transform checker = buildcamlim();
 
 		// - - - - - - - - Working - - - - - - - - //
-		if ( draw_should_draw && // basic rule
-			(out_of_sight_prop <= 0.0f || (
-				(fabsf(target_pos_x) < fabsf(out_of_sight_prop * (limit_x + 0.5f * (scale_g * scale_x)))) && // within borders (version 1.0)
-				(fabsf(target_pos_y) < fabsf(out_of_sight_prop * (limit_y + 0.5f * (scale_g * scale_y))))
-			)
-			))	// within borders (version 1.0)
+		if (draw_should_draw && // basic rule
+			((out_of_sight_prop <= 0.0f) ||
+			(m_assist_transform.in_range(
+				draw_pos_x,
+				draw_pos_y, 
+				[&] {const float& a = out_of_sight_prop + 0.5f * (scale_g * scale_x), & b = out_of_sight_prop + 0.5f * (scale_g * scale_y); return fabsf(a) + fabsf(b); }()
+			)))
+		)
 		{
 			double timee = al_get_time();
 			double dt = timee - last_draw_v;
@@ -91,14 +229,15 @@ namespace Lunaris {
 			draw_pos_y = ((1.0 - perc_run) * draw_pos_y + perc_run * real_posy);
 			draw_rot   = (1.0 - perc_run) * draw_rot   + perc_run * target_rot;
 
-			transform _temp; // transform by TRANSFORMATION. Assume POSX and POSY 0 from now on
+			//transform _temp; // transform by TRANSFORMATION. Assume POSX and POSY 0 from now on
 
 			if (draw_think_box) { // if think box, calculate think box raw pos
-				_temp.identity();
-				_temp.rotate(draw_rot);
-				_temp.translate(real_posx, real_posy);
-				_temp.compose(m_assist_transform);
-				_temp.apply();
+				//m_assist_inuse.identity();
+				//m_assist_inuse.rotate(draw_rot);
+				//m_assist_inuse.translate(real_posx, real_posy);
+				//m_assist_inuse.compose(m_assist_transform);
+				//m_assist_inuse.apply();
+				updcam(real_posx, real_posy, target_rot);
 
 				al_draw_filled_rectangle(
 					/* X1: */ - (scale_g * scale_x) * 0.5,
@@ -107,14 +246,17 @@ namespace Lunaris {
 					/* Y2: */   (scale_g * scale_y) * 0.5,
 					get<color>(enum_sprite_color_e::DRAW_THINK_BOX)
 				);
+
+				updcam(draw_pos_x, draw_pos_y, draw_rot);
 			}
 
 			// after think box calculate real pos (real I mean the drawing position pos)
-			_temp.identity();
-			_temp.rotate(draw_rot);
-			_temp.translate(draw_pos_x, draw_pos_y);
-			_temp.compose(m_assist_transform);
-			_temp.apply();
+			//m_assist_inuse.identity();
+			//m_assist_inuse.rotate(draw_rot);
+			//m_assist_inuse.translate(draw_pos_x, draw_pos_y);
+			//m_assist_inuse.compose(m_assist_transform);
+			//m_assist_inuse.apply();
+			
 
 			if (draw_draw_box) {
 				al_draw_filled_rectangle(
@@ -126,14 +268,17 @@ namespace Lunaris {
 				);
 			}
 
-			draw_task(m_assist_transform, _temp, limit_x, limit_y); // for now
+			draw_task(m_assist_transform, m_assist_inuse, limit_x, limit_y); // for now
 			set<bool>(enum_sprite_boolean_e::RO_DRAW_DRAWN_LAST_DRAW, true);
-
-			m_assist_transform.apply(); // reset transformation
 		}
 		else {
+			draw_pos_x = real_posx; // real time update
+			draw_pos_y = real_posy; // real time update
+			draw_rot = target_rot;  // real time update
+
 			set<bool>(enum_sprite_boolean_e::RO_DRAW_DRAWN_LAST_DRAW, false);
 		}
+		m_assist_transform.apply(); // reset transformation
 	}
 
 	LUNARIS_DECL void sprite::think()
@@ -197,12 +342,14 @@ namespace Lunaris {
 		//	const float real_posy = get_real_pos_y();
 		//}
 
-		transform _temp;
-		_temp.identity();
-		_temp.rotate(__rot);
-		//_temp.translate(curr_pos_x, curr_pos_y);
-		_temp.translate(get_real_pos_x(), get_real_pos_y());
-		_temp.compose(m_assist_transform);
+		//transform _temp;
+		//_temp.identity();
+		////_temp.translate(curr_pos_x, curr_pos_y);
+		////_temp.translate(get_real_pos_x(), get_real_pos_y());
+		//_temp.compose(generate_cam());// get<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE) ? m_assist_inuse : m_assist_transform);
+		//_temp.translate_inverse(-get<float>(enum_sprite_float_e::POS_X), -get<float>(enum_sprite_float_e::POS_Y)); // FIX THIS
+		//_temp.rotate_inverse(-__rot);
+		transform _temp = m_assist_inuse;
 
 		// top left
 		nwx = - (scale_g * scale_x) * 0.5;
