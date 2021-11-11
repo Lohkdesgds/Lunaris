@@ -159,6 +159,13 @@ namespace Lunaris {
 		void compare_scale_of(const transform&, float&, float&);
 
 		/// <summary>
+		/// <para>Tries to get what is the X/Y relation</para>
+		/// <para>The test is done from 0 to 1000 relative coords.</para>
+		/// </summary>
+		/// <returns>{float} Possible proportion.</returns>
+		float get_x_by_y() const;
+
+		/// <summary>
 		/// <para>Check if those values are in range.</para>
 		/// <para>Being in range means if the translated position on screen is on screen.</para>
 		/// <para>NOTE: needs a screen to work correctly.</para>
