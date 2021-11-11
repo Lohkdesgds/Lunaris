@@ -996,6 +996,8 @@ int graphics_test()
 	cout << console::color::BLUE << "# Starting graphics_test...";
 	cout << console::color::DARK_BLUE << "======================================";
 
+	const float fixprop = 1.0f; // global camera proportion
+
 	std::atomic<bool> keep_running_things = true;
 	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
@@ -1077,13 +1079,14 @@ int graphics_test()
 	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_SHOULD_DRAW, false);
 
 	txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, std::string("Test string text"));
-	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
+	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos fix
+	txt_main.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_NO_EFFECT_ON_SCALE, true); // deform scale fix
 	txt_main.set<float>(enum_sprite_float_e::SCALE_G, 0.1f);
 	txt_main.set<float>(enum_sprite_float_e::SCALE_X, 0.3f);
 	//txt_main.set<float>(enum_sprite_float_e::POS_X, -0.992f);
 	//txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.992f);
-	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.792f);
-	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.792f);
+	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.99f);
+	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.99f);
 	txt_main.set<float>(enum_sprite_float_e::DRAW_MOVEMENT_RESPONSIVENESS, 3.0f);
 	for (int __c = 1; 255 - 25 * __c > 0; __c++) {
 		int ctee = (255 - 25 * __c);
@@ -1103,9 +1106,9 @@ int graphics_test()
 
 	cout << "Applying default transformation to display...";
 
-	my_display.add_run_once_in_drawing_thread([&my_display] {
+	my_display.add_run_once_in_drawing_thread([&my_display,&fixprop] {
 		transform transf;
-		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 2.0f, 1.0f);
+		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 		transf.apply();
 	});
 
@@ -1175,7 +1178,7 @@ int graphics_test()
 
 	cout << "Setting up display events function...";
 
-	my_display.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum](const ALLEGRO_EVENT& ev) {
+	my_display.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum, &fixprop](const ALLEGRO_EVENT& ev) {
 		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.type << " triggered.";
 		
 		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
@@ -1185,7 +1188,7 @@ int graphics_test()
 		else if (ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE) {
 			cout << console::color::GREEN << "Screen size is now: " << ev.display.width << "x" << ev.display.height;
 			transform transf;
-			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, 2.0f, zuum);
+			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, fixprop, zuum);
 			transf.translate_inverse(off_x, off_y);
 			cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 			transf.apply();
@@ -1200,7 +1203,7 @@ int graphics_test()
 			my_display.add_run_once_in_drawing_thread([&] {
 				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
 				transform transf;
-				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), 2.0f, 1.0f);
+				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 				transf.apply();
 			});
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -1209,9 +1212,9 @@ int graphics_test()
 			cout << console::color::GREEN << "Randomizing camera...";
 			off_x = (random() % 1000) * 0.001f - 0.5f;
 			off_y = (random() % 1000) * 0.001f - 0.5f;
-			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum] {
+			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
 				transform transf;
-				transf.build_classic_fixed_proportion_auto(2.0f, zuum);
+				transf.build_classic_fixed_proportion_auto(fixprop, zuum);
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
@@ -1220,9 +1223,9 @@ int graphics_test()
 		case ALLEGRO_KEY_F:
 			cout << console::color::GREEN << "Randomizing zoom...";
 			zuum = 1.0f + (random() % 1000) * 0.002f - 0.5f;
-			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum] {
+			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
 				transform transf;
-				transf.build_classic_fixed_proportion_auto(2.0f, zuum);
+				transf.build_classic_fixed_proportion_auto(fixprop, zuum);
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
@@ -1233,9 +1236,9 @@ int graphics_test()
 			off_x = 0.0f;
 			off_y = 0.0f;
 			zuum = 1.0f;
-			my_display.add_run_once_in_drawing_thread([off_x, off_y,zuum] {
+			my_display.add_run_once_in_drawing_thread([off_x, off_y,zuum, fixprop] {
 				transform transf;
-				transf.build_classic_fixed_proportion_auto(2.0f, 1.0f);
+				transf.build_classic_fixed_proportion_auto(fixprop, 1.0f);
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				float ax = -1.0f, ay = -1.0f;

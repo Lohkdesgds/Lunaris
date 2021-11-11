@@ -137,6 +137,14 @@ namespace Lunaris {
 		yy = (scalh[3] - scalh[1]) / (scalt[3] - scalt[1]);
 	}
 
+	LUNARIS_DECL float transform::get_x_by_y() const
+	{
+		float scalh[4] = { 0.0f,0.0f,1000.0f,1000.0f }; // here
+		transform_inverse_coords(scalh[0], scalh[1]);
+		transform_inverse_coords(scalh[2], scalh[3]);
+		return (scalh[3] - scalh[1]) / (scalh[2] - scalh[0]);
+	}
+
 	LUNARIS_DECL bool transform::in_range(const float xx, const float yy, const float tol)
 	{
 		if (tol <= 0.0f) return false;

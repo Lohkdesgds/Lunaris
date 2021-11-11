@@ -76,6 +76,7 @@ namespace Lunaris {
 		DRAW_DRAW_BOX,						// draw colored box where images would be if any (not effective when there are things drawn after)
 		DRAW_THINK_BOX,						// draw colored box where thinking position thinks position is right now
 		DRAW_TRANSFORM_COORDS_KEEP_SCALE,	// the position is modified so if e.g. POSX goes from -3 to 3, a -1 POSX is transformed to -3. This may break collision visually. This affects RO_DRAW_PROJ_POS_### stuff. TODO: Collision should *= last camera transformation aka -3,3 stuff
+		DRAW_TRANSFORM_NO_EFFECT_ON_SCALE,  // like on DRAW_TRANSFORM_COORDS_KEEP_SCALE, but in scale itself. This only works in combination to DRAW_TRANSFORM_COORDS_KEEP_SCALE. Scale is 1:1 even if the camera is something else if this is enabled.
 
 		_SIZE
 	};
@@ -139,7 +140,8 @@ namespace Lunaris {
 		{false,		enum_sprite_boolean_e::DRAW_USE_COLOR},
 		{false,		enum_sprite_boolean_e::DRAW_DRAW_BOX},
 		{false,		enum_sprite_boolean_e::DRAW_THINK_BOX},
-		{false,		enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE}
+		{false,		enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE},
+		{false,		enum_sprite_boolean_e::DRAW_TRANSFORM_NO_EFFECT_ON_SCALE}
 	};
 
 	const std::initializer_list<multi_pair<color, enum_sprite_color_e>>				default_sprite_color_il = {
@@ -156,10 +158,6 @@ namespace Lunaris {
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_color_e::_SIZE), color, enum_sprite_color_e>
 	{
 		transform m_assist_transform{}, m_assist_inuse{}; // it doesn't need to be created every time, and it can be shared between collision and drawing threads
-
-		//float get_real_pos_x(const bool = false); // if DRAW_TRANSFORM_COORDS_KEEP_SCALE, it's the resulting pos. Bool: refresh m_assist_transform?
-		//float get_real_pos_y(const bool = false); // if DRAW_TRANSFORM_COORDS_KEEP_SCALE, it's the resulting pos
-		//transform generate_cam() const;
 	protected:
 		// raw transform, adapted transform, limit_x, limit_y
 		virtual void draw_task(transform, transform, const float&, const float&) {}
@@ -191,15 +189,4 @@ namespace Lunaris {
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_color_e::_SIZE), color, enum_sprite_color_e>::size;
 	};
 
-
-
 }
-
-/*
-inline void test() { // a way to get every key in key
-	auto& ref = self<float>();
-	auto it = ref.find(block_float_e::SPEED_X);
-
-	it->keys == false; // test bool part lmao
-}
-*/
