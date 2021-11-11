@@ -711,7 +711,26 @@ int utility_test(const std::string& self_path)
 		TESTLU(hybrid_src != hybrid_cpy, "They are the same still!");
 		TESTLU(*hybrid_src != *hybrid_cpy, "They are the same in value somehow!");
 
+		cout << "Trying something complex...";
+
+		// if all of this compile, good!
+		class example_complex {
+			hybrid_memory<int> lol;
+			char lel;
+			double lil;
+		public:
+			example_complex(hybrid_memory<int>&& a, const char b, const double& c)
+				: lol(std::move(a)), lel(b), lil(c)
+			{
+			}
+		};
+
+		hybrid_src = make_hybrid<int>();
+
+		auto handlr = make_hybrid<example_complex>(std::move(hybrid_src), 'c', 3.1415);
+
 		cout << console::color::GREEN << "PASSED!";
+
 	}
 
 	cout << console::color::LIGHT_PURPLE << "Testing 'multi_map'...";
