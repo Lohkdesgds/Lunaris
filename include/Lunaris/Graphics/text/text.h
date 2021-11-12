@@ -55,6 +55,10 @@ namespace Lunaris {
 
 		text_shadow() = default;
 		text_shadow(const float, const float, const color);
+
+		text_shadow& set_off_x(const float);
+		text_shadow& set_off_y(const float);
+		text_shadow& set_color(const color&);
 	};
 
 
