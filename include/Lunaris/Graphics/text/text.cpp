@@ -7,6 +7,24 @@ namespace Lunaris {
 	{
 	}
 
+	LUNARIS_DECL text_shadow& text_shadow::set_off_x(const float var)
+	{
+		offset_x = var;
+		return *this;
+	}
+
+	LUNARIS_DECL text_shadow& text_shadow::set_off_y(const float var)
+	{
+		offset_y = var;
+		return *this;
+	}
+
+	LUNARIS_DECL text_shadow& text_shadow::set_color(const color& var)
+	{
+		clr = var;
+		return *this;
+	}
+
 	LUNARIS_DECL std::shared_lock<std::shared_mutex> text::mu_shared_read_control() const
 	{
 		return std::shared_lock<std::shared_mutex>(font_mtx);
