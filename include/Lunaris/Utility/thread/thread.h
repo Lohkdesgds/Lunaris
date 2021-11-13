@@ -49,6 +49,8 @@ namespace Lunaris {
 		// keep running undefinitely (double is only used if speed is set to interval)
 		void task_async(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60);
 
+		void set_speed(const speed, const double = 1.0 / 60);
+
 		void signal_stop();
 
 		// stop and join threads (bool: skip exception rethrow if any?)

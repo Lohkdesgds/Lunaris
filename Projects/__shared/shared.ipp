@@ -119,10 +119,56 @@ void hard_test()
 }
 #endif
 
+//class menu_block {
+//	std::shared_ptr<ALLEGRO_MENU> __in_memory;
+//	ALLEGRO_MENU* make_menu_internal() { make_menu(); return __in_memory.get(); }
+//public:
+//	std::string name;
+//	uint16_t id = 0;
+//	int flags = 0;
+//	hybrid_memory<texture> icon;
+//	std::vector<hybrid_memory<menu_block>> submenus;
+//
+//	menu_block() = default;
+//	menu_block(const std::string& nam, const uint16_t i = 0, const int flg = 0, const hybrid_memory<texture>& ttur = {}, std::initializer_list<hybrid_memory<menu_block>> lst = {})
+//		: name(nam), id(i), flags(flg), icon(ttur), submenus(lst.begin(), lst.end())
+//	{}
+//
+//	menu_block& set_name(const std::string& val) { name = val; return *this; }
+//	menu_block& set_id(const uint16_t val) { id = val; return *this; }
+//	menu_block& set_flags(const int val) { flags = val; return *this; }
+//	menu_block& set_icon(const hybrid_memory<texture>& val) { icon = val; return *this; }
+//	menu_block& push_submenu(const hybrid_memory<menu_block>& val) { submenus.push_back(val); return *this; }
+//
+//	std::shared_ptr<ALLEGRO_MENU> make_menu() {
+//		__in_memory = std::shared_ptr<ALLEGRO_MENU>(al_create_menu(), al_destroy_menu);
+//		for (auto& it : submenus) {
+//			al_append_menu_item(__in_memory.get(), it->name.c_str(), it->id, it->flags, (it->icon.empty() ? nullptr : (it->icon->empty() ? nullptr : it->icon->get_raw_bitmap())), it->make_menu_internal());
+//		}
+//		return __in_memory; // cpy
+//	}
+//};
+//
+//hybrid_memory<menu_block> build_menu(const std::string& nam, const uint16_t i = 0, const int flg = 0, const hybrid_memory<texture>& ttur = {}, std::initializer_list<hybrid_memory<menu_block>> lst = {}) {
+//	return make_hybrid<menu_block>(nam, i, flg, ttur, lst);
+//}
+//
+//hybrid_memory<menu_block> build_menu(const std::string& nam, std::initializer_list<hybrid_memory<menu_block>> lst = {}) {
+//	return build_menu(nam, 0, 0, {}, lst);
+//}
+//
+//std::shared_ptr<menu_block> make_menu() {
+//	return std::make_shared<menu_block>();
+//}
+
 
 int main(int argc, char* argv[]) {
 	TESTLU(argc >= 1, "IRREGULAR STARTUP! Can't proceed.");
 	const std::string currpath = argv[0];
+
+	cout << console::color::YELLOW << "Lunaris version short: " << LUNARIS_VERSION_SHORT;
+	cout << console::color::YELLOW << "Lunaris version long:  " << LUNARIS_VERSION_LONG;
+	cout << console::color::YELLOW << "Lunaris version date:  " << LUNARIS_VERSION_DATE;
 
 	if (argc > 1) {
 		cout << "Hello someone calling me with custom arguments! I received those:";
@@ -135,21 +181,6 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
-	//{
-	//	display disp;
-	//	disp.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1000).set_height(1000)));
-	//	transform t1;
-	//	t1.build_classic_fixed_proportion_auto(1.0f, 4.0f);
-	//	t1.translate_inverse(-0.25f, 0.0f);
-	//
-	//	float sx = 0.0f, sy = 0.0f;
-	//
-	//	cout << (t1.in_range_store(0.5f, 0.5f, sx, sy, 2.0f) ? "IN RANGE" : "NOP");
-	//	cout << sx << "x; " << sy << "y";
-	//
-	//	disp.destroy();
-	//}
-	//return 0;
 
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
@@ -1393,7 +1424,7 @@ int events_test()
 	cout << "Creating display... (keep it in focus while the test is running)";
 
 	display disp;
-	TESTLU(disp.create(display_config().set_display_mode(display_options().set_width(640).set_height(480)).set_fullscreen(false).set_use_basic_internal_event_system(false).set_window_title("EVENTS_TEST")), "Could not create a simple display for testing!");
+	TESTLU(disp.create(display_config().set_display_mode(display_options().set_width(640).set_height(480)).set_fullscreen(false).set_use_basic_internal_event_system(true).set_auto_economy_mode(false).set_window_title("EVENTS_TEST")), "Could not create a simple display for testing!");
 
 	int last_event_id = 0;
 
@@ -1425,6 +1456,105 @@ int events_test()
 	while (std::chrono::system_clock::now() < timeoutt && (last_event_id != ALLEGRO_EVENT_DISPLAY_CLOSE)) std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 	cout << console::color::GREEN << "Good!";
+
+	{
+		disp.set_menu(display_menu()
+			.push(display_sub_menu()
+				.set_name("This one")
+				.push(display_sub_menu()
+					.set_name("Click me")
+					.set_id(10)
+				)
+				.push(display_sub_menu()
+					.make_this_division()
+				)
+				.push(display_sub_menu()
+					.set_name("Not this one")
+					.push(display_sub_menu()
+						.set_name("Hey")
+						.set_id(1)
+						.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
+					)
+					.push(display_sub_menu()
+						.set_name("Lists")
+						.set_id(2)
+						.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
+					)
+					.push(display_sub_menu()
+						.set_name("Exist?")
+						.set_id(3)
+						.push(display_sub_menu()
+							.set_name("LOL")
+							.set_id(300)
+						)
+					)
+				)
+			)
+			.push(display_sub_menu()
+				.set_name("About")
+				.push(display_sub_menu()
+					.set_name("Copyright? Probably not")
+					.set_id(20)
+				)
+				.push(display_sub_menu()
+					.make_this_division()
+				)
+				.push(display_sub_menu()
+					.set_name("Others")
+					.push(display_sub_menu()
+						.set_name("Lunaris B" + std::to_string(LUNARIS_BUILD_NUMBER))
+						.set_id(40)
+						.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
+					)
+					.push(display_sub_menu()
+						.set_name("Beta testing")
+						.set_id(50)
+						.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
+					)
+				)
+			)
+			.push(display_sub_menu()
+				.set_name("Crash app")
+				.push(display_sub_menu()
+					.set_name("Fatal crash call lol")
+					.set_id(900)
+					.push(display_sub_menu()
+						.set_name("Do you really want a fatal crash?")
+						.set_id(901)
+						.push(display_sub_menu()
+							.set_name("Okay, click this and the app will just DIE")
+							.set_id(902)
+							.push(display_sub_menu()
+								.set_name("Do you really want that? LOL")
+								.set_id(903)
+								.push(display_sub_menu()
+									.set_name("STD::TERMINATE()")
+									.set_id(911)
+								)
+							)
+						)
+					)
+				)
+			)
+		);
+
+		bool clicked_right = false;
+		disp.hook_menu_event_handler([&](const display_menu_event& mev) {
+			clicked_right |= ((mev.id == 10) && (mev.name == "Click me"));
+			cout << mev.id << " -> '" << mev.name << "'";
+			if (mev.id == 911) std::terminate(); // fatal error thingy
+			mev.toggle_flag(display_menu_event::flags::DISABLED);
+		});
+		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
+		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
+		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { disp.flip(); std::this_thread::sleep_for(std::chrono::milliseconds(20)); }
+		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
+		cout << console::color::GREEN << "Good!";
+
+		disp.delete_menu();
+		disp.flip();
+	}
+
 
 	cout << console::color::GREEN << "PASSED!";
 
