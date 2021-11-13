@@ -119,49 +119,6 @@ void hard_test()
 }
 #endif
 
-//class menu_block {
-//	std::shared_ptr<ALLEGRO_MENU> __in_memory;
-//	ALLEGRO_MENU* make_menu_internal() { make_menu(); return __in_memory.get(); }
-//public:
-//	std::string name;
-//	uint16_t id = 0;
-//	int flags = 0;
-//	hybrid_memory<texture> icon;
-//	std::vector<hybrid_memory<menu_block>> submenus;
-//
-//	menu_block() = default;
-//	menu_block(const std::string& nam, const uint16_t i = 0, const int flg = 0, const hybrid_memory<texture>& ttur = {}, std::initializer_list<hybrid_memory<menu_block>> lst = {})
-//		: name(nam), id(i), flags(flg), icon(ttur), submenus(lst.begin(), lst.end())
-//	{}
-//
-//	menu_block& set_name(const std::string& val) { name = val; return *this; }
-//	menu_block& set_id(const uint16_t val) { id = val; return *this; }
-//	menu_block& set_flags(const int val) { flags = val; return *this; }
-//	menu_block& set_icon(const hybrid_memory<texture>& val) { icon = val; return *this; }
-//	menu_block& push_submenu(const hybrid_memory<menu_block>& val) { submenus.push_back(val); return *this; }
-//
-//	std::shared_ptr<ALLEGRO_MENU> make_menu() {
-//		__in_memory = std::shared_ptr<ALLEGRO_MENU>(al_create_menu(), al_destroy_menu);
-//		for (auto& it : submenus) {
-//			al_append_menu_item(__in_memory.get(), it->name.c_str(), it->id, it->flags, (it->icon.empty() ? nullptr : (it->icon->empty() ? nullptr : it->icon->get_raw_bitmap())), it->make_menu_internal());
-//		}
-//		return __in_memory; // cpy
-//	}
-//};
-//
-//hybrid_memory<menu_block> build_menu(const std::string& nam, const uint16_t i = 0, const int flg = 0, const hybrid_memory<texture>& ttur = {}, std::initializer_list<hybrid_memory<menu_block>> lst = {}) {
-//	return make_hybrid<menu_block>(nam, i, flg, ttur, lst);
-//}
-//
-//hybrid_memory<menu_block> build_menu(const std::string& nam, std::initializer_list<hybrid_memory<menu_block>> lst = {}) {
-//	return build_menu(nam, 0, 0, {}, lst);
-//}
-//
-//std::shared_ptr<menu_block> make_menu() {
-//	return std::make_shared<menu_block>();
-//}
-
-
 int main(int argc, char* argv[]) {
 	TESTLU(argc >= 1, "IRREGULAR STARTUP! Can't proceed.");
 	const std::string currpath = argv[0];
@@ -181,6 +138,114 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
+//	{
+//		display_async ad;
+//		int idd = 0;
+//		display_menu men = display_menu()
+//			.push(display_sub_menu()
+//				.set_name("File")
+//				.set_id(idd++)
+//				.push(display_sub_menu()
+//					.set_name("Open")
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu()
+//					.set_name("Open folder")
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu().make_this_division()
+//				)
+//				.push(display_sub_menu()
+//					.set_name("Exit")
+//					.set_id(idd++)
+//				)
+//			)
+//			.push(display_sub_menu()
+//				.set_name("About")
+//				.set_id(idd++)
+//				.push(display_sub_menu()
+//					.set_name("Image Viewer")
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu().make_this_division()
+//				)
+//				.push(display_sub_menu()
+//					.set_name("Using " + std::string(LUNARIS_VERSION_SHORT))
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu()
+//					.set_name(LUNARIS_VERSION_DATE)
+//					.set_id(idd++)
+//				)
+//			);
+//		ad.create(display_config().set_display_mode(display_options().set_width(640).set_height(480)).set_fullscreen(false).set_framerate_limit(600));
+//
+//		ad.hook_menu_event_handler([](const display_menu_event& ev) {
+//			cout << ev.id << " -> " << ev.name;
+//		});
+//		ad.set_menu(men);
+//
+//		std::this_thread::sleep_for(std::chrono::seconds(5));
+//
+//		
+//
+//		men = display_menu()
+//			.push(display_sub_menu()
+//				.set_name("Not File")
+//				.set_id(idd++)
+//				.push(display_sub_menu()
+//					.set_name("Not Open")
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu()
+//					.set_name("Open fake")
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu().make_this_division()
+//				)
+//				.push(display_sub_menu()
+//					.set_name("Exitoo")
+//					.set_id(idd++)
+//				)
+//			)
+//			.push(display_sub_menu()
+//				.set_name("Aboutalla")
+//				.set_id(idd++)
+//				.push(display_sub_menu()
+//					.set_name("Imagy Vieweru")
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu().make_this_division()
+//				)
+//				.push(display_sub_menu()
+//					.set_name("Usinge " + std::string(LUNARIS_VERSION_SHORT))
+//					.set_id(idd++)
+//				)
+//				.push(display_sub_menu()
+//					.set_name(LUNARIS_VERSION_DATE)
+//					.set_id(idd++)
+//				)
+//			);
+//
+//		ad.set_menu(men);
+//
+//		std::this_thread::sleep_for(std::chrono::seconds(5));
+//
+//		men.destroy();
+//		//ad.delete_menu();
+//
+//		//for (int u = 1; u < 500;)
+//		//{
+//		//	ad.set_framerate_limit(u);
+//		//	cout << u << " FPS";
+//		//	u += (u / 5) + 1;
+//		//	std::this_thread::sleep_for(std::chrono::seconds(4));
+//		//}
+//		//
+//		//cout << "END OF FPS TEST";
+//		std::this_thread::sleep_for(std::chrono::seconds(5));
+//	}
+//	return 0;
 
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
