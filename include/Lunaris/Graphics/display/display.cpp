@@ -92,7 +92,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL display_config& display_config::set_framerate_limit(const double var)
 	{
-		max_frames = var > 0.0 ? 1.0 / var : 0.0;
+		max_frames = var > 0.0 ? var : 0.0;
 		return *this;
 	}
 
@@ -198,6 +198,12 @@ namespace Lunaris {
 		__menu.reset();
 	}
 
+	LUNARIS_DECL ALLEGRO_EVENT_SOURCE* display_menu::get_event_source() const
+	{
+		if (__menu) return al_enable_menu_event_source(__menu.get());
+		return nullptr;
+	}
+
 	LUNARIS_DECL std::vector<display_options> get_current_modes(const int index)
 	{
 		__display_allegro_start();
@@ -219,6 +225,21 @@ namespace Lunaris {
 		}
 	
 		return opts;
+	}
+
+	LUNARIS_DECL void display::timed_module::autowait()
+	{
+		if (delta_sec <= 0.0) return;
+		const double wtim = wait_until - al_get_time();
+		if (wtim > 0.0) al_rest(wtim);
+		wait_until = al_get_time() + delta_sec;
+	}
+
+	LUNARIS_DECL void display::timed_module::set_delay(const double dt)
+	{
+		delta_sec = dt;
+		wait_until = 0;// std::chrono::high_resolution_clock::now();
+		autowait(); // make value
 	}
 
 	LUNARIS_DECL display::display(const display_config& conf)
@@ -291,6 +312,7 @@ namespace Lunaris {
 		al_identity_transform(&latest_transform);
 
 		auto_economy = conf.auto_economy_mode;
+		timed.set_delay((conf.max_frames > 0.0) ? 1.0 / conf.max_frames : 0.0);
 
 		return window != nullptr;
 	}
@@ -400,11 +422,12 @@ namespace Lunaris {
 	LUNARIS_DECL void display::set_menu(const display_menu& men)
 	{
 		if (window) {
+			if (ev_qu && men.get_event_source() && al_is_event_source_registered(ev_qu, men.get_event_source())) {
+				al_unregister_event_source(ev_qu, men.get_event_source());
+			}
 			menu = men;
 			al_set_display_menu(window, menu.generate());
-			if (ev_qu && !al_is_event_source_registered(ev_qu, al_get_default_menu_event_source())) {
-				al_register_event_source(ev_qu, al_get_default_menu_event_source());
-			}
+			al_register_event_source(ev_qu, menu.get_event_source());
 		}
 	}
 
@@ -432,6 +455,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::destroy()
 	{
+		menu.destroy();
 		if (ev_qu) {
 			al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
@@ -449,6 +473,14 @@ namespace Lunaris {
 #endif
 		hooked_events.reset();
 		menu_events.reset();
+	}
+
+	LUNARIS_DECL void display::set_framerate_limit(const double var)
+	{
+		if (var <= 0.0) {
+			timed.set_delay(0.0);
+		}
+		else timed.set_delay(1.0 / var);
 	}
 
 	LUNARIS_DECL ALLEGRO_DISPLAY* display::get_raw_display() const
@@ -482,6 +514,7 @@ namespace Lunaris {
 			al_flip_display();
 
 			if (auto_economy && economy_mode) std::this_thread::sleep_for(economy_mode_delay);
+			timed.autowait();
 
 			if (((al_get_time() - last_event_check) > default_display_self_check_time)) {
 
@@ -537,19 +570,6 @@ namespace Lunaris {
 								const char* str = al_get_menu_item_caption(mev.source, mev.id);
 								if (str) mev.name = str;
 
-								//mev.pos = 0;
-								//while (1) {
-								//	const char* sss = al_get_menu_item_caption(mev.source, mev.pos);
-								//	if (sss == nullptr) {
-								//		mev.pos = 0;
-								//		break;
-								//	}
-								//	else if (sss == mev.name) {
-								//		break;
-								//	}
-								//	else mo
-								//}
-
 								auto flagss = al_get_menu_item_flags(mev.source, mev.id);
 
 								mev.checked = ((flagss & ALLEGRO_MENU_ITEM_CHECKBOX) && (flagss & ALLEGRO_MENU_ITEM_CHECKED));								
@@ -558,7 +578,6 @@ namespace Lunaris {
 							break;
 						}
 
-						// after handling by itself, call hooked function (if any)
 						hooked_events.csafe([&](const std::function<void(const ALLEGRO_EVENT&)>& fev) {
 							if (fev) fev(ev);
 						});
@@ -624,10 +643,6 @@ namespace Lunaris {
 		promises.push_back(std::move(prom));
 		thr.task_async([this] { async_run(); }, thread::speed::UNLEASHED);
 
-		if (conf.max_frames > 0.0) {
-			thr.set_speed(thread::speed::INTERVAL, conf.max_frames);
-		}
-
 		fut2.wait();
 
 		return fut2.get();
@@ -681,14 +696,6 @@ namespace Lunaris {
 	{
 		thr.join(skip_except);
 		this->display::destroy();
-	}
-
-	LUNARIS_DECL void display_async::set_framerate_limit(const double var)
-	{
-		if (var > 0.0) {
-			thr.set_speed(thread::speed::INTERVAL, 1.0 / var);
-		}
-		else thr.set_speed(thread::speed::UNLEASHED, 0.0);
 	}
 
 }

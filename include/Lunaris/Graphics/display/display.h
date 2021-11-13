@@ -52,7 +52,7 @@ namespace Lunaris {
 		bool auto_economy_mode = true;
 		bool single_buffer = false;
 		bool use_basic_internal_event_system = true; // automatically "acknowledge" events like resizing. If you want close events, you should register the display in a Event handler.
-		double max_frames = 1.0 / 500;
+		double max_frames = 0;
 
 		int flags_combine() const;
 
@@ -63,7 +63,7 @@ namespace Lunaris {
 		display_config& set_vsync(const bool);
 		display_config& set_auto_economy_mode(const bool);
 		display_config& set_single_buffer(const bool);
-		// set framerate limit. Only works on display_async.
+		// set framerate limit. Precision gets lower as value goes higher. Certainly this is MAXIMUM, not AVERAGE.
 		display_config& set_framerate_limit(const double);
 		display_config& set_use_basic_internal_event_system(const bool);
 		display_config& set_window_title(const std::string&);
@@ -83,6 +83,7 @@ namespace Lunaris {
 		display_sub_menu& make_this_division();
 		display_sub_menu& set_name(const std::string&);
 		display_sub_menu& set_id(const uint16_t);
+		// ALLEGRO_MENU_ITEM_***
 		display_sub_menu& set_flags(const int);
 		display_sub_menu& push(const display_sub_menu&);
 
@@ -108,6 +109,7 @@ namespace Lunaris {
 		display_menu& push(const display_sub_menu&);
 		ALLEGRO_MENU* generate();
 		void destroy();
+		ALLEGRO_EVENT_SOURCE* get_event_source() const;
 	};
 
 	std::vector<display_options> get_current_modes(const int = 0);
@@ -122,6 +124,17 @@ namespace Lunaris {
 #ifdef _WIN32
 		HICON last_icon_handle = nullptr;
 #endif
+		struct timed_module {
+			//std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double, std::nano>> wait_until;
+			double wait_until = 0.0;
+			double delta_sec = 0.0;
+
+			void autowait();
+			void set_delay(const double);
+		};
+
+		timed_module timed;
+
 		safe_data<std::function<void(const ALLEGRO_EVENT&)>> hooked_events;
 		safe_data<std::function<void(const display_menu_event&)>> menu_events;
 
@@ -174,6 +187,9 @@ namespace Lunaris {
 
 		void destroy();
 
+		// set fps limit, directly
+		void set_framerate_limit(const double);
+
 		ALLEGRO_DISPLAY* get_raw_display() const;
 		ALLEGRO_EVENT_SOURCE* get_event_source();
 		std::function<ALLEGRO_TRANSFORM(void)> get_current_transform_function(); // keep this valid while using it!
@@ -214,11 +230,8 @@ namespace Lunaris {
 
 		future<bool> add_run_once_in_drawing_thread(std::function<void(void)>);
 
-		// skip exceptions?
+		// skip exceptions? DO NOT CALL FROM ITSELF
 		void destroy(const bool = false);
-
-		// set fps limit, directly
-		void set_framerate_limit(const double);
 
 		using display::set_window_title;
 		using display::hook_event_handler;
@@ -238,6 +251,7 @@ namespace Lunaris {
 		using display::get_raw_display;
 		using display::get_event_source;
 		using display::get_current_transform_function;
+		using display::set_framerate_limit;
 		using display::operator std::function<ALLEGRO_TRANSFORM(void)>;
 	};
 }
