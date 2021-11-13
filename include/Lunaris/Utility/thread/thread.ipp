@@ -1,3 +1,4 @@
+#include "thread.h"
 #pragma once
 
 namespace Lunaris {
@@ -78,6 +79,12 @@ namespace Lunaris {
 		data->mode = mode;
 		data->interval_seconds = interv;
 		data->thr = std::thread([piece = this->data]{ piece->_thr_work(); });
+	}
+
+	inline void thread::set_speed(const speed mode, const double interv)
+	{
+		data->mode = mode;
+		data->interval_seconds = interv;
 	}
 
 	inline void thread::signal_stop()

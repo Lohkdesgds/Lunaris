@@ -7,7 +7,11 @@ This is a tool for every include thing in the Lunaris lib.
 #define WIN32_LEAN_AND_MEAN
 
 // This is set by BUILDCOUNTER
-#define LUNARIS_BUILD_NUMBER 639
+#define LUNARIS_BUILD_NUMBER 699
+
+// https://stackoverflow.com/questions/240353/convert-a-preprocessor-token-to-a-string
+#define __LUNARIS_STRINGIFY(x) #x
+#define __LUNARIS_TOSTRING(x) __LUNARIS_STRINGIFY(x)
 
 #ifdef LUNARIS_HEADER_ONLY
 // -- HEADER ONLY -- //
@@ -32,7 +36,19 @@ This is a tool for every include thing in the Lunaris lib.
 #define LUNARIS_AUTOSET_AUDIO_SAMPLE_AMOUNT 8
 #endif
 
+#include <string>
+
 namespace Lunaris {
+
+	const char ___lunaris_date[] = __TIMESTAMP__;
+
+#define ___LUNARIS_VERSION_SHORT ("Lunaris B" __LUNARIS_TOSTRING(LUNARIS_BUILD_NUMBER))
+#define ___LUNARIS_VERSION_LONG ((std::string("Lunaris build #" __LUNARIS_TOSTRING(LUNARIS_BUILD_NUMBER) " | Date: ") + Lunaris::___lunaris_date + " Brazil/Sao_Paulo").c_str())
+#define ___LUNARIS_VERSION_DATE (Lunaris::___lunaris_date)
+
+#define LUNARIS_VERSION_SHORT ___LUNARIS_VERSION_SHORT
+#define LUNARIS_VERSION_LONG ___LUNARIS_VERSION_LONG
+#define LUNARIS_VERSION_DATE ___LUNARIS_VERSION_DATE
 
 	/// <summary>
 	/// Template for non copyable classes (in the works)
