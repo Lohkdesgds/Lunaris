@@ -80,7 +80,12 @@ namespace Lunaris {
 
 	LUNARIS_DECL display_config& display_config::set_auto_economy_mode(const bool var)
 	{
-		auto_economy_mode = var;
+		return set_economy_framerate_limit(var ? 30 : 0);
+	}
+
+	LUNARIS_DECL display_config& display_config::set_economy_framerate_limit(const double var)
+	{
+		min_frames = var;
 		return *this;
 	}
 
@@ -238,8 +243,22 @@ namespace Lunaris {
 	LUNARIS_DECL void display::timed_module::set_delay(const double dt)
 	{
 		delta_sec = dt;
-		wait_until = 0;// std::chrono::high_resolution_clock::now();
-		autowait(); // make value
+		if (wait_until - al_get_time() > dt) wait_until = al_get_time() + delta_sec; // if time wait > new time, new time, else keep as is
+	}
+
+	LUNARIS_DECL void display::apply_mode_timed_auto()
+	{
+		if (economy_mode) {
+			double max_fps = economy_fps > 0.0 ? economy_fps : 0.0;
+			if (default_fps > 0.0 && (default_fps < max_fps || max_fps <= 0.0)) max_fps = default_fps;
+
+			if (max_fps > 0.0) timed.set_delay(1.0 / max_fps);
+			else timed.set_delay(0.0);
+		}
+		else {
+			if (default_fps > 0.0) timed.set_delay(1.0 / default_fps);
+			else timed.set_delay(0.0);
+		}
 	}
 
 	LUNARIS_DECL display::display(const display_config& conf)
@@ -311,7 +330,9 @@ namespace Lunaris {
 
 		al_identity_transform(&latest_transform);
 
-		auto_economy = conf.auto_economy_mode;
+		economy_fps = conf.min_frames < 0.0 ? 0.0 : conf.min_frames;
+		default_fps = conf.max_frames < 0.0 ? 0.0 : conf.max_frames;
+
 		timed.set_delay((conf.max_frames > 0.0) ? 1.0 / conf.max_frames : 0.0);
 
 		return window != nullptr;
@@ -443,9 +464,31 @@ namespace Lunaris {
 		return economy_mode;
 	}
 
+	LUNARIS_DECL double display::get_economy_fps() const
+	{
+		return economy_fps;
+	}
+
+	LUNARIS_DECL double display::get_fps_limit() const
+	{
+		return default_fps;
+	}
+
 	LUNARIS_DECL void display::set_is_auto_economy_set(const bool var)
 	{
-		auto_economy = var;
+		set_economy_fps(var ? 30 : 0);
+	}
+
+	LUNARIS_DECL void display::set_economy_fps(const double var)
+	{
+		economy_fps = var < 0.0 ? 0.0 : var;
+		apply_mode_timed_auto();
+	}
+
+	LUNARIS_DECL void display::set_fps_limit(const double var)
+	{
+		default_fps = var < 0.0 ? 0.0 : var;
+		apply_mode_timed_auto();
 	}
 
 	LUNARIS_DECL bool display::empty() const
@@ -513,7 +556,6 @@ namespace Lunaris {
 		if (window) {
 			al_flip_display();
 
-			if (auto_economy && economy_mode) std::this_thread::sleep_for(economy_mode_delay);
 			timed.autowait();
 
 			if (((al_get_time() - last_event_check) > default_display_self_check_time)) {
@@ -535,7 +577,8 @@ namespace Lunaris {
 							if (ev.display.source != window)
 								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
 
-							if (auto_economy) economy_mode = false;
+							economy_mode = false;
+							apply_mode_timed_auto();
 
 							break;
 
@@ -545,7 +588,8 @@ namespace Lunaris {
 							if (ev.display.source != window)
 								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
 
-							if (auto_economy) economy_mode = true;
+							economy_mode = true;
+							apply_mode_timed_auto();
 
 							break;
 
