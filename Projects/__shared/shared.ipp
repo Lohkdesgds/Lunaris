@@ -276,6 +276,38 @@ int utility_test(const std::string& self_path)
 
 	cout << console::color::GREEN << "Console is probably working (you can see me, right?)";
 
+	cout << console::color::LIGHT_PURPLE << "Testing 'bomb'...";
+	{
+		cout << "Creating a bomb...";
+
+		bool realboom = false;
+		{
+			bomb mybomb([&] {realboom = true; });
+			cout << "The bomb has been planted. Testing it...";
+		}
+		TESTLU(realboom, "The bomb didn't ignite. Bad news.");
+
+		cout << "Good, but is the anti-bomb squad good? Let's test them. Another bomb, but this time...";
+		bool shoulddefuse = false;
+		realboom = false;
+		{
+			bomb mybomb([&] {realboom = true; });
+			bomb mybomb2([&] {shoulddefuse = true; });
+			cout << "The bombs has been planted. Didn't I tell you there's two now? If we move one to another, the one being changed should explode if not defused before.";
+
+			mybomb2 = std::move(mybomb);
+			TESTLU(shoulddefuse, "Oh no bombs are not working as we expected.");
+			TESTLU(mybomb.is_defused(), "What? Duplicated bombs?");
+			TESTLU(!mybomb2.is_defused(), "BOMB DISAPPEARED WHILE MOVING OH NO!");
+
+			mybomb2.defuse();
+			cout << "Defused! Is that enough?";
+		}
+		TESTLU(!realboom, "The bomb exploded. We're all dead :(");
+
+		cout << console::color::GREEN << "PASSED!";
+	}
+
 	cout << console::color::LIGHT_PURPLE << "Testing 'paths'...";
 	{
 		cout << "Checking for common paths...";
