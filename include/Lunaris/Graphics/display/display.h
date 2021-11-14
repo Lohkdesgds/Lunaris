@@ -24,7 +24,6 @@
 namespace Lunaris {
 
 	const double default_display_self_check_time = 0.5; // check events twice a second (related to last_event_check)
-	const std::chrono::milliseconds economy_mode_delay = std::chrono::milliseconds(16); // when "not focused" or alt-tabbed, display will slow down (~60 fps)
 	const std::function<void(void)> default_quiet_safe_function_thread = [] { std::this_thread::sleep_for(std::chrono::milliseconds(6)); };
 
 	void __display_allegro_start();
@@ -49,10 +48,10 @@ namespace Lunaris {
 		int samples = 4; // ALLEGRO_SAMPLE_BUFFERS = samples > 0, ALLEGRO_SAMPLES = samples.
 		bool fullscreen = true; // flags_combine()
 		bool vsync = false;
-		bool auto_economy_mode = true;
 		bool single_buffer = false;
 		bool use_basic_internal_event_system = true; // automatically "acknowledge" events like resizing. If you want close events, you should register the display in a Event handler.
-		double max_frames = 0;
+		double max_frames = 0; // 0 == no set
+		double min_frames = 30; // 0 == no set
 
 		int flags_combine() const;
 
@@ -61,9 +60,11 @@ namespace Lunaris {
 		display_config& set_samples(const int);
 		display_config& set_fullscreen(const bool);
 		display_config& set_vsync(const bool);
+		// deprecated. Now it works like set_economy_framerate_limit(30) if true or set_economy_framerate_limit(0) if false
 		display_config& set_auto_economy_mode(const bool);
+		display_config& set_economy_framerate_limit(const double);
 		display_config& set_single_buffer(const bool);
-		// set framerate limit. Precision gets lower as value goes higher. Certainly this is MAXIMUM, not AVERAGE.
+		// set framerate limit. Precision gets lower as value goes higher. This is not perfect, but it's near.
 		display_config& set_framerate_limit(const double);
 		display_config& set_use_basic_internal_event_system(const bool);
 		display_config& set_window_title(const std::string&);
@@ -120,7 +121,10 @@ namespace Lunaris {
 
 		ALLEGRO_TRANSFORM latest_transform{}; // useful elsewhere, trust me (see mouse)
 		double last_event_check = 0.0;
-		bool economy_mode = false, auto_economy = false;
+		bool economy_mode = false;
+
+		double economy_fps = 0.0; // 0 == no delay
+		double default_fps = 0.0; // 0 == no delay
 #ifdef _WIN32
 		HICON last_icon_handle = nullptr;
 #endif
@@ -139,6 +143,8 @@ namespace Lunaris {
 		safe_data<std::function<void(const display_menu_event&)>> menu_events;
 
 		display_menu menu;
+
+		void apply_mode_timed_auto();
 	public:
 		display() = default;
 		display(const display_config&);
@@ -181,7 +187,15 @@ namespace Lunaris {
 
 		// only if use_basic_internal_event_system is enabled
 		bool get_is_economy_mode_activated() const;
+
+		double get_economy_fps() const;
+		double get_fps_limit() const;
+
+		// deprecated. Consider using set_economy_fps_limit with 30 for enabled and 0 to disabled
 		void set_is_auto_economy_set(const bool);
+
+		void set_economy_fps(const double);
+		void set_fps_limit(const double);
 
 		bool empty() const;
 
@@ -246,7 +260,11 @@ namespace Lunaris {
 		using display::set_menu;
 		using display::delete_menu;
 		using display::get_is_economy_mode_activated;
+		using display::get_economy_fps;
+		using display::get_fps_limit;
 		using display::set_is_auto_economy_set;
+		using display::set_economy_fps;
+		using display::set_fps_limit;
 		using display::empty;
 		using display::get_raw_display;
 		using display::get_event_source;

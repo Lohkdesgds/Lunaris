@@ -1170,7 +1170,14 @@ int graphics_test()
 
 	cout << "Creating display...";
 
-	TESTLU(my_display.create(display_config().set_fullscreen(false).set_display_mode(display_options().set_width(1800).set_height(900)).set_window_title("GRAPHICS TEST").set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)), "Failed to create the display");
+	TESTLU(my_display.create(display_config()
+		.set_fullscreen(false)
+		.set_display_mode(display_options().set_width(1800).set_height(900))
+		.set_window_title("GRAPHICS TEST")
+		.set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)
+		.set_framerate_limit(240)
+		.set_economy_framerate_limit(40)
+	), "Failed to create the display");
 
 	{
 		texture_gif* oop = (texture_gif*)giffye.get();
