@@ -160,6 +160,9 @@
     <Filter Include="include\Lunaris\Utility\__impl\path">
       <UniqueIdentifier>{19f28024-8885-4f21-82c6-186ae8901d5f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\bomb">
+      <UniqueIdentifier>{9335c84e-0b21-42c3-8bb2-106360d7c68d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -414,6 +417,12 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\path.h">
       <Filter>include\Lunaris\Utility\__include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\bomb.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\bomb\bomb.h">
+      <Filter>include\Lunaris\Utility\__impl\bomb</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">
@@ -499,6 +508,9 @@
     </ClCompile>
     <ClCompile Include="..\..\include\Lunaris\Utility\path\path.cpp">
       <Filter>include\Lunaris\Utility\__impl\path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Utility\bomb\bomb.cpp">
+      <Filter>include\Lunaris\Utility\__impl\bomb</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

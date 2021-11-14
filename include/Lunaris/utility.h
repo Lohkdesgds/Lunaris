@@ -17,3 +17,4 @@
 #include <Lunaris/Utility/random.h>
 #include <Lunaris/Utility/config.h>
 #include <Lunaris/Utility/path.h>
+#include <Lunaris/Utility/bomb.h>
