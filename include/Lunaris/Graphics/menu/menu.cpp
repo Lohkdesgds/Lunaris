@@ -417,9 +417,9 @@ namespace Lunaris {
 		if (was_showing) show();
 	}
 
-	LUNARIS_DECL menu::operator ALLEGRO_EVENT_SOURCE*() const
+	LUNARIS_DECL menu::operator std::vector<ALLEGRO_EVENT_SOURCE*>() const
 	{
-		return get_event_source();
+		return { ev_source };
 	}
 
 	LUNARIS_DECL ALLEGRO_EVENT_SOURCE* menu::get_event_source() const

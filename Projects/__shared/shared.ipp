@@ -1462,13 +1462,13 @@ int graphics_test()
 
 		switch(ev.key_id) {
 		case ALLEGRO_KEY_F11:
-			my_display.add_run_once_in_drawing_thread([&] {
+			//my_display.add_run_once_in_drawing_thread([&] {
 				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
-				transform transf;
-				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
-				transf.apply();
-				return true;
-			});
+			//	transform transf;
+			//	transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
+			//	transf.apply();
+			//	return true;
+			//});
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
 		case ALLEGRO_KEY_R:
@@ -1651,7 +1651,7 @@ int events_test()
 	});
 
 
-	event_generic.install_other(disp.get_event_source());
+	event_generic.install_other(disp.get_event_sources());
 
 	cout << "Checking common events from Display. Please do what I say from now on:";
 

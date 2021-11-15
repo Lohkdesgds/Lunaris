@@ -247,9 +247,12 @@ namespace Lunaris {
 		if (!(ev_qu = al_create_event_queue())) {
 			return false;
 		}
+		al_init_user_event_source(&evsrc);
+		al_register_event_source(ev_qu, &evsrc);
 
 		if (!(window = al_create_display(conf.mode.width > 0 ? conf.mode.width : 0, conf.mode.height > 0 ? conf.mode.height : 0)))
 		{
+			al_destroy_user_event_source(&evsrc);
 			if (ev_qu) al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 			return false;
@@ -298,7 +301,7 @@ namespace Lunaris {
 		if (!empty() && !str.empty()) al_set_window_title(window, str.c_str());
 	}
 
-	LUNARIS_DECL future<bool> display::add_run_once_in_drawing_thread(std::function<bool(void)> f)
+	LUNARIS_DECL future<bool> display::post_task(std::function<bool(void)> f)
 	{
 		promise<bool> prom;
 		if (!f) {
@@ -309,6 +312,11 @@ namespace Lunaris {
 		auto fn2 = prom.get_future().then([f](auto) -> bool { try { return f(); } catch (...) { return false; } });
 		promises.push_back(std::move(prom));
 		return fn2;
+	}
+
+	LUNARIS_DECL future<bool> display::add_run_once_in_drawing_thread(std::function<bool(void)> f)
+	{
+		return post_task(f);
 	}
 
 	LUNARIS_DECL int display::get_width() const
@@ -335,12 +343,23 @@ namespace Lunaris {
 		return 0;
 	}
 
-	LUNARIS_DECL void display::toggle_flag(const int flg)
+	LUNARIS_DECL future<bool> display::toggle_flag(const int flg)
 	{
-		if (window) {
-			al_toggle_display_flag(window, flg, !(al_get_display_flags(window) & flg));
-			acknowledge_resize();
-		}
+		return post_task([this, flg] {
+			if (window) {
+				if (!al_set_display_flag(window, flg, !(al_get_display_flags(window) & flg))) return false;
+				if (flg & ALLEGRO_FULLSCREEN_WINDOW) al_acknowledge_resize(window);
+
+				ALLEGRO_EVENT bev;
+				bev.user.type = static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE);
+				bev.user.data1 = static_cast<intptr_t>(al_get_display_width(window));
+				bev.user.data2 = static_cast<intptr_t>(al_get_display_height(window));
+				bev.user.data3 = (intptr_t)window;
+
+				return al_emit_user_event(&evsrc, &bev, nullptr);
+			}
+			return false;
+		});
 	}
 
 	LUNARIS_DECL bool display::set_icon(ALLEGRO_BITMAP* bmp)
@@ -352,19 +371,21 @@ namespace Lunaris {
 		return false;
 	}
 #ifdef _WIN32
-	LUNARIS_DECL bool display::set_icon_from_icon_resource(const int id)
+	LUNARIS_DECL future<bool> display::set_icon_from_icon_resource(const int id)
 	{
-		if (!window) return false;
-		HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(id), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
-		if (icon) {
-			HWND winhandle = al_get_win_window_handle(window);
-			SetClassLongPtr(winhandle, GCLP_HICON, (LONG_PTR)icon);
-			SetClassLongPtr(winhandle, GCLP_HICONSM, (LONG_PTR)icon);
-			if (last_icon_handle) DestroyIcon(last_icon_handle);
-			last_icon_handle = icon;
-			return true;
-		}
-		return false;
+		return post_task([this, id] {
+			if (!window) return false;
+			HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(id), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+			if (icon) {
+				HWND winhandle = al_get_win_window_handle(window);
+				SetClassLongPtr(winhandle, GCLP_HICON, (LONG_PTR)icon);
+				SetClassLongPtr(winhandle, GCLP_HICONSM, (LONG_PTR)icon);
+				if (last_icon_handle) DestroyIcon(last_icon_handle);
+				last_icon_handle = icon;
+				return true;
+			}
+			return false;
+		});
 	}
 #endif
 	LUNARIS_DECL bool display::get_is_economy_mode_activated() const
@@ -424,6 +445,7 @@ namespace Lunaris {
 			update_tasks = nullptr;
 		}
 		if (ev_qu) {
+			al_destroy_user_event_source(&evsrc);
 			al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 		}
@@ -444,14 +466,17 @@ namespace Lunaris {
 		return window;
 	}
 
-	LUNARIS_DECL display::operator ALLEGRO_EVENT_SOURCE*() const
+	LUNARIS_DECL display::operator std::vector<ALLEGRO_EVENT_SOURCE*>() const
 	{
-		return get_event_source();
+		return get_event_sources();
 	}
 
-	LUNARIS_DECL ALLEGRO_EVENT_SOURCE* display::get_event_source() const
+	LUNARIS_DECL std::vector<ALLEGRO_EVENT_SOURCE*> display::get_event_sources() const
 	{
-		return window ? al_get_display_event_source(window) : nullptr;
+		std::vector<ALLEGRO_EVENT_SOURCE*> _tmp;
+		if (window) _tmp.push_back(al_get_display_event_source(window));
+		_tmp.push_back((ALLEGRO_EVENT_SOURCE*)&evsrc);
+		return _tmp;
 	}
 
 	LUNARIS_DECL std::function<ALLEGRO_TRANSFORM(void)> display::get_current_transform_function()
@@ -529,6 +554,10 @@ namespace Lunaris {
 					else flag_draw_timed = true;
 
 					break;
+				case static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE):
+
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+					break;
 				}
 			}
 
@@ -543,9 +572,12 @@ namespace Lunaris {
 		else throw std::runtime_error("NO QUEUE FOUND! SOMETHING IS WRONG!"); // nop, something is really wrong here
 	}
 
-	LUNARIS_DECL void display::acknowledge_resize()
+	LUNARIS_DECL future<bool> display::acknowledge_resize()
 	{
-		if (window) al_acknowledge_resize(window);
+		return post_task([this] {
+			if (window) return al_acknowledge_resize(window);
+			return false;
+		});
 	}
 
 	LUNARIS_DECL bool display_async::safe_run::can_run()
@@ -646,6 +678,15 @@ namespace Lunaris {
 		: _ev(ev), _ref(rf)
 	{
 		source = ev.display.source;
+
+		if (_ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE)) {
+			_transl.width = _ev.user.data1;
+			_transl.height = _ev.user.data2;
+			_transl.orientation = al_get_display_orientation(_ref.get_raw_display());
+			_transl.source = (ALLEGRO_DISPLAY*)_ev.user.data3;
+			_transl.type = ALLEGRO_EVENT_DISPLAY_RESIZE;
+			al_get_window_position(_ref.get_raw_display(), &_transl.x, &_transl.y);
+		}
 	}
 
 	LUNARIS_DECL display* display_event::operator->()
@@ -680,7 +721,12 @@ namespace Lunaris {
 
 	LUNARIS_DECL bool display_event::is_resize() const
 	{
-		return _ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE;
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE || _ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE);
+	}
+
+	LUNARIS_DECL bool display_event::is_flag_change() const
+	{
+		return _ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE);
 	}
 
 	LUNARIS_DECL bool display_event::is_emergency_stop() const
@@ -705,7 +751,9 @@ namespace Lunaris {
 
 	LUNARIS_DECL const ALLEGRO_DISPLAY_EVENT& display_event::as_display() const
 	{
-		return _ev.display;
+		if (_ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE))
+			return _transl;
+		else return _ev.display;
 	}
 
 	LUNARIS_DECL const ALLEGRO_TIMER_EVENT& display_event::as_timer() const

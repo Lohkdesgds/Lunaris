@@ -2,7 +2,8 @@
 
 #include <Lunaris/__macro/macros.h>
 
-#include <Lunaris/Utility/safe_data.h>
+#include <Lunaris/Utility/mutex.h>
+#include <Lunaris/Utility/safe_data.h> // needs mutex
 #include <Lunaris/Utility/socket.h>
 #include <Lunaris/Utility/console.h>
 #include <Lunaris/Utility/future.h>

@@ -25,6 +25,7 @@ namespace Lunaris {
 		void install_touch();
 
 		void install_other(ALLEGRO_EVENT_SOURCE*);
+		void install_other(std::vector<ALLEGRO_EVENT_SOURCE*>);
 
 		void uninstall_keyboard();
 		void uninstall_mouse();
@@ -32,6 +33,7 @@ namespace Lunaris {
 		void uninstall_touch();
 
 		void uninstall_other(ALLEGRO_EVENT_SOURCE*);
+		void uninstall_other(std::vector<ALLEGRO_EVENT_SOURCE*>);
 
 		void hook_event_handler(const std::function<void(const ALLEGRO_EVENT&)>);
 		void unhook_event_handler();
@@ -47,7 +49,7 @@ namespace Lunaris {
 		std::function<void(EventHandlerType&)> generic_event;
 
 		ALLEGRO_TIMER* timer_check = nullptr;
-		ALLEGRO_EVENT_SOURCE* last_event_source = nullptr;
+		std::vector<ALLEGRO_EVENT_SOURCE*> last_event_source;
 
 		void handle_events(const ALLEGRO_EVENT&);
 		void check_time();

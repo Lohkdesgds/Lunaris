@@ -80,11 +80,14 @@ namespace Lunaris {
 			std::string get_text() const;
 			bool set_text(const std::string&);
 		};
+		enum class custom_events {DISPLAY_FLAG_TOGGLE = 1024};
 	private:
+
 		ALLEGRO_DISPLAY* window = nullptr;
 		ALLEGRO_EVENT_QUEUE* ev_qu = nullptr;
 		ALLEGRO_TIMER* timed_draw = nullptr;
 		ALLEGRO_TIMER* update_tasks = nullptr;
+		ALLEGRO_EVENT_SOURCE evsrc; // on toggle, because it's broken somehow lol
 
 		ALLEGRO_TRANSFORM latest_transform{}; // useful elsewhere, trust me (see mouse)
 
@@ -113,6 +116,7 @@ namespace Lunaris {
 
 		void set_window_title(const std::string&);
 
+		future<bool> post_task(std::function<bool(void)>);
 		future<bool> add_run_once_in_drawing_thread(std::function<bool(void)>);
 
 		int get_width() const;
@@ -120,11 +124,11 @@ namespace Lunaris {
 		int get_frequency() const;
 		int get_flags() const;
 
-		void toggle_flag(const int);
+		future<bool> toggle_flag(const int);
 
 		bool set_icon(ALLEGRO_BITMAP*);
 #ifdef _WIN32
-		bool set_icon_from_icon_resource(const int);
+		future<bool> set_icon_from_icon_resource(const int);
 #endif
 
 		// only if use_basic_internal_event_system is enabled
@@ -148,8 +152,8 @@ namespace Lunaris {
 
 		ALLEGRO_DISPLAY* get_raw_display() const;
 
-		operator ALLEGRO_EVENT_SOURCE*() const;
-		ALLEGRO_EVENT_SOURCE* get_event_source() const;
+		operator std::vector<ALLEGRO_EVENT_SOURCE*>() const;
+		std::vector<ALLEGRO_EVENT_SOURCE*> get_event_sources() const;
 
 		std::function<ALLEGRO_TRANSFORM(void)> get_current_transform_function(); // keep this valid while using it!
 		operator std::function<ALLEGRO_TRANSFORM(void)>() const; // same as ^^
@@ -158,7 +162,7 @@ namespace Lunaris {
 		void flip();
 
 		// not needed if use_basic_internal_event_system was on (defaults to on)
-		void acknowledge_resize();
+		future<bool> acknowledge_resize();
 	};
 
 	class display_async : public display {
@@ -211,8 +215,8 @@ namespace Lunaris {
 		using display::hold_draw;
 		using display::empty;
 		using display::get_raw_display;
-		using display::operator ALLEGRO_EVENT_SOURCE*;
-		using display::get_event_source;
+		using display::operator std::vector<ALLEGRO_EVENT_SOURCE*>;
+		using display::get_event_sources;
 		using display::get_current_transform_function;
 		using display::operator std::function<ALLEGRO_TRANSFORM(void)>;
 	};
@@ -222,6 +226,8 @@ namespace Lunaris {
 		ALLEGRO_DISPLAY* source = nullptr;
 		const ALLEGRO_EVENT& _ev;
 		display& _ref;
+
+		ALLEGRO_DISPLAY_EVENT _transl; // non standard window event translated
 	public:
 		display_event(display&, const ALLEGRO_EVENT&);
 
@@ -234,6 +240,7 @@ namespace Lunaris {
 		bool is_switch_off() const;
 		bool is_switch_on() const;
 		bool is_resize() const;
+		bool is_flag_change() const;
 		bool is_emergency_stop() const;
 		bool is_emergency_stop_gone() const;
 

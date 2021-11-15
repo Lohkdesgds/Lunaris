@@ -42,6 +42,15 @@ namespace Lunaris {
 			al_register_event_source(get_event_queue(), even);
 	}
 
+	LUNARIS_DECL void generic_event_handler::install_other(std::vector<ALLEGRO_EVENT_SOURCE*> evens)
+	{
+		auto lucky = get_lock();
+		for (auto& even : evens) {
+			if (even && !al_is_event_source_registered(get_event_queue(), even))
+				al_register_event_source(get_event_queue(), even);
+		}
+	}
+
 	LUNARIS_DECL void generic_event_handler::uninstall_keyboard()
 	{
 		uninstall_other(al_get_keyboard_event_source());
@@ -67,6 +76,15 @@ namespace Lunaris {
 		auto lucky = get_lock();
 		if (even && al_is_event_source_registered(get_event_queue(), even))
 			al_unregister_event_source(get_event_queue(), even);
+	}
+
+	LUNARIS_DECL void generic_event_handler::uninstall_other(std::vector<ALLEGRO_EVENT_SOURCE*> evens)
+	{
+		auto lucky = get_lock();
+		for (auto& even : evens) {
+			if (even && al_is_event_source_registered(get_event_queue(), even))
+				al_unregister_event_source(get_event_queue(), even);
+		}
 	}
 
 	LUNARIS_DECL void generic_event_handler::hook_event_handler(const std::function<void(const ALLEGRO_EVENT&)> f)
