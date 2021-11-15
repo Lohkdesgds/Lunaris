@@ -444,14 +444,14 @@ namespace Lunaris {
 			al_destroy_timer(update_tasks);
 			update_tasks = nullptr;
 		}
+		if (window) {
+			al_destroy_display(window);
+			window = nullptr;
+		}
 		if (ev_qu) {
 			al_destroy_user_event_source(&evsrc);
 			al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
-		}
-		if (window) {
-			al_destroy_display(window);
-			window = nullptr;
 		}
 #ifdef _WIN32
 		if (last_icon_handle) {
@@ -474,8 +474,10 @@ namespace Lunaris {
 	LUNARIS_DECL std::vector<ALLEGRO_EVENT_SOURCE*> display::get_event_sources() const
 	{
 		std::vector<ALLEGRO_EVENT_SOURCE*> _tmp;
-		if (window) _tmp.push_back(al_get_display_event_source(window));
-		_tmp.push_back((ALLEGRO_EVENT_SOURCE*)&evsrc);
+		if (window) {
+			_tmp.push_back(al_get_display_event_source(window));
+			_tmp.push_back((ALLEGRO_EVENT_SOURCE*)&evsrc);
+		}
 		return _tmp;
 	}
 
