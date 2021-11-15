@@ -107,6 +107,12 @@ namespace Lunaris {
 		return *this;
 	}
 
+	LUNARIS_DECL display_config& display_config::set_wait_for_display_draw(const bool var)
+	{
+		wait_for_display_draw = var;
+		return *this;
+	}
+
 	LUNARIS_DECL std::vector<display_options> get_current_modes(const int index)
 	{
 		__display_allegro_start();
@@ -212,6 +218,11 @@ namespace Lunaris {
 		}
 	}
 
+	LUNARIS_DECL bool display::auto_get_next_event(ALLEGRO_EVENT& rev)
+	{
+		return ev_qu ? ((wait_for_display_flip_before_drop && timed_draw) ? (al_wait_for_event_timed(ev_qu, &rev, max_time_wait_for_event)) : (al_get_next_event(ev_qu, &rev))) : false;
+	}
+
 	LUNARIS_DECL display::display(const display_config& conf)
 	{
 		if (!create(conf)) throw std::runtime_error("Can't create display!");
@@ -267,6 +278,7 @@ namespace Lunaris {
 
 		economy_fps = conf.min_frames < 0.0 ? 0.0 : conf.min_frames;
 		default_fps = conf.max_frames < 0.0 ? 0.0 : conf.max_frames;
+		wait_for_display_flip_before_drop = conf.wait_for_display_draw;
 
 		fix_timers();
 
@@ -425,6 +437,16 @@ namespace Lunaris {
 		totally_hold_draw = var;
 	}
 
+	LUNARIS_DECL bool display::get_wait_for_flip() const
+	{
+		return wait_for_display_flip_before_drop;
+	}
+
+	LUNARIS_DECL void display::set_wait_for_flip(const bool var)
+	{
+		wait_for_display_flip_before_drop = var;
+	}
+
 	LUNARIS_DECL bool display::empty() const
 	{
 		return window == nullptr;
@@ -498,80 +520,82 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::flip()
 	{
-		if (ev_qu) {
-			ALLEGRO_EVENT ev;
-			while (al_get_next_event(ev_qu, &ev))
-			{
-				switch (ev.type) {
+		ALLEGRO_EVENT ev;
+		while (!flag_draw_timed && auto_get_next_event(ev)) // drop if draw, always
+		{
+			switch (ev.type) {
 
-				case ALLEGRO_EVENT_DISPLAY_EXPOSE:
-				case ALLEGRO_EVENT_DISPLAY_FOUND:
-				case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+			case ALLEGRO_EVENT_DISPLAY_EXPOSE:
+			case ALLEGRO_EVENT_DISPLAY_FOUND:
+			case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
 
-					economy_mode = false;
-					fix_timers();
+				economy_mode = false;
+				fix_timers();
+				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+				break;
+
+			case ALLEGRO_EVENT_DISPLAY_LOST:
+			case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+
+				economy_mode = true;
+				fix_timers();
+				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+				break;
+
+			case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
+
+				hold_draw(true);
+				al_acknowledge_drawing_halt(window);
+
+				break;
+
+			case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
+
+				al_acknowledge_drawing_resume(window);
+				hold_draw(false);
+				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+				break;
+
+			case ALLEGRO_EVENT_DISPLAY_RESIZE:
+
+				acknowledge_resize();
+				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+				break;
+
+			case static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE):
+
+				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+				break;
+
+			case ALLEGRO_EVENT_TIMER: // DRAW EVENT!
+
+				if (ev.timer.source == update_tasks) {
 					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
-					break;
-
-				case ALLEGRO_EVENT_DISPLAY_LOST:
-				case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
-
-					economy_mode = true;
-					fix_timers();
-					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-					break;
-
-				case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
-
-					hold_draw(true);
-					al_acknowledge_drawing_halt(window);
-
-					break;
-
-				case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
-
-					al_acknowledge_drawing_resume(window);
-					hold_draw(false);
-					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-					break;
-
-				case ALLEGRO_EVENT_DISPLAY_RESIZE:
-
-					acknowledge_resize();
-					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-					break;
-
-				case ALLEGRO_EVENT_TIMER:
-
-					if (ev.timer.source == update_tasks) {
-						if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-						if (promises.size()) {
-							promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
-						}
+					if (promises.size()) {
+						promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
 					}
-					else flag_draw_timed = true;
-
-					break;
-				case static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE):
-
-					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-					break;
 				}
+				else {
+					flag_draw_timed = true;					
+				}
+
+				break;
 			}
-
-			const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
-			flag_draw_timed = false;
-
-			if (can_draw_now) al_flip_display();
 		}
-		else if (promises.size()) { // maybe there's something to do before that's available
+
+		const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
+		flag_draw_timed = false;
+
+		if (can_draw_now) al_flip_display();
+
+		if (promises.size()) { // maybe there's something to do before that's available
 			promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
 		}
-		else throw std::runtime_error("NO QUEUE FOUND! SOMETHING IS WRONG!"); // nop, something is really wrong here
 	}
 
 	LUNARIS_DECL future<bool> display::acknowledge_resize()

@@ -24,6 +24,8 @@
 
 namespace Lunaris {
 
+	const double max_time_wait_for_event = 1.0;
+
 	void __display_allegro_start();
 
 	struct display_options {
@@ -49,6 +51,7 @@ namespace Lunaris {
 		bool use_basic_internal_event_system = true; // automatically "acknowledge" events like resizing. If you want close events, you should register the display in a Event handler.
 		double max_frames = 0; // 0 == no set
 		double min_frames = 30; // 0 == no set
+		bool wait_for_display_draw = true; // if there's a timer for display aka max_frames is defined, when draw() should it wait for an DISPLAY FLIP event before returning the function or just drop if there's nothing to do?
 
 		int flags_combine() const;
 
@@ -65,6 +68,7 @@ namespace Lunaris {
 		display_config& set_framerate_limit(const double);
 		display_config& set_use_basic_internal_event_system(const bool);
 		display_config& set_window_title(const std::string&);
+		display_config& set_wait_for_display_draw(const bool);
 	};
 
 	std::vector<display_options> get_current_modes(const int = 0);
@@ -94,6 +98,7 @@ namespace Lunaris {
 		bool economy_mode = false;
 		bool totally_hold_draw = false;
 		bool flag_draw_timed = false; // when timer, this is used
+		bool wait_for_display_flip_before_drop = true;
 
 		double economy_fps = 0.0; // 0 == no delay
 		double default_fps = 0.0; // 0 == no delay
@@ -101,6 +106,9 @@ namespace Lunaris {
 		HICON last_icon_handle = nullptr;
 #endif
 		void fix_timers();
+
+		// automatically handle wait_for_display_flip_before_drop property and wait or get directly (or max_time_wait_for_event)
+		bool auto_get_next_event(ALLEGRO_EVENT&);
 	protected:
 		safe_vector<promise<bool>> promises; // when events, they can list things to do here, or maybe another thread somewhere else, idk
 	public:
@@ -145,6 +153,11 @@ namespace Lunaris {
 
 		// stop drawing at all
 		void hold_draw(const bool);
+
+		// if it waits for a real display flip on flip() before returning (or timeout)
+		bool get_wait_for_flip() const;
+		// set to wait for real flip to return or return as soon as there's nothing to do!
+		void set_wait_for_flip(const bool);
 
 		bool empty() const;
 
@@ -213,6 +226,8 @@ namespace Lunaris {
 		using display::set_economy_fps;
 		using display::set_fps_limit;
 		using display::hold_draw;
+		using display::get_wait_for_flip;
+		using display::set_wait_for_flip;
 		using display::empty;
 		using display::get_raw_display;
 		using display::operator std::vector<ALLEGRO_EVENT_SOURCE*>;

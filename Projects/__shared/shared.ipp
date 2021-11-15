@@ -1274,8 +1274,9 @@ int graphics_test()
 		.set_display_mode(display_options().set_width(1800).set_height(900))
 		.set_window_title("GRAPHICS TEST")
 		.set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)
-		.set_framerate_limit(0)
+		.set_framerate_limit(300)
 		.set_economy_framerate_limit(20)
+		.set_wait_for_display_draw(true)
 	), "Failed to create the display");
 
 	{
@@ -1396,7 +1397,8 @@ int graphics_test()
 
 	cout << "Setting up drawing call...";
 
-
+	double __time_count = 0.0;
+	size_t loops_call = 0;
 
 	my_display.hook_draw_function([&](const auto& _u) {
 		al_clear_to_color(al_map_rgb(
@@ -1410,6 +1412,13 @@ int graphics_test()
 		txt_main.draw();
 
 		topleft_dc.draw();
+
+		if (al_get_time() - __time_count > 1.0) {
+			__time_count = al_get_time();
+			cout << "Display loops: " << loops_call;
+			loops_call = 0;
+		}
+		++loops_call;
 
 		{
 			transform savv, raww;
