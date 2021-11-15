@@ -8,12 +8,6 @@ namespace Lunaris {
 		if (!al_is_primitives_addon_initialized() && !al_init_primitives_addon()) throw std::runtime_error("Can't start Primitives!");
 	}
 
-	LUNARIS_DECL void __display_menu_allegro_start()
-	{
-		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
-		if (!al_is_native_dialog_addon_initialized() && !al_init_native_dialog_addon()) throw std::runtime_error("Can't start Native Dialog!");
-	}
-
 	LUNARIS_DECL display_options& display_options::set_width(const int var)
 	{
 		width = var;
@@ -113,102 +107,6 @@ namespace Lunaris {
 		return *this;
 	}
 
-	LUNARIS_DECL display_sub_menu::display_sub_menu() 
-	{ 
-		__display_menu_allegro_start();
-	}
-
-	LUNARIS_DECL display_sub_menu& display_sub_menu::make_this_division() 
-	{ 
-		name.clear();
-		id = static_cast<uint16_t>(-1);
-		return *this;
-	}
-
-	LUNARIS_DECL display_sub_menu& display_sub_menu::set_name(const std::string& var)
-	{
-		name = var;
-		return *this;
-	}
-
-	LUNARIS_DECL display_sub_menu& display_sub_menu::set_id(const uint16_t var)
-	{
-		id = var; 
-		return *this;
-	}
-
-	LUNARIS_DECL display_sub_menu& display_sub_menu::set_flags(const int var)
-	{
-		flags = var;
-		return *this;
-	}
-
-	LUNARIS_DECL display_sub_menu& display_sub_menu::push(const display_sub_menu& var)
-	{
-		sub_menus.push_back(var); 
-		return *this; 
-	}
-
-	LUNARIS_DECL std::vector<ALLEGRO_MENU_INFO> display_sub_menu::generate()
-	{
-		std::vector<ALLEGRO_MENU_INFO> vec;
-		if (sub_menus.empty()) {
-			vec.push_back({ name.empty() ? nullptr : name.c_str(), id, flags, 0 });
-		}
-		else {
-			__makename = (name + "->");
-			vec.push_back({ __makename.c_str(), id, flags, 0 });
-
-			for (auto& it : sub_menus) {
-				auto __vc = it.generate();
-				vec.insert(vec.end(), __vc.begin(), __vc.end());
-			}
-
-			vec.push_back(ALLEGRO_END_OF_MENU);
-		}
-		return vec;
-	}
-
-	LUNARIS_DECL void display_menu_event::toggle_flag(const flags flag) const
-	{
-		if (source)
-			al_set_menu_item_flags(source, id, al_get_menu_item_flags(source, id) ^ static_cast<int>(flag));
-	}
-
-	LUNARIS_DECL display_menu::display_menu() 
-	{
-		__display_menu_allegro_start();
-	}
-
-	LUNARIS_DECL display_menu& display_menu::push(const display_sub_menu& each)
-	{
-		menus.push_back(each);
-		return *this;
-	}
-
-	LUNARIS_DECL ALLEGRO_MENU* display_menu::generate() 
-	{
-		std::vector<ALLEGRO_MENU_INFO> vec;
-		for (auto& it : menus) {
-			auto __vc = it.generate();
-			vec.insert(vec.end(), __vc.begin(), __vc.end());
-		}
-		vec.push_back(ALLEGRO_END_OF_MENU);
-		__menu = std::shared_ptr<ALLEGRO_MENU>(al_build_menu(vec.data()), al_destroy_menu);
-		return __menu.get();
-	}
-
-	LUNARIS_DECL void display_menu::destroy()
-	{
-		__menu.reset();
-	}
-
-	LUNARIS_DECL ALLEGRO_EVENT_SOURCE* display_menu::get_event_source() const
-	{
-		if (__menu) return al_enable_menu_event_source(__menu.get());
-		return nullptr;
-	}
-
 	LUNARIS_DECL std::vector<display_options> get_current_modes(const int index)
 	{
 		__display_allegro_start();
@@ -232,32 +130,85 @@ namespace Lunaris {
 		return opts;
 	}
 
-	LUNARIS_DECL void display::timed_module::autowait()
+	LUNARIS_DECL display::_clipboard::_clipboard(ALLEGRO_DISPLAY* d)
+		: src(d)
 	{
-		if (delta_sec <= 0.0) return;
-		const double wtim = wait_until - al_get_time();
-		if (wtim > 0.0) al_rest(wtim);
-		wait_until = al_get_time() + delta_sec;
 	}
 
-	LUNARIS_DECL void display::timed_module::set_delay(const double dt)
+	LUNARIS_DECL bool display::_clipboard::has_text() const
 	{
-		delta_sec = dt;
-		if (wait_until - al_get_time() > dt) wait_until = al_get_time() + delta_sec; // if time wait > new time, new time, else keep as is
+		return src ? al_clipboard_has_text(src) : false;
 	}
 
-	LUNARIS_DECL void display::apply_mode_timed_auto()
+	LUNARIS_DECL std::string display::_clipboard::get_text() const
 	{
+		if (!src) return {};
+		std::string cpy;
+		char* buf = al_get_clipboard_text(src);
+		if (!buf) return {};
+		cpy = buf;
+		al_free(buf);
+		al_set_clipboard_text(src, nullptr);
+		return cpy;
+	}
+
+	LUNARIS_DECL bool display::_clipboard::set_text(const std::string& var)
+	{
+		return src ? al_set_clipboard_text(src, var.c_str()) : false;
+	}
+
+	LUNARIS_DECL void display::fix_timers()
+	{
+		if (!ev_qu) throw std::runtime_error("Expected queue, no queue found, error!");
+
+		if (!update_tasks) {
+			update_tasks = al_create_timer(0.5);
+			al_register_event_source(ev_qu, al_get_timer_event_source(update_tasks));
+			al_start_timer(update_tasks);
+		}
+
 		if (economy_mode) {
 			double max_fps = economy_fps > 0.0 ? economy_fps : 0.0;
 			if (default_fps > 0.0 && (default_fps < max_fps || max_fps <= 0.0)) max_fps = default_fps;
-
-			if (max_fps > 0.0) timed.set_delay(1.0 / max_fps);
-			else timed.set_delay(0.0);
+	
+			if (max_fps > 0.0) {
+				if (!timed_draw) {
+					timed_draw = al_create_timer(1.0 / max_fps);
+					al_register_event_source(ev_qu, al_get_timer_event_source(timed_draw));
+					al_start_timer(timed_draw);
+				}
+				else {
+					al_set_timer_speed(timed_draw, 1.0 / max_fps);
+				}
+			}
+			else {
+				if (timed_draw) {
+					al_unregister_event_source(ev_qu, al_get_timer_event_source(timed_draw));
+					al_stop_timer(timed_draw);
+					al_destroy_timer(timed_draw);
+					timed_draw = nullptr;
+				}
+			}
 		}
 		else {
-			if (default_fps > 0.0) timed.set_delay(1.0 / default_fps);
-			else timed.set_delay(0.0);
+			if (default_fps > 0.0) {
+				if (!timed_draw) {
+					timed_draw = al_create_timer(1.0 / default_fps);
+					al_register_event_source(ev_qu, al_get_timer_event_source(timed_draw));
+					al_start_timer(timed_draw);
+				}
+				else {
+					al_set_timer_speed(timed_draw, 1.0 / default_fps);
+				}
+			}
+			else {
+				if (timed_draw) {
+					al_unregister_event_source(ev_qu, al_get_timer_event_source(timed_draw));
+					al_stop_timer(timed_draw);
+					al_destroy_timer(timed_draw);
+					timed_draw = nullptr;
+				}
+			}
 		}
 	}
 
@@ -271,26 +222,9 @@ namespace Lunaris {
 		destroy();
 	}
 
-	LUNARIS_DECL bool display::check_has_clipboard() const
+	LUNARIS_DECL display::_clipboard display::clipboard() const
 	{
-		return window ? al_clipboard_has_text(window) : false;
-	}
-
-	LUNARIS_DECL std::string display::get_clipboard() const
-	{
-		if (!window) return {};
-		std::string cpy;
-		char* buf = al_get_clipboard_text(window);
-		if (!buf) return {};
-		cpy = buf;
-		al_free(buf);
-		al_set_clipboard_text(window, nullptr);
-		return cpy;
-	}
-
-	LUNARIS_DECL bool display::set_clipboard(const std::string& var) const
-	{
-		return window ? al_set_clipboard_text(window, var.c_str()) : false;
+		return { window };
 	}
 
 	LUNARIS_DECL bool display::create(const display_config& conf)
@@ -310,14 +244,15 @@ namespace Lunaris {
 			al_set_new_window_title(conf.window_title.c_str());
 
 
-		if (conf.use_basic_internal_event_system) {
-			if (!(ev_qu = al_create_event_queue())) {
-				return false;
-			}					
+		if (!(ev_qu = al_create_event_queue())) {
+			return false;
 		}
+		al_init_user_event_source(&evsrc);
+		al_register_event_source(ev_qu, &evsrc);
 
 		if (!(window = al_create_display(conf.mode.width > 0 ? conf.mode.width : 0, conf.mode.height > 0 ? conf.mode.height : 0)))
 		{
+			al_destroy_user_event_source(&evsrc);
 			if (ev_qu) al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 			return false;
@@ -333,7 +268,9 @@ namespace Lunaris {
 		economy_fps = conf.min_frames < 0.0 ? 0.0 : conf.min_frames;
 		default_fps = conf.max_frames < 0.0 ? 0.0 : conf.max_frames;
 
-		timed.set_delay((conf.max_frames > 0.0) ? 1.0 / conf.max_frames : 0.0);
+		fix_timers();
+
+		if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
 		return window != nullptr;
 	}
@@ -364,24 +301,22 @@ namespace Lunaris {
 		if (!empty() && !str.empty()) al_set_window_title(window, str.c_str());
 	}
 
-	LUNARIS_DECL void display::hook_event_handler(std::function<void(const ALLEGRO_EVENT&)> f)
+	LUNARIS_DECL future<bool> display::post_task(std::function<bool(void)> f)
 	{
-		hooked_events = f;
+		promise<bool> prom;
+		if (!f) {
+			auto fn = prom.get_future();
+			prom.set_value(false);
+			return fn;
+		}
+		auto fn2 = prom.get_future().then([f](auto) -> bool { try { return f(); } catch (...) { return false; } });
+		promises.push_back(std::move(prom));
+		return fn2;
 	}
 
-	LUNARIS_DECL void display::unhook_event_handler()
+	LUNARIS_DECL future<bool> display::add_run_once_in_drawing_thread(std::function<bool(void)> f)
 	{
-		hooked_events = std::function<void(const ALLEGRO_EVENT&)>{};
-	}
-
-	LUNARIS_DECL void display::hook_menu_event_handler(std::function<void(const display_menu_event&)> f)
-	{
-		menu_events = f;
-	}
-
-	LUNARIS_DECL void display::unhook_menu_event_handler()
-	{
-		menu_events = std::function<void(const display_menu_event&)>{};
+		return post_task(f);
 	}
 
 	LUNARIS_DECL int display::get_width() const
@@ -408,12 +343,23 @@ namespace Lunaris {
 		return 0;
 	}
 
-	LUNARIS_DECL void display::toggle_flag(const int flg)
+	LUNARIS_DECL future<bool> display::toggle_flag(const int flg)
 	{
-		if (window) {
-			al_toggle_display_flag(window, flg, !(al_get_display_flags(window) & flg));
-			acknowledge_resize();
-		}
+		return post_task([this, flg] {
+			if (window) {
+				if (!al_set_display_flag(window, flg, !(al_get_display_flags(window) & flg))) return false;
+				if (flg & ALLEGRO_FULLSCREEN_WINDOW) al_acknowledge_resize(window);
+
+				ALLEGRO_EVENT bev;
+				bev.user.type = static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE);
+				bev.user.data1 = static_cast<intptr_t>(al_get_display_width(window));
+				bev.user.data2 = static_cast<intptr_t>(al_get_display_height(window));
+				bev.user.data3 = (intptr_t)window;
+
+				return al_emit_user_event(&evsrc, &bev, nullptr);
+			}
+			return false;
+		});
 	}
 
 	LUNARIS_DECL bool display::set_icon(ALLEGRO_BITMAP* bmp)
@@ -425,40 +371,23 @@ namespace Lunaris {
 		return false;
 	}
 #ifdef _WIN32
-	LUNARIS_DECL bool display::set_icon_from_icon_resource(const int id)
+	LUNARIS_DECL future<bool> display::set_icon_from_icon_resource(const int id)
 	{
-		if (!window) return false;
-		HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(id), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
-		if (icon) {
-			HWND winhandle = al_get_win_window_handle(window);
-			SetClassLongPtr(winhandle, GCLP_HICON, (LONG_PTR)icon);
-			SetClassLongPtr(winhandle, GCLP_HICONSM, (LONG_PTR)icon);
-			if (last_icon_handle) DestroyIcon(last_icon_handle);
-			last_icon_handle = icon;
-			return true;
-		}
-		return false;
+		return post_task([this, id] {
+			if (!window) return false;
+			HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(id), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+			if (icon) {
+				HWND winhandle = al_get_win_window_handle(window);
+				SetClassLongPtr(winhandle, GCLP_HICON, (LONG_PTR)icon);
+				SetClassLongPtr(winhandle, GCLP_HICONSM, (LONG_PTR)icon);
+				if (last_icon_handle) DestroyIcon(last_icon_handle);
+				last_icon_handle = icon;
+				return true;
+			}
+			return false;
+		});
 	}
 #endif
-	LUNARIS_DECL void display::set_menu(const display_menu& men)
-	{
-		if (window) {
-			if (ev_qu && men.get_event_source() && al_is_event_source_registered(ev_qu, men.get_event_source())) {
-				al_unregister_event_source(ev_qu, men.get_event_source());
-			}
-			menu = men;
-			al_set_display_menu(window, menu.generate());
-			al_register_event_source(ev_qu, menu.get_event_source());
-		}
-	}
-
-	LUNARIS_DECL void display::delete_menu()
-	{
-		if (window) {
-			menu.destroy();
-		}
-	}
-
 	LUNARIS_DECL bool display::get_is_economy_mode_activated() const
 	{
 		return economy_mode;
@@ -482,13 +411,18 @@ namespace Lunaris {
 	LUNARIS_DECL void display::set_economy_fps(const double var)
 	{
 		economy_fps = var < 0.0 ? 0.0 : var;
-		apply_mode_timed_auto();
+		fix_timers();
 	}
 
 	LUNARIS_DECL void display::set_fps_limit(const double var)
 	{
 		default_fps = var < 0.0 ? 0.0 : var;
-		apply_mode_timed_auto();
+		fix_timers();
+	}
+
+	LUNARIS_DECL void display::hold_draw(const bool var)
+	{
+		totally_hold_draw = var;
 	}
 
 	LUNARIS_DECL bool display::empty() const
@@ -498,15 +432,26 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::destroy()
 	{
-		menu.destroy();
-		if (ev_qu) {
-			al_destroy_event_queue(ev_qu);
-			ev_qu = nullptr;
-			last_event_check = 0.0;
+		if (timed_draw) {
+			al_stop_timer(timed_draw);
+			if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(timed_draw));
+			al_destroy_timer(timed_draw);
+			timed_draw = nullptr;
+		}
+		if (update_tasks) {
+			al_stop_timer(update_tasks);
+			if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(update_tasks));
+			al_destroy_timer(update_tasks);
+			update_tasks = nullptr;
 		}
 		if (window) {
 			al_destroy_display(window);
 			window = nullptr;
+		}
+		if (ev_qu) {
+			al_destroy_user_event_source(&evsrc);
+			al_destroy_event_queue(ev_qu);
+			ev_qu = nullptr;
 		}
 #ifdef _WIN32
 		if (last_icon_handle) {
@@ -514,16 +459,6 @@ namespace Lunaris {
 			last_icon_handle = nullptr;
 		}
 #endif
-		hooked_events.reset();
-		menu_events.reset();
-	}
-
-	LUNARIS_DECL void display::set_framerate_limit(const double var)
-	{
-		if (var <= 0.0) {
-			timed.set_delay(0.0);
-		}
-		else timed.set_delay(1.0 / var);
 	}
 
 	LUNARIS_DECL ALLEGRO_DISPLAY* display::get_raw_display() const
@@ -531,9 +466,19 @@ namespace Lunaris {
 		return window;
 	}
 
-	LUNARIS_DECL ALLEGRO_EVENT_SOURCE* display::get_event_source()
+	LUNARIS_DECL display::operator std::vector<ALLEGRO_EVENT_SOURCE*>() const
 	{
-		return window ? al_get_display_event_source(window) : nullptr;
+		return get_event_sources();
+	}
+
+	LUNARIS_DECL std::vector<ALLEGRO_EVENT_SOURCE*> display::get_event_sources() const
+	{
+		std::vector<ALLEGRO_EVENT_SOURCE*> _tmp;
+		if (window) {
+			_tmp.push_back(al_get_display_event_source(window));
+			_tmp.push_back((ALLEGRO_EVENT_SOURCE*)&evsrc);
+		}
+		return _tmp;
 	}
 
 	LUNARIS_DECL std::function<ALLEGRO_TRANSFORM(void)> display::get_current_transform_function()
@@ -553,100 +498,100 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::flip()
 	{
-		if (window) {
-			al_flip_display();
+		if (ev_qu) {
+			ALLEGRO_EVENT ev;
+			while (al_get_next_event(ev_qu, &ev))
+			{
+				switch (ev.type) {
 
-			timed.autowait();
+				case ALLEGRO_EVENT_DISPLAY_EXPOSE:
+				case ALLEGRO_EVENT_DISPLAY_FOUND:
+				case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
 
-			if (((al_get_time() - last_event_check) > default_display_self_check_time)) {
+					economy_mode = false;
+					fix_timers();
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
-				const ALLEGRO_TRANSFORM* cpy = al_get_current_transform();
-				if (cpy) latest_transform = *cpy;
+					break;
 
-				if (ev_qu) {
+				case ALLEGRO_EVENT_DISPLAY_LOST:
+				case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
 
-					ALLEGRO_EVENT ev;
-					while (ev_qu && al_get_next_event(ev_qu, &ev)) {
+					economy_mode = true;
+					fix_timers();
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
-						switch (ev.type) {
+					break;
 
-						case ALLEGRO_EVENT_DISPLAY_EXPOSE: // shown again
-						case ALLEGRO_EVENT_DISPLAY_FOUND:
-						case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+				case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
 
-							if (ev.display.source != window)
-								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+					hold_draw(true);
+					al_acknowledge_drawing_halt(window);
 
-							economy_mode = false;
-							apply_mode_timed_auto();
+					break;
 
-							break;
+				case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
 
-						case ALLEGRO_EVENT_DISPLAY_LOST:
-						case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+					al_acknowledge_drawing_resume(window);
+					hold_draw(false);
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
-							if (ev.display.source != window)
-								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+					break;
 
-							economy_mode = true;
-							apply_mode_timed_auto();
+				case ALLEGRO_EVENT_DISPLAY_RESIZE:
 
-							break;
+					acknowledge_resize();
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+					break;
 
-						case ALLEGRO_EVENT_DISPLAY_RESIZE:
+				case ALLEGRO_EVENT_TIMER:
 
-							if (ev.display.source != window)
-								throw std::runtime_error("Unexpected external event on display thread! Display is not itself?");
+					if (ev.timer.source == update_tasks) {
+						if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
-							acknowledge_resize();
-							break;
-						case ALLEGRO_EVENT_MENU_CLICK:
-							if (((ALLEGRO_DISPLAY*)ev.user.data2) != window)
-								break;
-
-							menu_events.csafe([&](const std::function<void(const display_menu_event&)>& fev) {
-								if (!fev) return;
-								display_menu_event mev;
-								mev.id = ev.user.data1;
-								mev.source = (ALLEGRO_MENU*)ev.user.data3;
-								if (!mev.source) return;
-
-								const char* str = al_get_menu_item_caption(mev.source, mev.id);
-								if (str) mev.name = str;
-
-								auto flagss = al_get_menu_item_flags(mev.source, mev.id);
-
-								mev.checked = ((flagss & ALLEGRO_MENU_ITEM_CHECKBOX) && (flagss & ALLEGRO_MENU_ITEM_CHECKED));								
-								fev(mev);
-							});
-							break;
+						if (promises.size()) {
+							promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
 						}
-
-						hooked_events.csafe([&](const std::function<void(const ALLEGRO_EVENT&)>& fev) {
-							if (fev) fev(ev);
-						});
 					}
+					else flag_draw_timed = true;
+
+					break;
+				case static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE):
+
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+					break;
 				}
 			}
+
+			const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
+			flag_draw_timed = false;
+
+			if (can_draw_now) al_flip_display();
 		}
+		else if (promises.size()) { // maybe there's something to do before that's available
+			promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
+		}
+		else throw std::runtime_error("NO QUEUE FOUND! SOMETHING IS WRONG!"); // nop, something is really wrong here
 	}
 
-	LUNARIS_DECL void display::acknowledge_resize()
+	LUNARIS_DECL future<bool> display::acknowledge_resize()
 	{
-		if (window) al_acknowledge_resize(window);
+		return post_task([this] {
+			if (window) return al_acknowledge_resize(window);
+			return false;
+		});
 	}
 
 	LUNARIS_DECL bool display_async::safe_run::can_run()
 	{
-		is_paused = is_lock;
-		return !is_paused;
+		return !(is_paused = is_lock);
 	}
 
 	LUNARIS_DECL void display_async::safe_run::lock(const bool skip_wait)
 	{
 		is_lock = true;
 		if (skip_wait) return;
-		while (!is_paused) std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		while (!is_paused) std::this_thread::sleep_for(std::chrono::milliseconds(5));
 	}
 
 	LUNARIS_DECL void display_async::safe_run::unlock() 
@@ -656,16 +601,14 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display_async::async_run()
 	{
-		if (!safer.can_run()) return;
-
-		if (promises.size()) {
-			promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } });
-			promises.clear();
+		if (!safer.can_run()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			return;
 		}
 
-		if (hooked_draw) hooked_draw(*this);
-
 		flip();
+
+		if (hooked_draw) hooked_draw(*this);
 	}
 
 	LUNARIS_DECL display_async::display_async(const display_config& conf)
@@ -727,19 +670,107 @@ namespace Lunaris {
 		safer.unlock();
 	}
 
-	LUNARIS_DECL future<bool> display_async::add_run_once_in_drawing_thread(std::function<void(void)> f)
-	{
-		promise<bool> prom;
-		if (!f) { auto fn = prom.get_future(); prom.set_value(false); return fn; }
-		auto fn2 = prom.get_future().then([f](auto) -> bool { try { f(); return true; } catch (...) { return false; } });
-		promises.push_back(std::move(prom));
-		return fn2;
-	}
-
 	LUNARIS_DECL void display_async::destroy(const bool skip_except)
 	{
 		thr.join(skip_except);
 		this->display::destroy();
+	}
+
+	LUNARIS_DECL display_event::display_event(display& rf, const ALLEGRO_EVENT& ev)
+		: _ev(ev), _ref(rf)
+	{
+		source = ev.display.source;
+
+		if (_ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE)) {
+			_transl.width = _ev.user.data1;
+			_transl.height = _ev.user.data2;
+			_transl.orientation = al_get_display_orientation(_ref.get_raw_display());
+			_transl.source = (ALLEGRO_DISPLAY*)_ev.user.data3;
+			_transl.type = ALLEGRO_EVENT_DISPLAY_RESIZE;
+			al_get_window_position(_ref.get_raw_display(), &_transl.x, &_transl.y);
+		}
+	}
+
+	LUNARIS_DECL display* display_event::operator->()
+	{
+		return &_ref;
+	}
+
+	LUNARIS_DECL display* display_event::operator->() const
+	{
+		return &_ref;
+	}
+
+	LUNARIS_DECL bool display_event::valid() const
+	{
+		return source == _ref.get_raw_display();
+	}
+
+	LUNARIS_DECL bool display_event::is_close() const
+	{
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE;
+	}
+
+	LUNARIS_DECL bool display_event::is_switch_off() const
+	{
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_SWITCH_OUT || _ev.type == ALLEGRO_EVENT_DISPLAY_LOST;
+	}
+
+	LUNARIS_DECL bool display_event::is_switch_on() const
+	{
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_SWITCH_IN || _ev.type == ALLEGRO_EVENT_DISPLAY_FOUND || _ev.type == ALLEGRO_EVENT_DISPLAY_EXPOSE;
+	}
+
+	LUNARIS_DECL bool display_event::is_resize() const
+	{
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE || _ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE);
+	}
+
+	LUNARIS_DECL bool display_event::is_flag_change() const
+	{
+		return _ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE);
+	}
+
+	LUNARIS_DECL bool display_event::is_emergency_stop() const
+	{
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_HALT_DRAWING;
+	}
+
+	LUNARIS_DECL bool display_event::is_emergency_stop_gone() const
+	{
+		return _ev.type == ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING;
+	}
+
+	LUNARIS_DECL int display_event::get_type() const
+	{
+		return _ev.type;
+	}
+
+	LUNARIS_DECL future<bool> display_event::post_task(std::function<bool(void)> f)
+	{
+		return _ref.add_run_once_in_drawing_thread(f);
+	}
+
+	LUNARIS_DECL const ALLEGRO_DISPLAY_EVENT& display_event::as_display() const
+	{
+		if (_ev.type == static_cast<int>(display::custom_events::DISPLAY_FLAG_TOGGLE))
+			return _transl;
+		else return _ev.display;
+	}
+
+	LUNARIS_DECL const ALLEGRO_TIMER_EVENT& display_event::as_timer() const
+	{
+		return _ev.timer;
+	}
+
+	LUNARIS_DECL const ALLEGRO_EVENT& display_event::get_event() const
+	{
+		return _ev;
+	}
+
+	LUNARIS_DECL display& display_event::get_display()
+	{
+		return _ref;
 	}
 
 }

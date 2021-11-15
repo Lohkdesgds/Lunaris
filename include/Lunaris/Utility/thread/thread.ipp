@@ -119,4 +119,28 @@ namespace Lunaris {
 		if (!skip_any_exception && data->_exception) std::rethrow_exception(data->_exception);
 	}
 
+	inline bool async_thread_info::has_ended() const
+	{
+		return ended.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+	}
+
+	inline void async_thread_info::force_destroy()
+	{
+		if (__destroyed) return;
+		__destroyed = true;
+		::TerminateThread(id, 0); // goodbye my friend.
+	}
+
+	inline async_thread_info throw_thread(const std::function<void(void)> f)
+	{
+		if (!f) return {};
+		std::promise<bool> _prom;
+		async_thread_info _mak;
+		_mak.ended = _prom.get_future();
+		std::thread _launch = std::thread([pm = std::move(_prom), f]() mutable { try { f(); } catch (...) { pm.set_value(false); return; } pm.set_value(true); });
+		_mak.id = _launch.native_handle();
+		_launch.detach();
+		return _mak;
+	}
+
 }

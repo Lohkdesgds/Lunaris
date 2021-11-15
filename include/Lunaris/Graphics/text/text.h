@@ -12,10 +12,16 @@
 #include <string>
 #include <sstream>
 
+#include <Lunaris/Utility/bomb.h>
+#include <Lunaris/Graphics/texture.h>
+
 namespace Lunaris {
 
 	enum class enum_text_float_e {
 		DRAW_LINE_PROP,				// [0.0,inf) 1.0 means font height for multiple lines
+		DRAW_ALIGNMENT_PROP_Y,		// (-inf, inf) Usually between -1.0 and 1.0, offset based on font height. 0.5 centers the font
+		DRAW_UPDATES_PER_SEC,		// [0.0, inf) 0.0 or lower disables the feature. Bigger than 0.0 enables texture drawing (less times drawing in a texture). Some features are not completely ported to this high performance mode!
+		DRAW_RESOLUTION,			// (0.01, inf) Enabled if DRAW_UPDATES_PER_SEC is > 0.0. This value is the text buffer resolution compared to target. If 0.5, if target is 600x600, the text resolution will be 300x300
 
 		_SIZE
 	};
@@ -35,10 +41,13 @@ namespace Lunaris {
 
 	const std::initializer_list<multi_pair<float, enum_text_float_e>>									default_text_float_il = {
 		// READONLY DATA
-		{1.0,		enum_text_float_e::DRAW_LINE_PROP }
+		{1.0,		enum_text_float_e::DRAW_LINE_PROP },
+		{0.0,		enum_text_float_e::DRAW_ALIGNMENT_PROP_Y },
+		{30.0,		enum_text_float_e::DRAW_UPDATES_PER_SEC },
+		{1.0,		enum_text_float_e::DRAW_RESOLUTION }
 	};
 
-	const std::initializer_list<multi_pair<safe_data<std::string>, enum_text_safe_string_e>>							default_text_string_il = {
+	const std::initializer_list<multi_pair<safe_data<std::string>, enum_text_safe_string_e>>			default_text_string_il = {
 		// READONLY DATA
 		{std::string(""),		enum_text_safe_string_e::STRING}
 	};
@@ -68,10 +77,16 @@ namespace Lunaris {
 		public fixed_multi_map_work<static_cast<size_t>(enum_text_safe_string_e::_SIZE), safe_data<std::string>, enum_text_safe_string_e>,
 		public fixed_multi_map_work<static_cast<size_t>(enum_text_integer_e::_SIZE), int, enum_text_integer_e>
 	{
+		struct _texture_mode {
+			texture mapped;
+			double last_draw = 0.0;
+		};
+
 		// variables
 		mutable std::shared_mutex font_mtx; // used for font_used and shadows
 		hybrid_memory<font> font_used;
 		std::vector<text_shadow> shadows;
+		std::unique_ptr<_texture_mode> if_texture;
 
 		// funcs
 		std::shared_lock<std::shared_mutex> mu_shared_read_control() const; // easier

@@ -2,6 +2,8 @@
 
 #include <Lunaris/__macro/macros.h>
 
+#include <Lunaris/Utility/mutex.h>
+
 #include <shared_mutex>
 #include <functional>
 
@@ -9,7 +11,7 @@ namespace Lunaris {
 
 	template<typename T>
 	class safe_data {
-		mutable std::shared_mutex shrmtx;
+		mutable shared_recursive_mutex shrmtx;
 		T data;
 	public:
 		safe_data() = default;
@@ -36,7 +38,7 @@ namespace Lunaris {
 
 	template<typename T>
 	class safe_vector {
-		mutable std::shared_mutex shrmtx;
+		mutable shared_recursive_mutex shrmtx;
 		std::vector<T> data;
 	public:
 		safe_vector() = default;

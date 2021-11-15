@@ -32,6 +32,7 @@
     <ClInclude Include="..\..\include\Lunaris\events.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Events\keyboard.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\keyboard\keyboard.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\keys.h" />
@@ -51,6 +52,8 @@
     <ClInclude Include="..\..\include\Lunaris\Graphics\display\display.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\font.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\font\font.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\menu.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\menu\menu.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\sprite.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\sprite\sprite.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\text.h" />
@@ -85,6 +88,8 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\multi_map.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\mutex.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package\package.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package\package.ipp" />
@@ -121,6 +126,7 @@
     <ClCompile Include="..\..\include\Lunaris\Graphics\color\color.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\display\display.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\font\font.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\menu\menu.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\sprite\sprite.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp" />
@@ -134,6 +140,7 @@
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Utility\mutex\mutex.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\path\path.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
   </ItemGroup>
@@ -295,7 +302,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
@@ -325,7 +332,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
@@ -351,7 +358,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)x64\Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)x64\Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
@@ -381,7 +388,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)x64\Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)x64\Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>

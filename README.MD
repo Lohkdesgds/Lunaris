@@ -4,6 +4,12 @@
 *The multi-purpose graphics, audio, socket and so much more library combo based on Allegro 5 created by Lohk!*
 
 <br>
+
+#### Useful information about this version (automatically built)
+Key | Value
+--- | ---
+LUNARIS_BUILD_NUMBER | 940
+
 <br>
 
 ##### TL;DR:
@@ -17,13 +23,13 @@
 
 *Didn't get it yet? This is a combo of what I've done all this years in one package. This is the perfect combo for 2D graphics with tools. You can use only the tools if you want to. It should be THE TOOL to make good apps.*
 
-*There're big examples coming soon!*
+*Big examples coming soon!*
 <br>
 
 # How to get it running?
 
 *You have to follow these steps to get a project up and running:*<br>
-***PS:** Linux support will come in the future, but it's not my priority right now. You can help by joining the official [Discord Server](https://discord.gg/eQfnXdTH6f) and talking about it.*
+***PS:** Linux support will come in the future, but it's not my priority right now. Some stuff already works on Linux. You can help by joining the official [Discord Server](https://discord.gg/eQfnXdTH6f) and talking about it.*
 <br>
 <hr>
 

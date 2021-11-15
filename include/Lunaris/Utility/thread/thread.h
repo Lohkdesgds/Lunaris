@@ -6,6 +6,7 @@
 #include <thread>
 #include <functional>
 #include <memory>
+#include <future>
 
 namespace Lunaris {
 
@@ -59,6 +60,26 @@ namespace Lunaris {
 		// caution: may cause memory leak! Use at your own risk!
 		void force_kill(const bool = false);
 	};
+
+	struct async_thread_info {
+	private:
+		bool __destroyed = false;
+	public:
+		std::thread::native_handle_type id = {};
+		std::future<bool> ended;
+
+		// by status
+		bool has_ended() const;
+		void force_destroy();
+	};
+
+	/// <summary>
+	/// <para>Launch pure async thread! If you don't save the return value, you'll have a zombie thread.</para>
+	/// </summary>
+	/// <param name="{function}">Function to launch.</param>
+	/// <returns>{async_thread_info} The information needed.</returns>
+	async_thread_info throw_thread(const std::function<void(void)>);
+
 
 }
 

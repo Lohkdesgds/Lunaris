@@ -4,6 +4,7 @@
 #include <Lunaris/Utility/future.h>
 #include <Lunaris/Utility/thread.h>
 #include <Lunaris/Utility/safe_data.h>
+#include <Lunaris/Events/generic_event_handler.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
@@ -23,11 +24,7 @@
 
 namespace Lunaris {
 
-	const double default_display_self_check_time = 0.5; // check events twice a second (related to last_event_check)
-	const std::function<void(void)> default_quiet_safe_function_thread = [] { std::this_thread::sleep_for(std::chrono::milliseconds(6)); };
-
 	void __display_allegro_start();
-	void __display_menu_allegro_start();
 
 	struct display_options {
 		int width = 0;
@@ -70,92 +67,48 @@ namespace Lunaris {
 		display_config& set_window_title(const std::string&);
 	};
 
-	struct display_sub_menu {
-	private:
-		std::string __makename;
-	public:
-		display_sub_menu();
-
-		std::string name;
-		uint16_t id = 0;
-		int flags = 0;
-		std::vector<display_sub_menu> sub_menus;
-
-		display_sub_menu& make_this_division();
-		display_sub_menu& set_name(const std::string&);
-		display_sub_menu& set_id(const uint16_t);
-		// ALLEGRO_MENU_ITEM_***
-		display_sub_menu& set_flags(const int);
-		display_sub_menu& push(const display_sub_menu&);
-
-		std::vector<ALLEGRO_MENU_INFO> generate();
-	};
-
-	struct display_menu_event {
-		enum class flags { DISABLED = ALLEGRO_MENU_ITEM_DISABLED, AS_CHECKBOX = ALLEGRO_MENU_ITEM_CHECKED, CHECKED = ALLEGRO_MENU_ITEM_CHECKBOX };
-		ALLEGRO_MENU* source = nullptr;
-		std::string name;
-		uint16_t id;
-		bool checked = false; // if checkbox
-		// possible flags: ALLEGRO_MENU_ITEM_DISABLED, ALLEGRO_MENU_ITEM_CHECKED, probably ALLEGRO_MENU_ITEM_CHECKBOX
-		void toggle_flag(const flags) const;
-	};
-
-	class display_menu {
-		std::vector<display_sub_menu> menus;
-		std::shared_ptr<ALLEGRO_MENU> __menu;
-	public:
-		display_menu();
-
-		display_menu& push(const display_sub_menu&);
-		ALLEGRO_MENU* generate();
-		void destroy();
-		ALLEGRO_EVENT_SOURCE* get_event_source() const;
-	};
-
 	std::vector<display_options> get_current_modes(const int = 0);
 
 	class display : public NonCopyable, public NonMovable {
+	public:
+		class _clipboard : public NonCopyable{
+			ALLEGRO_DISPLAY* src;
+		public:
+			_clipboard(ALLEGRO_DISPLAY*);
+
+			bool has_text() const;
+			std::string get_text() const;
+			bool set_text(const std::string&);
+		};
+		enum class custom_events {DISPLAY_FLAG_TOGGLE = 1024};
+	private:
+
 		ALLEGRO_DISPLAY* window = nullptr;
 		ALLEGRO_EVENT_QUEUE* ev_qu = nullptr;
+		ALLEGRO_TIMER* timed_draw = nullptr;
+		ALLEGRO_TIMER* update_tasks = nullptr;
+		ALLEGRO_EVENT_SOURCE evsrc; // on toggle, because it's broken somehow lol
 
 		ALLEGRO_TRANSFORM latest_transform{}; // useful elsewhere, trust me (see mouse)
-		double last_event_check = 0.0;
+
 		bool economy_mode = false;
+		bool totally_hold_draw = false;
+		bool flag_draw_timed = false; // when timer, this is used
 
 		double economy_fps = 0.0; // 0 == no delay
 		double default_fps = 0.0; // 0 == no delay
 #ifdef _WIN32
 		HICON last_icon_handle = nullptr;
 #endif
-		struct timed_module {
-			//std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double, std::nano>> wait_until;
-			double wait_until = 0.0;
-			double delta_sec = 0.0;
-
-			void autowait();
-			void set_delay(const double);
-		};
-
-		timed_module timed;
-
-		safe_data<std::function<void(const ALLEGRO_EVENT&)>> hooked_events;
-		safe_data<std::function<void(const display_menu_event&)>> menu_events;
-
-		display_menu menu;
-
-		void apply_mode_timed_auto();
+		void fix_timers();
+	protected:
+		safe_vector<promise<bool>> promises; // when events, they can list things to do here, or maybe another thread somewhere else, idk
 	public:
 		display() = default;
 		display(const display_config&);
 		~display();
 
-		// check if there's any clipboard
-		bool check_has_clipboard() const;
-		// this will cut your clipboard!
-		std::string get_clipboard() const;
-		// this will set your clipboard!
-		bool set_clipboard(const std::string&) const;
+		_clipboard clipboard() const;
 
 		bool create(const display_config& = {});
 		bool create(const int, const int, const int = 0);
@@ -163,27 +116,20 @@ namespace Lunaris {
 
 		void set_window_title(const std::string&);
 
-		// hook reset on re-create or destroy
-		void hook_event_handler(std::function<void(const ALLEGRO_EVENT&)>);
-		void unhook_event_handler();
-		// hook menu handler
-		void hook_menu_event_handler(std::function<void(const display_menu_event&)>);
-		void unhook_menu_event_handler();
+		future<bool> post_task(std::function<bool(void)>);
+		future<bool> add_run_once_in_drawing_thread(std::function<bool(void)>);
 
 		int get_width() const;
 		int get_height() const;
 		int get_frequency() const;
 		int get_flags() const;
 
-		void toggle_flag(const int);
+		future<bool> toggle_flag(const int);
 
 		bool set_icon(ALLEGRO_BITMAP*);
 #ifdef _WIN32
-		bool set_icon_from_icon_resource(const int);
+		future<bool> set_icon_from_icon_resource(const int);
 #endif
-
-		void set_menu(const display_menu&);
-		void delete_menu();
 
 		// only if use_basic_internal_event_system is enabled
 		bool get_is_economy_mode_activated() const;
@@ -197,15 +143,18 @@ namespace Lunaris {
 		void set_economy_fps(const double);
 		void set_fps_limit(const double);
 
+		// stop drawing at all
+		void hold_draw(const bool);
+
 		bool empty() const;
 
 		void destroy();
 
-		// set fps limit, directly
-		void set_framerate_limit(const double);
-
 		ALLEGRO_DISPLAY* get_raw_display() const;
-		ALLEGRO_EVENT_SOURCE* get_event_source();
+
+		operator std::vector<ALLEGRO_EVENT_SOURCE*>() const;
+		std::vector<ALLEGRO_EVENT_SOURCE*> get_event_sources() const;
+
 		std::function<ALLEGRO_TRANSFORM(void)> get_current_transform_function(); // keep this valid while using it!
 		operator std::function<ALLEGRO_TRANSFORM(void)>() const; // same as ^^
 
@@ -213,7 +162,7 @@ namespace Lunaris {
 		void flip();
 
 		// not needed if use_basic_internal_event_system was on (defaults to on)
-		void acknowledge_resize();
+		future<bool> acknowledge_resize();
 	};
 
 	class display_async : public display {
@@ -227,8 +176,8 @@ namespace Lunaris {
 		} safer;
 
 		thread thr;
-		safe_vector<promise<bool>> promises;
 		std::function<void(const display_async&)> hooked_draw;
+
 		void async_run();
 	public:
 		display_async() = default;
@@ -242,34 +191,72 @@ namespace Lunaris {
 		void hook_draw_function(std::function<void(const display_async&)>);
 		void unhook_draw_function();
 
-		future<bool> add_run_once_in_drawing_thread(std::function<void(void)>);
-
 		// skip exceptions? DO NOT CALL FROM ITSELF
 		void destroy(const bool = false);
 
+		using display::clipboard;
 		using display::set_window_title;
-		using display::hook_event_handler;
-		using display::unhook_event_handler;
-		using display::hook_menu_event_handler;
-		using display::unhook_menu_event_handler;
+		using display::add_run_once_in_drawing_thread;
 		using display::get_width;
 		using display::get_height;
 		using display::get_frequency;
 		using display::get_flags;
 		using display::toggle_flag;
-		using display::set_menu;
-		using display::delete_menu;
+		using display::set_icon;
+#ifdef _WIN32
+		using display::set_icon_from_icon_resource;
+#endif
 		using display::get_is_economy_mode_activated;
 		using display::get_economy_fps;
 		using display::get_fps_limit;
 		using display::set_is_auto_economy_set;
 		using display::set_economy_fps;
 		using display::set_fps_limit;
+		using display::hold_draw;
 		using display::empty;
 		using display::get_raw_display;
-		using display::get_event_source;
+		using display::operator std::vector<ALLEGRO_EVENT_SOURCE*>;
+		using display::get_event_sources;
 		using display::get_current_transform_function;
-		using display::set_framerate_limit;
 		using display::operator std::function<ALLEGRO_TRANSFORM(void)>;
 	};
+
+	class display_event : public NonCopyable, public NonMovable {
+		// cached stuff:
+		ALLEGRO_DISPLAY* source = nullptr;
+		const ALLEGRO_EVENT& _ev;
+		display& _ref;
+
+		ALLEGRO_DISPLAY_EVENT _transl; // non standard window event translated
+	public:
+		display_event(display&, const ALLEGRO_EVENT&);
+
+		display* operator->();
+		display* operator->() const;
+
+		bool valid() const;
+
+		bool is_close() const;
+		bool is_switch_off() const;
+		bool is_switch_on() const;
+		bool is_resize() const;
+		bool is_flag_change() const;
+		bool is_emergency_stop() const;
+		bool is_emergency_stop_gone() const;
+
+		int get_type() const;
+
+		future<bool> post_task(std::function<bool(void)>);
+
+		// probably only these ones
+
+		const ALLEGRO_DISPLAY_EVENT& as_display() const;
+		const ALLEGRO_TIMER_EVENT& as_timer() const;
+
+		const ALLEGRO_EVENT& get_event() const;
+		display& get_display();
+	};
+
+	using display_event_handler = specific_event_handler<display_event, display>;
+
 }

@@ -6,8 +6,8 @@ namespace Lunaris {
 	template<typename T>
 	inline safe_data<T>::safe_data(const safe_data& oth)
 	{
-		std::shared_lock<std::shared_mutex> luck1(oth.shrmtx);
-		std::unique_lock<std::shared_mutex> luck2(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck1(oth.shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck2(shrmtx);
 
 		data = oth.data;
 	}
@@ -15,8 +15,8 @@ namespace Lunaris {
 	template<typename T>
 	inline safe_data<T>::safe_data(safe_data&& oth)
 	{
-		std::unique_lock<std::shared_mutex> luck1(oth.shrmtx, std::defer_lock);
-		std::unique_lock<std::shared_mutex> luck2(shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck1(oth.shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck2(shrmtx, std::defer_lock);
 		std::lock(luck1, luck2);
 
 		data = std::move(oth.data);
@@ -31,14 +31,14 @@ namespace Lunaris {
 	template<typename T>
 	inline safe_data<T>::safe_data(T&& var)
 	{
-		std::unique_lock<std::shared_mutex> luck2(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck2(shrmtx);
 		data = std::move(var);
 	}
 	
 	template<typename T>
 	inline T safe_data<T>::read()
 	{
-		std::shared_lock<std::shared_mutex> luck(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck(shrmtx);
 		return data;
 	}
 
@@ -46,7 +46,7 @@ namespace Lunaris {
 	inline void safe_data<T>::csafe(const std::function<void(const T&)> f)
 	{
 		if (!f) return;
-		std::shared_lock<std::shared_mutex> luck(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck(shrmtx);
 		f(data);
 	}
 
@@ -54,42 +54,42 @@ namespace Lunaris {
 	inline void safe_data<T>::safe(const std::function<void(T&)> f)
 	{
 		if (!f) return;
-		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		f(data);
 	}
 
 	template<typename T>
 	inline void safe_data<T>::set(T&& var)
 	{
-		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		data = std::move(var);
 	}
 
 	template<typename T>
 	inline void safe_data<T>::set(const T& var)
 	{
-		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		data = var;
 	}
 
 	template<typename T>
 	inline void safe_data<T>::reset()
 	{
-		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		data = {};
 	}
 
 	template<typename T>
 	inline safe_data<T>::operator T()
 	{
-		std::shared_lock<std::shared_mutex> luck(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck(shrmtx);
 		return data;
 	}
 	template<typename T>
 	inline void safe_data<T>::operator=(const safe_data& oth)
 	{
-		std::shared_lock<std::shared_mutex> luck1(oth.shrmtx);
-		std::unique_lock<std::shared_mutex> luck2(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck1(oth.shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck2(shrmtx);
 
 		data = oth.data;
 	}
@@ -97,8 +97,8 @@ namespace Lunaris {
 	template<typename T>
 	inline void safe_data<T>::operator=(safe_data&& oth)
 	{
-		std::unique_lock<std::shared_mutex> luck1(oth.shrmtx, std::defer_lock);
-		std::unique_lock<std::shared_mutex> luck2(shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck1(oth.shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck2(shrmtx, std::defer_lock);
 		std::lock(luck1, luck2);
 
 		data = std::move(oth.data);
@@ -107,22 +107,22 @@ namespace Lunaris {
 	template<typename T>
 	inline void safe_data<T>::operator=(T&& var)
 	{
-		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		data = std::move(var);
 	}
 
 	template<typename T>
 	inline void safe_data<T>::operator=(const T& var)
 	{
-		std::unique_lock<std::shared_mutex> luck(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		data = var;
 	}
 
 	template<typename T>
 	inline safe_vector<T>::safe_vector(const safe_vector& var)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
-		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck2(var.shrmtx, std::defer_lock);
 		std::lock(luck1, luck2);
 
 		data = var.data;
@@ -131,8 +131,8 @@ namespace Lunaris {
 	template<typename T>
 	inline safe_vector<T>::safe_vector(safe_vector&& var)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
-		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck2(var.shrmtx, std::defer_lock);
 		std::lock(luck1, luck2);
 
 		data = std::move(var.data);
@@ -141,8 +141,8 @@ namespace Lunaris {
 	template<typename T>
 	inline void safe_vector<T>::operator=(const safe_vector& var)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
-		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck2(var.shrmtx, std::defer_lock);
 		std::lock(luck1, luck2);
 
 		data = var.data;
@@ -151,8 +151,8 @@ namespace Lunaris {
 	template<typename T>
 	inline void safe_vector<T>::operator=(safe_vector&& var)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx, std::defer_lock);
-		std::unique_lock<std::shared_mutex> luck2(var.shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx, std::defer_lock);
+		std::unique_lock<shared_recursive_mutex> luck2(var.shrmtx, std::defer_lock);
 		std::lock(luck1, luck2);
 
 		data = std::move(var.data);
@@ -161,21 +161,21 @@ namespace Lunaris {
 	template<typename T>
 	inline void safe_vector<T>::push_back(T&& var)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		data.push_back(std::move(var));
 	}
 
 	template<typename T>
 	inline const T& safe_vector<T>::index(const size_t& var) const
 	{
-		std::shared_lock<std::shared_mutex> luck1(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
 		return data[var];
 	}
 
 	template<typename T>
 	inline T& safe_vector<T>::index(const size_t& var)
 	{
-		std::shared_lock<std::shared_mutex> luck1(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
 		return data[var];
 	}
 
@@ -183,7 +183,7 @@ namespace Lunaris {
 	inline void safe_vector<T>::csafe(const std::function<void(const std::vector<T>&)> f)
 	{
 		if (!f) return;
-		std::shared_lock<std::shared_mutex> luck1(shrmtx);
+		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
 		f(data);
 	}
 
@@ -191,28 +191,28 @@ namespace Lunaris {
 	inline void safe_vector<T>::safe(const std::function<void(std::vector<T>&)> f)
 	{
 		if (!f) return;
-		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		f(data);
 	}
 
 	template<typename T>
 	inline void safe_vector<T>::erase(const size_t& var)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		data.erase(data.begin() + var);
 	}
 
 	template<typename T>
 	inline void safe_vector<T>::erase(const size_t& var, const size_t& var2)
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		data.erase(data.begin() + var, data.begin() + var2);
 	}
 
 	template<typename T>
 	inline void safe_vector<T>::clear()
 	{
-		std::unique_lock<std::shared_mutex> luck1(shrmtx);
+		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		data.clear();
 	}
 

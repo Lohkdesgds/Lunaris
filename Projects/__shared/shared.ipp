@@ -127,6 +127,8 @@ int main(int argc, char* argv[]) {
 	cout << console::color::YELLOW << "Lunaris version long:  " << LUNARIS_VERSION_LONG;
 	cout << console::color::YELLOW << "Lunaris version date:  " << LUNARIS_VERSION_DATE;
 
+	
+
 	if (argc > 1) {
 		cout << "Hello someone calling me with custom arguments! I received those:";
 		for (int a = 0; a < argc; a++) cout << "Argument #" << a << ": '" << argv[a] << "'";
@@ -300,10 +302,107 @@ int utility_test(const std::string& self_path)
 			TESTLU(mybomb.is_defused(), "What? Duplicated bombs?");
 			TESTLU(!mybomb2.is_defused(), "BOMB DISAPPEARED WHILE MOVING OH NO!");
 
+			cout << "All good, defusing now.";
+
 			mybomb2.defuse();
 			cout << "Defused! Is that enough?";
 		}
 		TESTLU(!realboom, "The bomb exploded. We're all dead :(");
+
+		cout << "Defuse works!";
+
+		cout << "Creating a timed bomb with time = 2.2 sec...";
+		
+		realboom = false;
+		{
+			timed_bomb mybomb([&] {realboom = true; }, 2.2);
+			cout << "The bomb has been planted. Waiting up to 5 seconds and checking status";
+			for (int a = 0; a < 5; a++) {
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+				if (!realboom) cout << "Bomb didn't trigger yet... [" << (a + 1) << "/5]";
+				else break;
+			}
+			TESTLU(realboom, "The bomb didn't ignite. Bad news.");
+
+			cout << "Timed bomb exploded in time!";
+		}
+
+		cout << "Now testing if a timed bomb explode early if destroyed. Time = 2 sec.";
+
+		realboom = false;
+		{
+			timed_bomb mybomb([&] {realboom = true; }, 2.0);
+			cout << "The bomb has been planted. Dropping the bomb alone!";
+		}
+		TESTLU(realboom, "The bomb didn't ignite. Bad news.");
+
+		cout << "Timed bomb exploded on destroy!";
+		cout << "Testing moving them around and defusing now.";
+
+		shoulddefuse = false;
+		realboom = false;
+		{
+			timed_bomb mybomb([&] {realboom = true; }, 2.0);
+			timed_bomb mybomb2([&] {shoulddefuse = true; }, 2.0);
+			cout << "The bombs has been planted.";
+
+			mybomb2 = std::move(mybomb);
+			TESTLU(shoulddefuse, "Oh no bombs are not working as we expected.");
+			TESTLU(mybomb.is_defused(), "What? Duplicated bombs?");
+			TESTLU(!mybomb2.is_defused(), "BOMB DISAPPEARED WHILE MOVING OH NO!");
+
+			cout << "All good, defusing now.";
+
+			mybomb2.defuse();
+			cout << "Defused! Is that enough?";
+		}
+		TESTLU(!realboom, "The bomb exploded. We're all dead :(");
+		cout << "Yes it is!";
+
+		cout << console::color::GREEN << "PASSED!";
+	}
+
+	cout << console::color::LIGHT_PURPLE << "Testing 'throw_thread'...";
+	{
+		std::atomic_int counter = 0;
+		cout << "Launching an async zombie thread (monitoring it)";
+
+		{
+			auto info = throw_thread([&counter] {std::this_thread::sleep_for(std::chrono::seconds(3));  while (++counter < 1000); });
+
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			TESTLU(counter == 0, "The thread didn't respect the time I asked for them.");
+
+			cout << "Waiting zombie thread to count up to 1000!";
+			for (int a = 0; a < 10; a++) {
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+				if (counter < 1000) cout << "Counter at: " << counter << " [" << (a + 1) << "/5]";
+				else break;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+			TESTLU(counter == 1000, "The thread didn't respect the time I asked for them.");
+			TESTLU(info.has_ended(), "Future value was not set!");
+
+		}
+		
+		counter = 0;
+		cout << "Launching totally async this time!";
+
+		{
+			throw_thread([&counter] {std::this_thread::sleep_for(std::chrono::seconds(3));  while (++counter < 1000); });
+		}
+
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		TESTLU(counter == 0, "The thread didn't respect the time I asked for them.");
+
+		cout << "Waiting zombie thread to count up to 1000!";
+		for (int a = 0; a < 10; a++) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			if (counter < 1000) cout << "Counter at: " << counter << " [" << (a + 1) << "/5]";
+			else break;
+		}
+		TESTLU(counter == 1000, "The thread didn't respect the time I asked for them.");
 
 		cout << console::color::GREEN << "PASSED!";
 	}
@@ -1175,8 +1274,8 @@ int graphics_test()
 		.set_display_mode(display_options().set_width(1800).set_height(900))
 		.set_window_title("GRAPHICS TEST")
 		.set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)
-		.set_framerate_limit(240)
-		.set_economy_framerate_limit(40)
+		.set_framerate_limit(0)
+		.set_economy_framerate_limit(20)
 	), "Failed to create the display");
 
 	{
@@ -1239,8 +1338,10 @@ int graphics_test()
 	txt_main.set<float>(enum_sprite_float_e::SCALE_X, 0.3f);
 	//txt_main.set<float>(enum_sprite_float_e::POS_X, -0.992f);
 	//txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.992f);
-	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.99f);
-	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.99f);
+	txt_main.set<float>(enum_sprite_float_e::POS_X, -0.992f);
+	txt_main.set<float>(enum_sprite_float_e::POS_Y, -0.992f);
+	//txt_main.set<float>(enum_text_float_e::DRAW_UPDATES_PER_SEC, 0.0f);
+	//txt_main.set<float>(enum_text_float_e::DRAW_RESOLUTION, 0.5f);
 	txt_main.set<float>(enum_sprite_float_e::DRAW_MOVEMENT_RESPONSIVENESS, 3.0f);
 	for (int __c = 1; 255 - 25 * __c > 0; __c++) {
 		int ctee = (255 - 25 * __c);
@@ -1264,6 +1365,7 @@ int graphics_test()
 		transform transf;
 		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 		transf.apply();
+		return true;
 	});
 
 	cout << "Loading texture in video memory and default font...";
@@ -1332,34 +1434,41 @@ int graphics_test()
 
 	cout << "Setting up display events function...";
 
-	my_display.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum, &fixprop](const ALLEGRO_EVENT& ev) {
-		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.type << " triggered.";
-		
-		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+	display_event_handler dispevh(my_display);
+
+	dispevh.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum, &fixprop](display_event& ev) {
+		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.get_type() << " triggered.";
+
+		if (ev.is_close()) {
 			cout << console::color::GREEN << "Closing app...";
 			keep_running_things = false;
 		}
-		else if (ev.type == ALLEGRO_EVENT_DISPLAY_RESIZE) {
-			cout << console::color::GREEN << "Screen size is now: " << ev.display.width << "x" << ev.display.height;
-			transform transf;
-			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, fixprop, zuum);
-			transf.translate_inverse(off_x, off_y);
-			cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
-			transf.apply();
+		else if (ev.is_resize()) {
+			cout << console::color::GREEN << "Screen size is now: " << ev.as_display().width << "x" << ev.as_display().height << ". Posted task.";
+			ev.post_task([wd = ev.as_display().width, ht = ev.as_display().height, fixprop, zuum, off_x, off_y] {
+				transform transf;
+				transf.build_classic_fixed_proportion(wd, ht, fixprop, zuum);
+				transf.translate_inverse(off_x, off_y);
+				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
+				transf.apply();
+				return true;
+			});
 		}
 	});
+
 
 	kb.hook_event([&](const keys::key_event& ev) {
 		if (!ev.down) return;
 
 		switch(ev.key_id) {
 		case ALLEGRO_KEY_F11:
-			my_display.add_run_once_in_drawing_thread([&] {
+			//my_display.add_run_once_in_drawing_thread([&] {
 				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
-				transform transf;
-				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
-				transf.apply();
-			});
+			//	transform transf;
+			//	transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
+			//	transf.apply();
+			//	return true;
+			//});
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
 		case ALLEGRO_KEY_R:
@@ -1372,6 +1481,7 @@ int graphics_test()
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
+				return true;
 			});
 			break;
 		case ALLEGRO_KEY_F:
@@ -1383,6 +1493,7 @@ int graphics_test()
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
+				return true;
 			});
 			break;
 		case ALLEGRO_KEY_0:
@@ -1399,6 +1510,7 @@ int graphics_test()
 				transf.transform_inverse_coords(ax, ay);
 				cout << console::color::DARK_GREEN << "Converted inverse coords " << fabsf(ax) << " x " << fabsf(ay);
 				transf.apply();
+				return true;
 			});
 			break;
 		}
@@ -1502,6 +1614,7 @@ int graphics_test()
 		font_u->destroy();
 		bmppp->destroy();
 		giffye->destroy();
+		return true;
 	}).wait();
 
 
@@ -1537,7 +1650,8 @@ int events_test()
 		last_event_id = static_cast<int>(ev.type);
 	});
 
-	event_generic.install_other(disp.get_event_source());
+
+	event_generic.install_other(disp.get_event_sources());
 
 	cout << "Checking common events from Display. Please do what I say from now on:";
 
@@ -1561,93 +1675,103 @@ int events_test()
 	TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 	cout << console::color::GREEN << "Good!";
 
-	{
-		disp.set_menu(display_menu()
-			.push(display_sub_menu()
-				.set_name("This one")
-				.push(display_sub_menu()
-					.set_name("Click me")
-					.set_id(10)
-				)
-				.push(display_sub_menu()
-					.make_this_division()
-				)
-				.push(display_sub_menu()
-					.set_name("Not this one")
-					.push(display_sub_menu()
-						.set_name("Hey")
-						.set_id(1)
-						.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
-					)
-					.push(display_sub_menu()
-						.set_name("Lists")
-						.set_id(2)
-						.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
-					)
-					.push(display_sub_menu()
-						.set_name("Exist?")
-						.set_id(3)
-						.push(display_sub_menu()
-							.set_name("LOL")
-							.set_id(300)
-						)
-					)
-				)
+	menu mymenu(disp, {
+		menu_each_menu()
+			.set_name("This one")
+			.set_id(9900)
+			.push(menu_each_default()
+				.set_name("Click me")
+				.set_id(10)
 			)
-			.push(display_sub_menu()
-				.set_name("About")
-				.push(display_sub_menu()
-					.set_name("Copyright? Probably not")
-					.set_id(20)
-				)
-				.push(display_sub_menu()
-					.make_this_division()
-				)
-				.push(display_sub_menu()
-					.set_name("Others")
-					.push(display_sub_menu()
-						.set_name("Lunaris B" + std::to_string(LUNARIS_BUILD_NUMBER))
-						.set_id(40)
-						.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
-					)
-					.push(display_sub_menu()
-						.set_name("Beta testing")
-						.set_id(50)
-						.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
-					)
-				)
+			.push(menu_each_empty()
 			)
-			.push(display_sub_menu()
-				.set_name("Crash app")
-				.push(display_sub_menu()
-					.set_name("Fatal crash call lol")
-					.set_id(900)
-					.push(display_sub_menu()
-						.set_name("Do you really want a fatal crash?")
-						.set_id(901)
-						.push(display_sub_menu()
-							.set_name("Okay, click this and the app will just DIE")
-							.set_id(902)
-							.push(display_sub_menu()
-								.set_name("Do you really want that? LOL")
-								.set_id(903)
-								.push(display_sub_menu()
-									.set_name("STD::TERMINATE()")
-									.set_id(911)
-								)
+			.push(menu_each_menu()
+				.set_name("Not this one")
+				.set_id(9901)
+				.push(menu_each_default()
+					.set_name("Hey")
+					.set_id(1)
+					.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
+				)
+				.push(menu_each_default()
+					.set_name("Lists")
+					.set_id(2)
+					.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
+				)
+				.push(menu_each_menu()
+					.set_name("Exist?")
+					.set_id(9902)
+					.push(menu_each_default()
+						.set_name("LOL")
+						.set_id(300)
+					)
+				)
+			),
+		menu_each_menu()
+			.set_name("About")
+			.set_id(9903)
+			.push(menu_each_default()
+				.set_name("Copyright? Probably not")
+				.set_id(20)
+			)
+			.push(menu_each_empty()
+			)
+			.push(menu_each_menu()
+				.set_name("Others")
+				.set_id(9904)
+				.push(menu_each_default()
+					.set_name("Lunaris B" + std::to_string(LUNARIS_BUILD_NUMBER))
+					.set_id(40)
+					.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
+				)
+				.push(menu_each_default()
+					.set_name("Beta testing")
+					.set_id(50)
+					.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
+				)
+			),
+		menu_each_menu()
+			.set_name("Crash app")
+			.set_id(9905)
+			.push(menu_each_menu()
+				.set_name("Fatal crash call lol")
+				.set_id(9906)
+				.push(menu_each_menu()
+					.set_name("Do you really want a fatal crash?")
+					.set_id(9907)
+					.push(menu_each_menu()
+						.set_name("Okay, click this and the app will just DIE")
+						.set_id(9908)
+						.push(menu_each_menu()
+							.set_name("Do you really want that? LOL")
+							.set_id(9909)
+							.push(menu_each_default()
+								.set_name("STD::TERMINATE()")
+								.set_id(911)
 							)
 						)
 					)
 				)
 			)
-		);
+		}
+	);
+	{
+
+		//);
+
+		menu_event_handler menuev(mymenu);
+
+		mymenu.show();
 
 		bool clicked_right = false;
-		disp.hook_menu_event_handler([&](const display_menu_event& mev) {
-			clicked_right |= ((mev.id == 10) && (mev.name == "Click me"));
-			cout << mev.id << " -> '" << mev.name << "'";
-			if (mev.id == 911) std::terminate(); // fatal error thingy
-			mev.toggle_flag(display_menu_event::flags::DISABLED);
+		menuev.hook_event_handler([&](menu_event& mev) {
+			clicked_right |= ((mev.get_id() == 10) && (mev.get_name() == "Click me"));
+			cout << mev.get_id() << " -> '" << mev.get_name() << "'";
+			if (mev.get_id() == 911) std::terminate(); // fatal error thingy
+			if (!clicked_right) {
+				mev.patch_toggle_flag(menu_item_flags::DISABLED);
+				mev.patch_name("This was not it. Random number voila: " + std::to_string(random()));
+			}
 		});
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
@@ -1655,7 +1779,22 @@ int events_test()
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
-		disp.delete_menu();
+		mymenu.hide();
+
+		cout << console::color::YELLOW << "Do it again, please.";
+		clicked_right = false;
+
+		mymenu.reset(menu::menu_type::POPUP);
+
+		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
+		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
+		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { 
+			disp.flip();
+			mymenu.show();
+			std::this_thread::sleep_for(std::chrono::milliseconds(500)); }
+		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
+		cout << console::color::GREEN << "Good!";
+
 		disp.flip();
 	}
 
