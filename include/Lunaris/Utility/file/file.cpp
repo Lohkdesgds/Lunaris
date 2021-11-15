@@ -113,6 +113,11 @@ namespace Lunaris {
 		return fp ? al_fsize(fp.get()) : 0;
 	}
 
+	LUNARIS_DECL bool file::is_open() const
+	{
+		return fp.operator bool();
+	}
+
 	LUNARIS_DECL tempfile::tempfile(tempfile&& oth) noexcept
 		: file(std::move(oth))
 	{

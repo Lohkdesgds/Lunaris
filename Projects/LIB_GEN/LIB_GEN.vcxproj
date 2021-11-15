@@ -32,6 +32,7 @@
     <ClInclude Include="..\..\include\Lunaris\events.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.h" />
+    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Events\keyboard.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\keyboard\keyboard.h" />
     <ClInclude Include="..\..\include\Lunaris\Events\keys.h" />
@@ -51,6 +52,8 @@
     <ClInclude Include="..\..\include\Lunaris\Graphics\display\display.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\font.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\font\font.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\menu.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\menu\menu.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\sprite.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\sprite\sprite.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\text.h" />
@@ -121,6 +124,7 @@
     <ClCompile Include="..\..\include\Lunaris\Graphics\color\color.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\display\display.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\font\font.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\menu\menu.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\sprite\sprite.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp" />

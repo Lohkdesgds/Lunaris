@@ -93,6 +93,7 @@ namespace Lunaris {
 		bool seek(const int64_t, const seek_mode_e);
 		bool flush();
 		size_t size() const;
+		bool is_open() const;
 	};
 
 	class tempfile : public file {
@@ -114,6 +115,7 @@ namespace Lunaris {
 		using file::seek;
 		using file::flush;
 		using file::size;
+		using file::is_open;
 	};
 
 	class memfile : public file {
@@ -136,6 +138,7 @@ namespace Lunaris {
 		using file::seek;
 		using file::flush;
 		using file::size;
+		using file::is_open;
 	};
 
 #ifdef _WIN32 // && _MSC_VER
