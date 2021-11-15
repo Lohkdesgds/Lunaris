@@ -249,9 +249,9 @@ int main(int argc, char* argv[]) {
 //	}
 //	return 0;
 
-	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
-	if (AUTOEXCEPT(audio_test()) != 0) return 1;
-	if (AUTOEXCEPT(events_test()) != 0) return 1;
+	//if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+	//if (AUTOEXCEPT(audio_test()) != 0) return 1;
+	//if (AUTOEXCEPT(events_test()) != 0) return 1;
 	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
 }
 

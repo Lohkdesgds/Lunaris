@@ -42,41 +42,39 @@ namespace Lunaris {
 		float real_prop = resolution_prop < 0.01f ? 0.01 : resolution_prop;
 
 		auto* old_targ = al_get_target_bitmap();
-		bool need_draw = draws_per_sec_textured <= 0.0f;
+		//bool need_draw = draws_per_sec_textured <= 0.0f;
+
+		bomb draw_texture_auto([transf, old_targ, &draws_per_sec_textured, this] 
+			{
+				if (draws_per_sec_textured > 0.0f && if_texture && !if_texture->mapped.empty()) {
+					transform transf2;
+					transf2.identity();
+					transf2.apply();
+					if_texture->mapped.draw_scaled_at(0.0f, 0.0f, al_get_bitmap_width(old_targ), al_get_bitmap_height(old_targ)); transf.apply();
+				}
+				transf.apply();
+			});
+
 
 		if (draws_per_sec_textured > 0.0f) {
-			if (!if_texture) if_texture = std::make_unique<_texture_mode>();			
-
+			if (!if_texture) if_texture = std::make_unique<_texture_mode>();
 			const double rn = al_get_time();
 
 			if (rn - if_texture->last_draw < 1.0f / draws_per_sec_textured || if_texture->last_draw == 0.0)
 			{
 				if (if_texture->last_draw == 0.0) if_texture->last_draw = rn;
+				if (!old_targ) throw std::runtime_error("No display?!");
 
-
-				transform transf2;
-				transf2.identity();
-				transf2.apply();
-
-				ALLEGRO_BITMAP* ref = al_get_target_bitmap();
-				if (!ref) throw std::runtime_error("No display?!");
-
-				const int cxx = (al_get_bitmap_width(ref) * resolution_prop) < 32 ? 32 : (al_get_bitmap_width(ref) * resolution_prop);
-				const int cyy = (al_get_bitmap_height(ref) * resolution_prop) < 32 ? 32 : (al_get_bitmap_height(ref) * resolution_prop);
+				const int cxx = (al_get_bitmap_width(old_targ) * resolution_prop) < 32 ? 32 : (al_get_bitmap_width(old_targ) * resolution_prop);
+				const int cyy = (al_get_bitmap_height(old_targ) * resolution_prop) < 32 ? 32 : (al_get_bitmap_height(old_targ) * resolution_prop);
 
 				if (if_texture->mapped.empty() || (if_texture->mapped.get_width() != cxx) || (if_texture->mapped.get_height() != cyy))
 				{
 					if_texture->mapped.create(cxx, cyy);
-					need_draw = true;
 				}
-				else {
-					if_texture->mapped.draw_scaled_at(0.0f, 0.0f, al_get_bitmap_width(ref), al_get_bitmap_height(ref));
-					transf.apply();
-					need_draw = false;
-				}
+				else return; // bomb draws
 			}
 			else {
-				need_draw = true;
 				if_texture->last_draw = rn;
 			}
 		}
@@ -85,71 +83,72 @@ namespace Lunaris {
 			real_prop = 1.0f;
 		}
 
-		if (!need_draw) return;
-		else if (draws_per_sec_textured > 0.0f && if_texture && !if_texture->mapped.empty()) {
-			if_texture->mapped.set_as_target();
-			color(0.0f, 0.0f, 0.0f, 0.0f).clear_to_this();
-		}
 
 		auto lock = mu_shared_read_control();
 		if (font_used.empty()) return;
 
-		bomb disable_halt_auto([transf, old_targ] {al_hold_bitmap_drawing(false); al_set_target_bitmap(old_targ); transf.apply(); });
-		al_hold_bitmap_drawing(true); // may improve big text drawing
-
-		const float& scale_g = get<float>(enum_sprite_float_e::SCALE_G);
-		const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
-		const float& scale_y = get<float>(enum_sprite_float_e::SCALE_Y);
-		const float& draw_line_height = get<float>(enum_text_float_e::DRAW_LINE_PROP);
-		const float& line_offset = get<float>(enum_text_float_e::DRAW_ALIGNMENT_PROP_Y);
-		const float& draw_pos_x = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_X);
-		const float& draw_pos_y = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_Y);
-		const float& center_x = get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X);
-		const float& center_y = get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y);
-		const std::string to_str = get<safe_string>(enum_text_safe_string_e::STRING).read();
-		const int& text_alignment = get<int>(enum_text_integer_e::DRAW_ALIGNMENT);
-		const color& text_clr = get<color>(enum_sprite_color_e::DRAW_TINT);
-
-		int height = font_used->get_line_height();
-		if (height <= 0) throw std::runtime_error("Font said invalid height size!");
-
-		transform current;
-
-		//transf_back = transf; // later just apply back
-		current = transf; // working here
-
-		const float csx = scale_g * scale_x / height;
-		const float csy = scale_g * scale_y / height;
-
-		drawntransf.scale_inverse(1.0f / (csx * real_prop), 1.0f / (csy * real_prop));
-		drawntransf.apply();
-
-		const auto text_len = font_used->get_width(to_str);
-
-		std::stringstream ss(to_str);
-
 		{
-			std::string _temp;
-			size_t linecount_off = 0;
+			bomb disable_halt_auto([transf, old_targ] {al_hold_bitmap_drawing(false); al_set_target_bitmap(old_targ); transf.apply(); });
 
-			while (std::getline(ss, _temp, '\n')) {
+			if (draws_per_sec_textured > 0.0f && if_texture && !if_texture->mapped.empty()) {
+				if_texture->mapped.set_as_target();
+				color(0.0f, 0.0f, 0.0f, 0.0f).clear_to_this();
+			}
 
-				for (const auto& i : shadows)
-				{
+			al_hold_bitmap_drawing(true); // may improve big text drawing
+
+			const float& scale_g = get<float>(enum_sprite_float_e::SCALE_G);
+			const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
+			const float& scale_y = get<float>(enum_sprite_float_e::SCALE_Y);
+			const float& draw_line_height = get<float>(enum_text_float_e::DRAW_LINE_PROP);
+			const float& line_offset = get<float>(enum_text_float_e::DRAW_ALIGNMENT_PROP_Y);
+			const float& draw_pos_x = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_X);
+			const float& draw_pos_y = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_Y);
+			const float& center_x = get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_X);
+			const float& center_y = get<float>(enum_sprite_float_e::DRAW_RELATIVE_CENTER_Y);
+			const std::string to_str = get<safe_string>(enum_text_safe_string_e::STRING).read();
+			const int& text_alignment = get<int>(enum_text_integer_e::DRAW_ALIGNMENT);
+			const color& text_clr = get<color>(enum_sprite_color_e::DRAW_TINT);
+
+			int height = font_used->get_line_height();
+			if (height <= 0) throw std::runtime_error("Font said invalid height size!");
+
+			transform current;
+			current = transf; // working here
+
+			const float csx = scale_g * scale_x / height;
+			const float csy = scale_g * scale_y / height;
+
+			drawntransf.scale_inverse(1.0f / (csx * real_prop), 1.0f / (csy * real_prop));
+			drawntransf.apply();
+
+			const auto text_len = font_used->get_width(to_str);
+
+			std::stringstream ss(to_str);
+
+			{
+				std::string _temp;
+				size_t linecount_off = 0;
+
+				while (std::getline(ss, _temp, '\n')) {
+
+					for (const auto& i : shadows)
+					{
+						font_used->draw(
+							i.clr,
+							static_cast<float>(center_x + i.offset_x) * text_len, (static_cast<float>(center_y + i.offset_y) + static_cast<float>(linecount_off) * draw_line_height + line_offset) * height,
+							text_alignment,
+							_temp);
+					}
+
 					font_used->draw(
-						i.clr,
-						static_cast<float>(center_x + i.offset_x) * text_len, (static_cast<float>(center_y + i.offset_y) + static_cast<float>(linecount_off) * draw_line_height + line_offset) * height,
+						text_clr,
+						static_cast<float>(center_x) * text_len, (static_cast<float>(center_y) + static_cast<float>(linecount_off) * draw_line_height + line_offset) * height,
 						text_alignment,
 						_temp);
+
+					linecount_off++;
 				}
-
-				font_used->draw(
-					text_clr,
-					static_cast<float>(center_x) * text_len, (static_cast<float>(center_y) + static_cast<float>(linecount_off) * draw_line_height + line_offset) * height,
-					text_alignment,
-					_temp);
-
-				linecount_off++;
 			}
 		}
 	}

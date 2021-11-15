@@ -8,7 +8,7 @@
 #### Useful information about this version (automatically built)
 Key | Value
 --- | ---
-LUNARIS_BUILD_NUMBER | 926
+LUNARIS_BUILD_NUMBER | 936
 
 <br>
 
