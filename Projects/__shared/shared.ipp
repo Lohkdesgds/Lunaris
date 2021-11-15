@@ -1365,6 +1365,7 @@ int graphics_test()
 		transform transf;
 		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 		transf.apply();
+		return true;
 	});
 
 	cout << "Loading texture in video memory and default font...";
@@ -1435,22 +1436,23 @@ int graphics_test()
 
 	display_event_handler dispevh(my_display);
 
-	dispevh.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum, &fixprop](const display_event& raw_ev) {
-		const ALLEGRO_EVENT& ev = raw_ev.get_event();
+	dispevh.hook_event_handler([&keep_running_things, &off_x, &off_y, &zuum, &fixprop](display_event& ev) {
+		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.get_type() << " triggered.";
 
-		cout << console::color::AQUA << "DISPLAY EVENT: " << console::color::BLUE << "Event #" << ev.type << " triggered.";
-
-		if (raw_ev.is_close()) {
+		if (ev.is_close()) {
 			cout << console::color::GREEN << "Closing app...";
 			keep_running_things = false;
 		}
-		else if (raw_ev.is_resize()) {
-			cout << console::color::GREEN << "Screen size is now: " << ev.display.width << "x" << ev.display.height;
-			transform transf;
-			transf.build_classic_fixed_proportion(ev.display.width, ev.display.height, fixprop, zuum);
-			transf.translate_inverse(off_x, off_y);
-			cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
-			transf.apply();
+		else if (ev.is_resize()) {
+			cout << console::color::GREEN << "Screen size is now: " << ev.as_display().width << "x" << ev.as_display().height << ". Posted task.";
+			ev.post_task([wd = ev.as_display().width, ht = ev.as_display().height, fixprop, zuum, off_x, off_y] {
+				transform transf;
+				transf.build_classic_fixed_proportion(wd, ht, fixprop, zuum);
+				transf.translate_inverse(off_x, off_y);
+				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
+				transf.apply();
+				return true;
+			});
 		}
 	});
 
@@ -1465,6 +1467,7 @@ int graphics_test()
 				transform transf;
 				transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 				transf.apply();
+				return true;
 			});
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
@@ -1478,6 +1481,7 @@ int graphics_test()
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
+				return true;
 			});
 			break;
 		case ALLEGRO_KEY_F:
@@ -1489,6 +1493,7 @@ int graphics_test()
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
+				return true;
 			});
 			break;
 		case ALLEGRO_KEY_0:
@@ -1505,6 +1510,7 @@ int graphics_test()
 				transf.transform_inverse_coords(ax, ay);
 				cout << console::color::DARK_GREEN << "Converted inverse coords " << fabsf(ax) << " x " << fabsf(ay);
 				transf.apply();
+				return true;
 			});
 			break;
 		}
@@ -1608,6 +1614,7 @@ int graphics_test()
 		font_u->destroy();
 		bmppp->destroy();
 		giffye->destroy();
+		return true;
 	}).wait();
 
 

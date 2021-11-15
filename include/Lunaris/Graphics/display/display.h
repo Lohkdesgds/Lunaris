@@ -84,7 +84,7 @@ namespace Lunaris {
 		ALLEGRO_DISPLAY* window = nullptr;
 		ALLEGRO_EVENT_QUEUE* ev_qu = nullptr;
 		ALLEGRO_TIMER* timed_draw = nullptr;
-		ALLEGRO_TIMER* update_transform = nullptr;
+		ALLEGRO_TIMER* update_tasks = nullptr;
 
 		ALLEGRO_TRANSFORM latest_transform{}; // useful elsewhere, trust me (see mouse)
 
@@ -97,8 +97,9 @@ namespace Lunaris {
 #ifdef _WIN32
 		HICON last_icon_handle = nullptr;
 #endif
-
 		void fix_timers();
+	protected:
+		safe_vector<promise<bool>> promises; // when events, they can list things to do here, or maybe another thread somewhere else, idk
 	public:
 		display() = default;
 		display(const display_config&);
@@ -111,6 +112,8 @@ namespace Lunaris {
 		bool create(const std::string&, const int, const int, const int = 0);
 
 		void set_window_title(const std::string&);
+
+		future<bool> add_run_once_in_drawing_thread(std::function<bool(void)>);
 
 		int get_width() const;
 		int get_height() const;
@@ -169,8 +172,8 @@ namespace Lunaris {
 		} safer;
 
 		thread thr;
-		safe_vector<promise<bool>> promises;
 		std::function<void(const display_async&)> hooked_draw;
+
 		void async_run();
 	public:
 		display_async() = default;
@@ -184,13 +187,12 @@ namespace Lunaris {
 		void hook_draw_function(std::function<void(const display_async&)>);
 		void unhook_draw_function();
 
-		future<bool> add_run_once_in_drawing_thread(std::function<void(void)>);
-
 		// skip exceptions? DO NOT CALL FROM ITSELF
 		void destroy(const bool = false);
 
 		using display::clipboard;
 		using display::set_window_title;
+		using display::add_run_once_in_drawing_thread;
 		using display::get_width;
 		using display::get_height;
 		using display::get_frequency;
@@ -223,6 +225,9 @@ namespace Lunaris {
 	public:
 		display_event(display&, const ALLEGRO_EVENT&);
 
+		display* operator->();
+		display* operator->() const;
+
 		bool valid() const;
 
 		bool is_close() const;
@@ -231,6 +236,15 @@ namespace Lunaris {
 		bool is_resize() const;
 		bool is_emergency_stop() const;
 		bool is_emergency_stop_gone() const;
+
+		int get_type() const;
+
+		future<bool> post_task(std::function<bool(void)>);
+
+		// probably only these ones
+
+		const ALLEGRO_DISPLAY_EVENT& as_display() const;
+		const ALLEGRO_TIMER_EVENT& as_timer() const;
 
 		const ALLEGRO_EVENT& get_event() const;
 		display& get_display();

@@ -159,12 +159,12 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::fix_timers()
 	{
-		if (!ev_qu) throw std::runtime_error("Event queue disappeared?!");
+		if (!ev_qu) throw std::runtime_error("Expected queue, no queue found, error!");
 
-		if (!update_transform) {
-			update_transform = al_create_timer(1.0);
-			al_register_event_source(ev_qu, al_get_timer_event_source(update_transform));
-			al_start_timer(update_transform);
+		if (!update_tasks) {
+			update_tasks = al_create_timer(0.5);
+			al_register_event_source(ev_qu, al_get_timer_event_source(update_tasks));
+			al_start_timer(update_tasks);
 		}
 
 		if (economy_mode) {
@@ -244,10 +244,8 @@ namespace Lunaris {
 			al_set_new_window_title(conf.window_title.c_str());
 
 
-		if (conf.use_basic_internal_event_system) {
-			if (!(ev_qu = al_create_event_queue())) {
-				return false;
-			}					
+		if (!(ev_qu = al_create_event_queue())) {
+			return false;
 		}
 
 		if (!(window = al_create_display(conf.mode.width > 0 ? conf.mode.width : 0, conf.mode.height > 0 ? conf.mode.height : 0)))
@@ -298,6 +296,19 @@ namespace Lunaris {
 	LUNARIS_DECL void display::set_window_title(const std::string& str)
 	{
 		if (!empty() && !str.empty()) al_set_window_title(window, str.c_str());
+	}
+
+	LUNARIS_DECL future<bool> display::add_run_once_in_drawing_thread(std::function<bool(void)> f)
+	{
+		promise<bool> prom;
+		if (!f) {
+			auto fn = prom.get_future();
+			prom.set_value(false);
+			return fn;
+		}
+		auto fn2 = prom.get_future().then([f](auto) -> bool { try { return f(); } catch (...) { return false; } });
+		promises.push_back(std::move(prom));
+		return fn2;
 	}
 
 	LUNARIS_DECL int display::get_width() const
@@ -406,11 +417,11 @@ namespace Lunaris {
 			al_destroy_timer(timed_draw);
 			timed_draw = nullptr;
 		}
-		if (update_transform) {
-			al_stop_timer(update_transform);
-			if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(update_transform));
-			al_destroy_timer(update_transform);
-			update_transform = nullptr;
+		if (update_tasks) {
+			al_stop_timer(update_tasks);
+			if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(update_tasks));
+			al_destroy_timer(update_tasks);
+			update_tasks = nullptr;
 		}
 		if (ev_qu) {
 			al_destroy_event_queue(ev_qu);
@@ -460,8 +471,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::flip()
 	{
-		if (window) {
-
+		if (ev_qu) {
 			ALLEGRO_EVENT ev;
 			while (al_get_next_event(ev_qu, &ev))
 			{
@@ -509,8 +519,12 @@ namespace Lunaris {
 
 				case ALLEGRO_EVENT_TIMER:
 
-					if (ev.timer.source == update_transform) {
+					if (ev.timer.source == update_tasks) {
 						if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+						if (promises.size()) {
+							promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
+						}
 					}
 					else flag_draw_timed = true;
 
@@ -518,13 +532,15 @@ namespace Lunaris {
 				}
 			}
 
-			const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw;
+			const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
 			flag_draw_timed = false;
 
-			if (can_draw_now) {
-				al_flip_display();
-			}
+			if (can_draw_now) al_flip_display();
 		}
+		else if (promises.size()) { // maybe there's something to do before that's available
+			promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
+		}
+		else throw std::runtime_error("NO QUEUE FOUND! SOMETHING IS WRONG!"); // nop, something is really wrong here
 	}
 
 	LUNARIS_DECL void display::acknowledge_resize()
@@ -556,14 +572,9 @@ namespace Lunaris {
 			return;
 		}
 
-		if (promises.size()) {
-			promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } });
-			promises.clear();
-		}
+		flip();
 
 		if (hooked_draw) hooked_draw(*this);
-
-		flip();
 	}
 
 	LUNARIS_DECL display_async::display_async(const display_config& conf)
@@ -625,19 +636,6 @@ namespace Lunaris {
 		safer.unlock();
 	}
 
-	LUNARIS_DECL future<bool> display_async::add_run_once_in_drawing_thread(std::function<void(void)> f)
-	{
-		promise<bool> prom;
-		if (!f) {
-			auto fn = prom.get_future();
-			prom.set_value(false);
-			return fn;
-		}
-		auto fn2 = prom.get_future().then([f](auto) -> bool { try { f(); return true; } catch (...) { return false; } });
-		promises.push_back(std::move(prom));
-		return fn2;
-	}
-
 	LUNARIS_DECL void display_async::destroy(const bool skip_except)
 	{
 		thr.join(skip_except);
@@ -648,6 +646,16 @@ namespace Lunaris {
 		: _ev(ev), _ref(rf)
 	{
 		source = ev.display.source;
+	}
+
+	LUNARIS_DECL display* display_event::operator->()
+	{
+		return &_ref;
+	}
+
+	LUNARIS_DECL display* display_event::operator->() const
+	{
+		return &_ref;
 	}
 
 	LUNARIS_DECL bool display_event::valid() const
@@ -683,6 +691,26 @@ namespace Lunaris {
 	LUNARIS_DECL bool display_event::is_emergency_stop_gone() const
 	{
 		return _ev.type == ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING;
+	}
+
+	LUNARIS_DECL int display_event::get_type() const
+	{
+		return _ev.type;
+	}
+
+	LUNARIS_DECL future<bool> display_event::post_task(std::function<bool(void)> f)
+	{
+		return _ref.add_run_once_in_drawing_thread(f);
+	}
+
+	LUNARIS_DECL const ALLEGRO_DISPLAY_EVENT& display_event::as_display() const
+	{
+		return _ev.display;
+	}
+
+	LUNARIS_DECL const ALLEGRO_TIMER_EVENT& display_event::as_timer() const
+	{
+		return _ev.timer;
 	}
 
 	LUNARIS_DECL const ALLEGRO_EVENT& display_event::get_event() const

@@ -299,7 +299,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
@@ -329,7 +329,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
@@ -355,7 +355,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)x64\Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)x64\Debug\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
@@ -385,7 +385,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)x64\Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER</Command>
+      <Command>"$(SolutionDir)x64\Release\BUILDCOUNTER.exe" "$(SolutionDir)include\Lunaris\__macro\macros.h" LUNARIS_BUILD_NUMBER "$(SolutionDir)README.MD" LUNARIS_BUILD_NUMBER</Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)include</AdditionalLibraryDirectories>
