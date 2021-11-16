@@ -129,7 +129,7 @@ namespace Lunaris {
 
 		void show();
 		void hide();
-		void reset(const menu_type);
+		void remake_as(const menu_type);
 
 		operator std::vector<ALLEGRO_EVENT_SOURCE*>() const;
 		ALLEGRO_EVENT_SOURCE* get_event_source() const;

@@ -398,18 +398,22 @@ namespace Lunaris {
 
 	LUNARIS_DECL void menu::show()
 	{
+		auto* __d = disp.get_raw_display();
+		if (!__d) return;
 		showing = true;
-		if (latest == menu_type::BAR) al_set_display_menu(disp.get_raw_display(), ptr.get());
-		else al_popup_menu(ptr.get(), disp.get_raw_display());
+		if (latest == menu_type::BAR) al_set_display_menu(__d, ptr.get());
+		else al_popup_menu(ptr.get(), __d);
 	}
 
 	LUNARIS_DECL void menu::hide()
 	{
+		auto* __d = disp.get_raw_display();
+		if (!__d) return;
 		showing = false;
-		if (latest == menu_type::BAR) al_set_display_menu(disp.get_raw_display(), nullptr);
+		if (latest == menu_type::BAR) al_set_display_menu(__d, nullptr);
 	}
 
-	LUNARIS_DECL void menu::reset(const menu_type mod)
+	LUNARIS_DECL void menu::remake_as(const menu_type mod)
 	{
 		bool was_showing = showing;
 		hide();

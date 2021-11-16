@@ -1793,7 +1793,7 @@ int events_test()
 		cout << console::color::YELLOW << "Do it again, please.";
 		clicked_right = false;
 
-		mymenu.reset(menu::menu_type::POPUP);
+		mymenu.remake_as(menu::menu_type::POPUP);
 
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
