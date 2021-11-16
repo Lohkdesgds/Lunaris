@@ -154,8 +154,12 @@ namespace Lunaris {
 		if (!buf) return {};
 		cpy = buf;
 		al_free(buf);
-		al_set_clipboard_text(src, nullptr);
 		return cpy;
+	}
+
+	LUNARIS_DECL bool display::_clipboard::clear_text()
+	{
+		return set_text("");
 	}
 
 	LUNARIS_DECL bool display::_clipboard::set_text(const std::string& var)

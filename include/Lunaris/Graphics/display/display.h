@@ -82,6 +82,7 @@ namespace Lunaris {
 
 			bool has_text() const;
 			std::string get_text() const;
+			bool clear_text();
 			bool set_text(const std::string&);
 		};
 		enum class custom_events {DISPLAY_FLAG_TOGGLE = 1024};
