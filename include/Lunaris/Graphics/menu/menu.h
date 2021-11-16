@@ -112,7 +112,7 @@ namespace Lunaris {
 	private:
 		std::vector<menu_each_menu> menus;
 		std::shared_ptr<ALLEGRO_MENU> ptr;
-		ALLEGRO_EVENT_SOURCE* ev_source;
+		ALLEGRO_EVENT_SOURCE* ev_source = nullptr;
 		display& disp;
 		bool showing = false;
 		menu_type latest = menu_type::BAR;
