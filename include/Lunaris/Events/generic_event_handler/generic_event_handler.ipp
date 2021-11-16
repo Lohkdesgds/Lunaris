@@ -43,13 +43,17 @@ namespace Lunaris {
 		}
 
 		if (removing.empty() && adding.empty()) return;
+		auto lucky = get_lock();
 
-		printf_s("changed event source\n");
+		try {
+			for (auto& e : adding) if (e) al_register_event_source(get_event_queue(), e);
+			for (auto& e : removing) if (e) al_unregister_event_source(get_event_queue(), e);
 
-		for(auto& e : adding) if (e) al_register_event_source(get_event_queue(), e);
-		for(auto& e : removing) if (e) al_unregister_event_source(get_event_queue(), e);
-
-		last_event_source = nevs;
+			last_event_source = nevs;
+		}
+		catch (const std::exception& e) {
+			if (exception_work) exception_work(e);
+		}
 	}
 
 	template<class EventHandlerType, class SourceClass>
@@ -59,8 +63,6 @@ namespace Lunaris {
 		timer_check = al_create_timer(0.5);
 		al_start_timer(timer_check);
 		al_register_event_source(get_event_queue(), al_get_timer_event_source(timer_check));
-
-		check_time();
 	}
 
 	template<class EventHandlerType, class SourceClass>
@@ -84,6 +86,20 @@ namespace Lunaris {
 	{
 		auto lucky = get_lock();
 		generic_event = {};
+	}
+
+	template<class EventHandlerType, class SourceClass>
+	inline void specific_event_handler<EventHandlerType, SourceClass>::hook_exception_handler(const std::function<void(const std::exception&)> f)
+	{
+		auto lucky = get_lock();
+		exception_work = f;
+	}
+
+	template<class EventHandlerType, class SourceClass>
+	inline void specific_event_handler<EventHandlerType, SourceClass>::unhook_exception_handler()
+	{
+		auto lucky = get_lock();
+		exception_work = {};
 	}
 
 }

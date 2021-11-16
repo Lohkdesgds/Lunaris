@@ -57,7 +57,7 @@ namespace Lunaris {
 
 		menu_each_default& set_name(const std::string&);
 		menu_each_default& set_id(const uint16_t);
-		menu_each_default& set_flags(std::initializer_list<menu_item_flags>);
+		menu_each_default& set_flags(std::vector<menu_item_flags>);
 		menu_each_default& set_flags(const int);
 
 		const std::string& get_name() const;
@@ -78,13 +78,13 @@ namespace Lunaris {
 		std::vector<std::shared_ptr<__menu_each_generic>> sub_menus;
 	public:
 		menu_each_menu() = default;
-		menu_each_menu(std::initializer_list<__menu_each_generic>);
+		menu_each_menu(std::vector<__menu_each_generic>);
 		menu_each_menu(const std::string&, const uint16_t, const int = 0);
-		menu_each_menu(const std::string&, const uint16_t, const int, std::initializer_list<__menu_each_generic>);
+		menu_each_menu(const std::string&, const uint16_t, const int, std::vector<__menu_each_generic>);
 
 		menu_each_menu& set_name(const std::string&);
 		menu_each_menu& set_id(const uint16_t);
-		menu_each_menu& set_flags(std::initializer_list<menu_item_flags>);
+		menu_each_menu& set_flags(std::vector<menu_item_flags>);
 		menu_each_menu& set_flags(const int);
 		menu_each_menu& push(const menu_each_empty&);
 		menu_each_menu& push(const menu_each_default&);
@@ -119,7 +119,7 @@ namespace Lunaris {
 
 		void make_happen(const menu_type);
 	public:
-		menu(display&, std::initializer_list<menu_each_menu>, const menu_type = menu_type::BAR);
+		menu(display&, std::vector<menu_each_menu>, const menu_type = menu_type::BAR);
 		~menu();
 
 		menu_each_menu& index(const size_t);

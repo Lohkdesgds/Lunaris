@@ -10,7 +10,7 @@
 
 namespace Lunaris {
 
-	class thread {
+	class thread : public NonCopyable {
 	public:
 		enum class speed {
 			UNLEASHED,				// no control
@@ -28,6 +28,7 @@ namespace Lunaris {
 			bool should_quit = false;
 			bool _ended_gracefully = true;
 			std::exception_ptr _exception; // rethrows on join() if any
+			std::function<void(const std::exception&)> exp_hdlr;
 
 			bool _run_ctrl(); // called by _thr_work()'s loop
 			void _thr_work();
@@ -38,17 +39,14 @@ namespace Lunaris {
 		thread() = default;
 
 		// same as task_async
-		thread(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60);
+		thread(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60, std::function<void(const std::exception&)> = {});
 		~thread();
-
-		thread(const thread&) = delete;
-		void operator=(const thread&) = delete;
 
 		thread(thread&&) noexcept;
 		void operator=(thread&&) noexcept;
 
 		// keep running undefinitely (double is only used if speed is set to interval)
-		void task_async(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60);
+		void task_async(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60, std::function<void(const std::exception&)> = {});
 
 		void set_speed(const speed, const double = 1.0 / 60);
 
@@ -71,6 +69,7 @@ namespace Lunaris {
 		// by status
 		bool has_ended() const;
 		void force_destroy();
+		bool exists() const;
 	};
 
 	/// <summary>

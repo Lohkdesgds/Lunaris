@@ -25,9 +25,9 @@ namespace Lunaris {
 		void csafe(const std::function<void(const T&)>);
 		void safe(const std::function<void(T&)>);
 
-		void set(T&&);
 		void set(const T&);
-		void reset();
+		void set(T&&);
+		T reset();
 
 		operator T();
 		void operator=(const safe_data&);
@@ -47,14 +47,21 @@ namespace Lunaris {
 		void operator=(const safe_vector&);
 		void operator=(safe_vector&&);
 
+		void push_back(const T&);
 		void push_back(T&&);
-		const T& index(const size_t&) const;
-		T& index(const size_t&);
+		T index(const size_t&) const;
+		T index(const size_t&);
+		T operator[](const size_t) const;
+		T operator[](const size_t);
+
+		bool set(const size_t, const T&);
+		bool set(const size_t, T&&);
 
 		void csafe(const std::function<void(const std::vector<T>&)>);
 		void safe(const std::function<void(std::vector<T>&)>);
 
 		void erase(const size_t&);
+		// point A to point B
 		void erase(const size_t&, const size_t&);
 		void clear();
 

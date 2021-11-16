@@ -84,7 +84,7 @@ namespace Lunaris {
 		return *this;
 	}
 
-	LUNARIS_DECL menu_each_default& menu_each_default::set_flags(std::initializer_list<menu_item_flags> flgs)
+	LUNARIS_DECL menu_each_default& menu_each_default::set_flags(std::vector<menu_item_flags> flgs)
 	{
 		flags = 0;
 		for (const auto& ea : flgs) flags |= static_cast<int>(ea);
@@ -143,7 +143,7 @@ namespace Lunaris {
 		}
 	}
 
-	LUNARIS_DECL menu_each_menu::menu_each_menu(std::initializer_list<__menu_each_generic> lst)
+	LUNARIS_DECL menu_each_menu::menu_each_menu(std::vector<__menu_each_generic> lst)
 	{
 		for (auto& it : lst) {
 			switch (it.get_type()) {
@@ -176,7 +176,7 @@ namespace Lunaris {
 	{
 	}
 
-	LUNARIS_DECL menu_each_menu::menu_each_menu(const std::string& nam, const uint16_t i, const int flg, std::initializer_list<__menu_each_generic> lst)
+	LUNARIS_DECL menu_each_menu::menu_each_menu(const std::string& nam, const uint16_t i, const int flg, std::vector<__menu_each_generic> lst)
 		: name(nam), id(i), flags(flg)
 	{
 		for (auto& it : lst) {
@@ -217,7 +217,7 @@ namespace Lunaris {
 		return *this;
 	}
 
-	LUNARIS_DECL menu_each_menu& menu_each_menu::set_flags(std::initializer_list<menu_item_flags> flgs)
+	LUNARIS_DECL menu_each_menu& menu_each_menu::set_flags(std::vector<menu_item_flags> flgs)
 	{
 		flags = 0;
 		for (const auto& ea : flgs) flags |= static_cast<int>(ea);
@@ -363,7 +363,7 @@ namespace Lunaris {
 		if (!(ev_source = al_enable_menu_event_source(ptr.get()))) throw std::runtime_error("Could not load menu properly");
 	}
 
-	LUNARIS_DECL menu::menu(display& d, std::initializer_list<menu_each_menu> lst, const menu_type mod)
+	LUNARIS_DECL menu::menu(display& d, std::vector<menu_each_menu> lst, const menu_type mod)
 		: disp(d), menus(lst.begin(), lst.end())
 	{
 		__display_menu_allegro_start();

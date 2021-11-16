@@ -47,6 +47,7 @@ namespace Lunaris {
 	class specific_event_handler : public __common_event {
 
 		std::function<void(EventHandlerType&)> generic_event;
+		std::function<void(const std::exception&)> exception_work;
 
 		ALLEGRO_TIMER* timer_check = nullptr;
 		std::vector<ALLEGRO_EVENT_SOURCE*> last_event_source;
@@ -61,6 +62,9 @@ namespace Lunaris {
 
 		void hook_event_handler(const std::function<void(EventHandlerType&)>);
 		void unhook_event_handler();
+
+		void hook_exception_handler(const std::function<void(const std::exception&)>);
+		void unhook_exception_handler();
 	};
 }
 

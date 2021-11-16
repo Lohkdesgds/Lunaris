@@ -38,18 +38,23 @@ namespace Lunaris {
 			try {
 				func();
 			}
+			catch (const std::exception& e) {
+				if (exp_hdlr) exp_hdlr(e);
+				else {
+					_exception = std::current_exception();
+				}
+			}
 			catch (...) {
 				_exception = std::current_exception();
-				break;
 			}
 		}
 
 		_ended_gracefully = true;
 	}
 
-	inline thread::thread(std::function<void(void)> fun, const speed mode, const double interv)
+	inline thread::thread(std::function<void(void)> fun, const speed mode, const double interv, std::function<void(const std::exception&)> excpt)
 	{
-		task_async(fun, mode, interv);
+		task_async(fun, mode, interv, excpt);
 	}
 
 	inline thread::~thread()
@@ -69,7 +74,7 @@ namespace Lunaris {
 	}
 
 	// keep running undefinitely
-	inline void thread::task_async(std::function<void(void)> fun, const speed mode, const double interv)
+	inline void thread::task_async(std::function<void(void)> fun, const speed mode, const double interv, std::function<void(const std::exception&)> excpt)
 	{
 		if (!fun) throw std::runtime_error("Invalid function for thread!");
 		if (interv > 86400) throw std::runtime_error("Invalid time interval! (More than 1 day? Seriously?)");
@@ -78,6 +83,7 @@ namespace Lunaris {
 		data->func = fun;
 		data->mode = mode;
 		data->interval_seconds = interv;
+		data->exp_hdlr = excpt;
 		data->thr = std::thread([piece = this->data]{ piece->_thr_work(); });
 	}
 
@@ -129,6 +135,11 @@ namespace Lunaris {
 		if (__destroyed) return;
 		__destroyed = true;
 		::TerminateThread(id, 0); // goodbye my friend.
+	}
+
+	inline bool async_thread_info::exists() const
+	{
+		return id != std::thread::native_handle_type{};
 	}
 
 	inline async_thread_info throw_thread(const std::function<void(void)> f)
