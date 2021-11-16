@@ -396,6 +396,27 @@ namespace Lunaris {
 		}
 	}
 
+	LUNARIS_DECL bool menu::patch_name_of(const uint16_t id, const std::string& var)
+	{
+		if (!ptr) return false;
+		al_set_menu_item_caption(ptr.get(), id, var.c_str());
+		return true;
+	}
+
+	LUNARIS_DECL bool menu::patch_flags_of(const uint16_t id, const int var)
+	{
+		if (!ptr) return false;
+		al_set_menu_item_flags(ptr.get(), id, var);
+		return true;
+	}
+
+	LUNARIS_DECL bool menu::patch_toggle_flag(const uint16_t id, const menu_item_flags var)
+	{
+		if (!ptr) return false;
+		al_set_menu_item_flags(ptr.get(), id, al_get_menu_item_flags(ptr.get(), id) ^ static_cast<int>(var));
+		return true;
+	}
+
 	LUNARIS_DECL void menu::show()
 	{
 		auto* __d = disp.get_raw_display();

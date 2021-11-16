@@ -127,6 +127,13 @@ namespace Lunaris {
 		// update from allegro itself
 		void update();
 
+		// patch allegro side. update() if you want up to date remake information
+		bool patch_name_of(const uint16_t, const std::string&);
+		// patch allegro side. update() if you want up to date remake information
+		bool patch_flags_of(const uint16_t, const int);
+		// patch allegro side. update() if you want up to date remake information
+		bool patch_toggle_flag(const uint16_t, const menu_item_flags);
+
 		void show();
 		void hide();
 		void remake_as(const menu_type);

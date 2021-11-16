@@ -1741,7 +1741,7 @@ int events_test()
 			),
 		menu_each_menu()
 			.set_name("Crash app")
-			.set_id(9905)
+			.set_id(112)
 			.push(menu_each_menu()
 				.set_name("Fatal crash call lol")
 				.set_id(9906)
@@ -1761,6 +1761,13 @@ int events_test()
 						)
 					)
 				)
+			),
+		menu_each_menu()
+			.set_name("LUL")
+			.set_id(12344)
+			.push(menu_each_default()
+				.set_name("Keeps toggling lol")
+				.set_id(12345)
 			)
 		}
 	);
@@ -1784,7 +1791,7 @@ int events_test()
 		});
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
-		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { disp.flip(); std::this_thread::sleep_for(std::chrono::milliseconds(20)); }
+		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { disp.flip(); std::this_thread::sleep_for(std::chrono::milliseconds(500)); mymenu.patch_name_of(112, "Crash app (rng: " + std::to_string(random() % 1000) + ")"); mymenu.patch_toggle_flag(12345, menu_item_flags::DISABLED); }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
@@ -1800,7 +1807,7 @@ int events_test()
 		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { 
 			disp.flip();
 			mymenu.show();
-			std::this_thread::sleep_for(std::chrono::milliseconds(500)); }
+			std::this_thread::sleep_for(std::chrono::milliseconds(1500)); }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
