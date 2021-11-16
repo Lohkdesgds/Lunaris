@@ -8,40 +8,6 @@ namespace Lunaris {
 		if (!al_is_native_dialog_addon_initialized() && !al_init_native_dialog_addon()) throw std::runtime_error("Can't start Native Dialog!");
 	}
 
-	//LUNARIS_DECL __menu_each_generic::__menu_each_generic()
-	//{ 
-	//	__display_menu_allegro_start();
-	//}
-	//LUNARIS_DECL std::vector<ALLEGRO_MENU_INFO> __menu_each_generic::generate() const
-	//{
-	//	return {};
-	//}
-	//
-	//LUNARIS_DECL __menu_each_generic::menu_each_type __menu_each_generic::get_type() const
-	//{
-	//	return __menu_each_generic::menu_each_type::_INVALID;
-	//}
-	//
-	//LUNARIS_DECL bool __menu_each_generic::operator==(const uint16_t) const
-	//{
-	//	return false;
-	//}
-	//
-	//LUNARIS_DECL bool __menu_each_generic::operator!=(const uint16_t) const
-	//{
-	//	return true;
-	//}
-	//
-	//LUNARIS_DECL void __menu_each_generic::update_self(ALLEGRO_MENU*)
-	//{
-	//	return;
-	//}
-	//
-	//LUNARIS_DECL __menu_each_generic* __menu_each_generic::export_new() const
-	//{
-	//	return nullptr;
-	//}
-
 	LUNARIS_DECL std::vector<ALLEGRO_MENU_INFO> menu_each_empty::generate() const
 	{
 		return { ALLEGRO_MENU_INFO{ nullptr, static_cast<uint16_t>(-1), 0, nullptr } };
@@ -134,13 +100,8 @@ namespace Lunaris {
 
 	LUNARIS_DECL void menu_each_default::update_self(ALLEGRO_MENU* men)
 	{
-		ALLEGRO_MENU* chosen = nullptr;
-		int index = 0;
-		if (al_find_menu_item(men, id, &chosen, &index))
-		{
-			name = al_get_menu_item_caption(chosen, index);
-			flags = al_get_menu_item_flags(chosen, index);
-		}
+		if (const char* gg = al_get_menu_item_caption(men, id); gg) name = gg;
+		if (const int gg = al_get_menu_item_flags(men, id); gg >= 0) flags = gg;
 	}
 
 	LUNARIS_DECL menu_each_menu::menu_each_menu(std::vector<__menu_each_generic> lst)
@@ -282,26 +243,6 @@ namespace Lunaris {
 
 		vec.push_back({ name.c_str(), id, flags, 0 });
 		for (auto& it : sub_menus) {
-			switch (it->get_type()) {
-			case __menu_each_generic::menu_each_type::DEFAULT:
-			{
-				menu_each_default* pp = (menu_each_default*)&it;
-			}
-			break;
-			case __menu_each_generic::menu_each_type::MENU:
-			{
-				menu_each_menu* pp = (menu_each_menu*)&it;
-			}
-			break;
-			case __menu_each_generic::menu_each_type::EMPTY:
-			{
-				menu_each_empty* pp = (menu_each_empty*)&it;
-			}
-			break;
-			default:
-				continue;
-			}
-
 			auto __vc = it->generate();
 			vec.insert(vec.end(), __vc.begin(), __vc.end());
 		}
@@ -327,13 +268,9 @@ namespace Lunaris {
 
 	LUNARIS_DECL void menu_each_menu::update_self(ALLEGRO_MENU* men)
 	{
-		ALLEGRO_MENU* chosen = nullptr;
-		int index = 0;
-		if (al_find_menu_item(men, id, &chosen, &index))
-		{
-			name = al_get_menu_item_caption(chosen, index);
-			flags = al_get_menu_item_flags(chosen, index);
-		}
+		if (const char* gg = al_get_menu_item_caption(men, id); gg) name = gg;
+		if (const int gg = al_get_menu_item_flags(men, id); gg >= 0) flags = gg;
+
 		for (auto& o : sub_menus) {
 			o->update_self(men);
 		}

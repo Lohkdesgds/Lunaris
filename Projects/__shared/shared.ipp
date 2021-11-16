@@ -140,114 +140,6 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
-//	{
-//		display_async ad;
-//		int idd = 0;
-//		display_menu men = display_menu()
-//			.push(display_sub_menu()
-//				.set_name("File")
-//				.set_id(idd++)
-//				.push(display_sub_menu()
-//					.set_name("Open")
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu()
-//					.set_name("Open folder")
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu().make_this_division()
-//				)
-//				.push(display_sub_menu()
-//					.set_name("Exit")
-//					.set_id(idd++)
-//				)
-//			)
-//			.push(display_sub_menu()
-//				.set_name("About")
-//				.set_id(idd++)
-//				.push(display_sub_menu()
-//					.set_name("Image Viewer")
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu().make_this_division()
-//				)
-//				.push(display_sub_menu()
-//					.set_name("Using " + std::string(LUNARIS_VERSION_SHORT))
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu()
-//					.set_name(LUNARIS_VERSION_DATE)
-//					.set_id(idd++)
-//				)
-//			);
-//		ad.create(display_config().set_display_mode(display_options().set_width(640).set_height(480)).set_fullscreen(false).set_framerate_limit(600));
-//
-//		ad.hook_menu_event_handler([](const display_menu_event& ev) {
-//			cout << ev.id << " -> " << ev.name;
-//		});
-//		ad.set_menu(men);
-//
-//		std::this_thread::sleep_for(std::chrono::seconds(5));
-//
-//		
-//
-//		men = display_menu()
-//			.push(display_sub_menu()
-//				.set_name("Not File")
-//				.set_id(idd++)
-//				.push(display_sub_menu()
-//					.set_name("Not Open")
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu()
-//					.set_name("Open fake")
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu().make_this_division()
-//				)
-//				.push(display_sub_menu()
-//					.set_name("Exitoo")
-//					.set_id(idd++)
-//				)
-//			)
-//			.push(display_sub_menu()
-//				.set_name("Aboutalla")
-//				.set_id(idd++)
-//				.push(display_sub_menu()
-//					.set_name("Imagy Vieweru")
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu().make_this_division()
-//				)
-//				.push(display_sub_menu()
-//					.set_name("Usinge " + std::string(LUNARIS_VERSION_SHORT))
-//					.set_id(idd++)
-//				)
-//				.push(display_sub_menu()
-//					.set_name(LUNARIS_VERSION_DATE)
-//					.set_id(idd++)
-//				)
-//			);
-//
-//		ad.set_menu(men);
-//
-//		std::this_thread::sleep_for(std::chrono::seconds(5));
-//
-//		men.destroy();
-//		//ad.delete_menu();
-//
-//		//for (int u = 1; u < 500;)
-//		//{
-//		//	ad.set_framerate_limit(u);
-//		//	cout << u << " FPS";
-//		//	u += (u / 5) + 1;
-//		//	std::this_thread::sleep_for(std::chrono::seconds(4));
-//		//}
-//		//
-//		//cout << "END OF FPS TEST";
-//		std::this_thread::sleep_for(std::chrono::seconds(5));
-//	}
-//	return 0;
 
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
@@ -1788,6 +1680,7 @@ int events_test()
 				mev.patch_toggle_flag(menu_item_flags::DISABLED);
 				mev.patch_name("This was not it. Random number voila: " + std::to_string(random()));
 			}
+			mymenu.update(); // test if works
 		});
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
