@@ -47,10 +47,10 @@ namespace Lunaris {
 	{
 #ifdef LUNARIS_VERBOSE_BUILD
 		std::unique_lock<mutex_type> lock(__g_verbose_lock); // global mutex for print
+		PRINT_DEBUG(nullptr);
 #else
 		std::unique_lock<mutex_type> lock(m_safe);
 #endif
-		PRINT_DEBUG(nullptr);
 		console::_block_control _block(std::move(lock));
 		_block << var;
 		return _block;

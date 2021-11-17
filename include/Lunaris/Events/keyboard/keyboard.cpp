@@ -68,7 +68,9 @@ namespace Lunaris {
 		// because of this line here we don't need to check if m_movable exists (it must exist)
 		install(events::KEYBOARD);
 		get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("%p is KEYBOARD object", get_core_ptr());
+#endif
 	}
 
 	LUNARIS_DECL void keyboard::hook_each_key_event(const std::function<void(keyboard&, const int)> f)

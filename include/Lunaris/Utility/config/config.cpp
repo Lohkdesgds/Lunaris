@@ -76,8 +76,9 @@ namespace Lunaris {
 		if (str.empty()) {
 			return false;
 		}
-
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Loading config %p <- '%s'", this, path.c_str());
+#endif
 
 		ALLEGRO_CONFIG* conf = nullptr;
 		conf = al_load_config_file(str.c_str());
@@ -119,7 +120,9 @@ namespace Lunaris {
 		}
 		al_destroy_config(conf);
 
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Loaded config %p <- '%s'", this, path.c_str());
+#endif
 
 		return true;
 	}
@@ -138,7 +141,9 @@ namespace Lunaris {
 
 		if (path.empty()) return false;
 
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Saving config %p -> '%s'", this, path.c_str());
+#endif
 
 		ALLEGRO_CONFIG* conf = al_create_config();
 		if (!conf) return false;
@@ -157,7 +162,9 @@ namespace Lunaris {
 		}
 		al_destroy_config(conf);
 
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Saved config %p -> '%s'", this, path.c_str());
+#endif
 		return true;
 	}
 

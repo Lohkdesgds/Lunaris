@@ -29,13 +29,17 @@ namespace Lunaris {
 	LUNARIS_DECL sample::sample(sample&& sp) noexcept
 		: file_sample(sp.file_sample)
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Moved sample new <- %p", sp.file_sample);
+#endif
 		sp.file_sample = nullptr;
 	}
 
 	LUNARIS_DECL void sample::operator=(sample&& sp) noexcept
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Moved sample %p <- %p", file_sample, sp.file_sample);
+#endif
 		destroy();
 		file_sample = sp.file_sample;
 		sp.file_sample = nullptr;
@@ -49,7 +53,9 @@ namespace Lunaris {
 	LUNARIS_DECL void sample::destroy()
 	{
 		if (file_sample) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Del sample %p", file_sample);
+#endif
 			al_destroy_sample(file_sample);
 			file_sample = nullptr;
 		}

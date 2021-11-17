@@ -123,14 +123,11 @@ int main(int argc, char* argv[]) {
 	TESTLU(argc >= 1, "IRREGULAR STARTUP! Can't proceed.");
 	const std::string currpath = argv[0];
 
-	PRINT_DEBUG("Test!");
 
 	cout << console::color::YELLOW << "Lunaris version short: " << LUNARIS_VERSION_SHORT;
 	cout << console::color::YELLOW << "Lunaris version long:  " << LUNARIS_VERSION_LONG;
 	cout << console::color::YELLOW << "Lunaris version date:  " << LUNARIS_VERSION_DATE;
-
-	PRINT_DEBUG("Test2!");
-		
+			
 
 	if (argc > 1) {
 		cout << "Hello someone calling me with custom arguments! I received those:";
@@ -144,8 +141,8 @@ int main(int argc, char* argv[]) {
 	return 0;
 #endif
 
-	//if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
-	//if (AUTOEXCEPT(audio_test()) != 0) return 1;
+	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+	if (AUTOEXCEPT(audio_test()) != 0) return 1;
 	if (AUTOEXCEPT(events_test()) != 0) return 1;
 	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
 }
@@ -1696,6 +1693,7 @@ int events_test()
 		cout << console::color::GREEN << "Good!";
 
 		mymenu.hide();
+		disp.flip();
 
 		cout << console::color::YELLOW << "Do it again, please.";
 		clicked_right = false;

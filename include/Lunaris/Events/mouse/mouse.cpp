@@ -82,7 +82,9 @@ namespace Lunaris {
         current_transform_getter = f;
         install(events::MOUSE);
         get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
+#ifdef LUNARIS_VERBOSE_BUILD
         PRINT_DEBUG("%p is MOUSE object", get_core_ptr());
+#endif
     }
 
 	LUNARIS_DECL void mouse::hook_event(const std::function<void(const int, const mouse_event&)> f)

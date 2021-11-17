@@ -7,7 +7,7 @@ This is a tool for every include thing in the Lunaris lib.
 #define WIN32_LEAN_AND_MEAN
 
 // This is set by BUILDCOUNTER
-#define LUNARIS_BUILD_NUMBER 1097
+#define LUNARIS_BUILD_NUMBER 1135
 
 // https://stackoverflow.com/questions/240353/convert-a-preprocessor-token-to-a-string
 #define __LUNARIS_STRINGIFY(x) #x
@@ -120,7 +120,7 @@ namespace Lunaris {
 
 // if FORMAT null no breakline, just format
 #define PRINT_DEBUG(_FORMAT, ...) Lunaris::__PRINT_DEBUG(__FILE__, __LINE__, _FORMAT, __VA_ARGS__)
-#else
-#define PRINT_DEBUG(_FORMAT, ...)
+//#else
+//#define PRINT_DEBUG(_FORMAT, ...)
 #endif
 }

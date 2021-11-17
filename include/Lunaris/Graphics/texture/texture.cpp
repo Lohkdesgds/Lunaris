@@ -52,9 +52,9 @@ namespace Lunaris {
 		if (!bitmap) return false;
 		//al_set_new_bitmap_flags(((al_get_bitmap_flags(bitmap) & ~ALLEGRO_MEMORY_BITMAP) & ~ALLEGRO_CONVERT_BITMAP) | ALLEGRO_VIDEO_BITMAP);
 		if ((al_get_bitmap_flags(bitmap) & ALLEGRO_MEMORY_BITMAP) && al_get_current_display() != nullptr) {
-			//al_set_new_display_flags(ALLEGRO_VIDEO_BITMAP);
-			//printf_s("Would convert #%p\n", (void*)bitmap);
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Converting bitmap %p", bitmap);
+#endif
 			al_convert_bitmap(bitmap);
 		}
 		return bitmap != nullptr;
@@ -73,13 +73,17 @@ namespace Lunaris {
 	LUNARIS_DECL texture::texture(texture&& oth) noexcept
 		: bitmap(oth.bitmap), fileref(std::move(oth.fileref))
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Moved bitmap (new <-  %p)", oth.bitmap);
+#endif
 		oth.bitmap = nullptr;
 	}
 
 	LUNARIS_DECL void texture::operator=(texture&& oth) noexcept
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Moved bitmap (%p <- %p)", bitmap, oth.bitmap);
+#endif
 		destroy();
 		bitmap = oth.bitmap;
 		fileref = std::move(oth.fileref);
@@ -159,24 +163,32 @@ namespace Lunaris {
 
 	LUNARIS_DECL texture texture::duplicate()
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Duplicating bitmap %p", bitmap);
+#endif
 		ALLEGRO_BITMAP* bmp = get_raw_bitmap();
 		if (!bmp) throw std::runtime_error("Invalid texture!");
 		texture temp;
 		if (!(temp.bitmap = al_clone_bitmap(bmp))) throw std::runtime_error("Can't duplicate texture!");
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Duplicated bitmap (%p -> %p)", bitmap, temp.bitmap);
+#endif
 		return temp;
 	}
 
 	LUNARIS_DECL texture texture::create_sub(const int px, const int py, const int dx, const int dy)
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Sub creating bitmap %p", bitmap);
+#endif
 		ALLEGRO_BITMAP* bmp = get_raw_bitmap();
 		if (!bmp) throw std::runtime_error("Invalid texture!");
 		if (px + dx > al_get_bitmap_width(bmp) || py + dy > al_get_bitmap_height(bmp) || px < 0 || py < 0 || dx <= 0 || dy <= 0) throw std::runtime_error("Invalid size or position to create a sub texture!");
 		texture temp;
 		if (!(temp.bitmap = al_create_sub_bitmap(bmp, px, py, dx, dy))) throw std::runtime_error("Can't create sub bitmap!");
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Sub created bitmap (%p -> %p)", bitmap, temp.bitmap);
+#endif
 		return temp;
 	}
 
@@ -222,7 +234,9 @@ namespace Lunaris {
 	LUNARIS_DECL void texture::destroy()
 	{
 		if (bitmap) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Del bitmap %p", bitmap);
+#endif
 			al_destroy_bitmap(bitmap);
 			bitmap = nullptr;
 		}

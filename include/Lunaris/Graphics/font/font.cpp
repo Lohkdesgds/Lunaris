@@ -174,7 +174,9 @@ namespace Lunaris {
 	LUNARIS_DECL void font::destroy()
 	{
 		if (font_ptr) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Del font %p", font_ptr);
+#endif
 			al_destroy_font(font_ptr);
 			font_ptr = nullptr;
 		}

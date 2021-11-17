@@ -29,14 +29,18 @@ namespace Lunaris {
 	LUNARIS_DECL track::track(track&& tk) noexcept
 		: playing(tk.playing), paused_at(tk.paused_at)
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Moved track new <- %p", tk.playing);
+#endif
 		tk.playing = nullptr;
 		tk.paused_at = 0;
 	}
 
 	LUNARIS_DECL void track::operator=(track&& tk) noexcept
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Moved track %p <- %p", playing, tk.playing);
+#endif
 		destroy();
 		playing = tk.playing;
 		paused_at = tk.paused_at;
@@ -63,7 +67,9 @@ namespace Lunaris {
 	LUNARIS_DECL void track::destroy()
 	{
 		if (playing) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Del track %p", playing);
+#endif
 			al_destroy_sample_instance(playing);
 			playing = nullptr;
 		}

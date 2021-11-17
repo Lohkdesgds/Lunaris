@@ -74,7 +74,9 @@ namespace Lunaris {
 	LUNARIS_DECL void file::close()
 	{
 		if (fp) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Close file %p - '%s'", this, path.c_str());
+#endif
 			fp.reset();
 			path.clear();
 		}
@@ -188,11 +190,15 @@ namespace Lunaris {
 	{
 		if (fp) {
 			fp.reset();
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Close tempfile %p - '%s'", this, path.c_str());
+#endif
 		}
 
 		if (!path.empty()) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Remove file tempfile '%s'", path.c_str());
+#endif
 			::remove(path.c_str());
 			path.clear();
 		}
@@ -246,9 +252,13 @@ namespace Lunaris {
 	{
 		this->file::close();
 		if (mem) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Freeing memfile %p", this);
+#endif
 			mem.reset();
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Freed memfile %p", this);
+#endif
 		}
 	}
 

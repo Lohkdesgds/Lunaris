@@ -72,6 +72,9 @@ namespace Lunaris {
 #ifdef _WIN32
 	inline socket_core::_data::_data()
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("WSA socket startup");
+#endif
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) { // wake up
 			throw std::exception("Socket core can't start!");
 		}
@@ -84,6 +87,10 @@ namespace Lunaris {
 #endif
 	inline SocketType socket_core::gen_client(const char* addr, const u_short port, const int protocol, const int family)
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("Creating socket client %p", this);
+#endif
+
 		char Port[8]{};
 		SocketAddrInfo Hints;
 		SocketAddrInfo* AddrInfo = nullptr;
@@ -98,7 +105,12 @@ namespace Lunaris {
 		Hints.ai_family = static_cast<int>(family);
 		Hints.ai_socktype = protocol;
 
-		if (getaddrinfo(addr ? addr : "localhost", Port, &Hints, &AddrInfo) != 0) return SocketInvalid;
+		if (getaddrinfo(addr ? addr : "localhost", Port, &Hints, &AddrInfo) != 0) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Invalid state client %p", this);
+#endif
+			return SocketInvalid;
+		}
 
 		for (SocketAddrInfo* AI = AddrInfo; AI != nullptr; AI = AI->ai_next)
 		{
@@ -113,17 +125,33 @@ namespace Lunaris {
 
 			freeaddrinfo(AddrInfo);
 
-			if (AI == NULL) return SocketInvalid;
+			if (AI == nullptr) {
+#ifdef LUNARIS_VERBOSE_BUILD
+				PRINT_DEBUG("Invalid state client %p", this);
+#endif
+				return SocketInvalid;
+			}
+
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Got socket %p client %p", sock, this);
+#endif
 
 			return sock;
 		}
 
 		freeaddrinfo(AddrInfo);
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("Got no socket client %p", this);
+#endif
 		return SocketInvalid;
 	}
 
 	inline std::vector<SocketType> socket_core::gen_host(const u_short port, const int protocol, const int family)
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("Creating sockets host %p", this);
+#endif
 		std::vector<SocketType> sockets;
 
 		char Port[8]{};
@@ -142,7 +170,12 @@ namespace Lunaris {
 		Hints.ai_socktype = static_cast<int>(protocol);
 		Hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
 
-		if (getaddrinfo(nullptr, Port, &Hints, &AddrInfo) != 0) return {};
+		if (getaddrinfo(nullptr, Port, &Hints, &AddrInfo) != 0) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Invalid state host %p", this);
+#endif
+			return {};
+		}
 
 		SocketAddrInfo* AI = AddrInfo;
 		for (int i = 0; AI != nullptr && i != FD_SETSIZE; AI = AI->ai_next)
@@ -171,11 +204,19 @@ namespace Lunaris {
 				}
 			}
 
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Added host %p socket %p", this, newcon);
+#endif
+
 			sockets.push_back(newcon);
 			i++;
 		}
 
 		freeaddrinfo(AddrInfo);
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("Total host %p: %zu", this, sockets.size());
+#endif
 
 		return sockets;
 	}
@@ -235,7 +276,12 @@ namespace Lunaris {
 	template<int protocol, bool host>
 	inline void socket_client<protocol, host>::close_socket()
 	{
-		if (data->connection != SocketInvalid) closeSocket(data->connection);
+		if (data->connection != SocketInvalid) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Closed client %p socket %p", this, data->connection);
+#endif
+			closeSocket(data->connection);
+		}
 		data->connection = SocketInvalid;
 	}
 
@@ -244,6 +290,9 @@ namespace Lunaris {
 	{
 		close_socket();
 		data->connection = conn;
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("Applied client %p socket %p", this, data->connection);
+#endif
 	}
 
 	template<int protocol, bool host>
@@ -273,14 +322,26 @@ namespace Lunaris {
 	template<int protocol, bool host>
 	inline void socket_host<protocol, host>::close_socket()
 	{
-		for (auto& i : data->listeners) { if (i != SocketInvalid) closeSocket(i); }
+		for (auto& i : data->listeners) { 
+			if (i != SocketInvalid) {
+#ifdef LUNARIS_VERBOSE_BUILD
+				PRINT_DEBUG("Closed host %p socket %p", this, i);
+#endif
+				closeSocket(i);
+			}
+		}
 		data->listeners.clear();
 	}
 
 	template<int protocol, bool host>
 	inline void socket_host<protocol, host>::add_socket(SocketType conn)
 	{
-		if (conn != SocketInvalid) data->listeners.push_back(conn);
+		if (conn != SocketInvalid) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Applied host %p socket %p", this, conn);
+#endif
+			data->listeners.push_back(conn);
+		}
 	}
 
 	template<int protocol, bool host>
@@ -381,9 +442,15 @@ namespace Lunaris {
 	{
 		SocketType selected = SocketInvalid;
 		do {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Listening host %p", this);
+#endif
 			selected = common_select(data->listeners, to);
 
 			if (selected == SocketInvalid || selected == SocketError) {
+#ifdef LUNARIS_VERBOSE_BUILD
+				PRINT_DEBUG("Failed listen host %p [timeout/error]", this);
+#endif
 				std::this_thread::yield();
 				continue;
 			}
@@ -393,7 +460,16 @@ namespace Lunaris {
 
 			SocketType sock = SocketInvalid;
 
-			if (sock = accept(selected, (SocketSockAddrPtr)&From, &FromLen); sock == SocketInvalid) continue;
+			if (sock = accept(selected, (SocketSockAddrPtr)&From, &FromLen); sock == SocketInvalid) {
+#ifdef LUNARIS_VERBOSE_BUILD
+				PRINT_DEBUG("Failed listen host %p [accept fail]", this);
+#endif
+				continue;
+			}
+
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Listen host %p got new client socket %p", this, sock);
+#endif
 
 			return TCP_client{ sock, From };
 		} while (to == 0);
@@ -495,15 +571,32 @@ namespace Lunaris {
 		SocketStorage From{};
 		socklen_t FromLen = sizeof(SocketStorage);
 
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("UDP listening-like host %p", this);
+#endif
 		SocketType selected = common_select(data->listeners, to);
 
-		if (selected == SocketInvalid) return UDP_host_handler();
+		if (selected == SocketInvalid) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Failed listen host %p [timeout/error]", this);
+#endif
+			return UDP_host_handler();
+		}
 
 		SocketStorage _temp{};
 		socklen_t _temp_len = sizeof(SocketStorage);
 
 		int res = ::recvfrom(selected, raw.data(), expected, 0, (sockaddr*)&_temp, &_temp_len);
-		if (res != expected) return UDP_host_handler();
+		if (res != expected) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			PRINT_DEBUG("Failed listen host %p [recv size mismatch]", this);
+#endif
+			return UDP_host_handler();
+		}
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		PRINT_DEBUG("UDP Listen-like host %p got data from %p", this, selected);
+#endif
 
 		return UDP_host_handler(selected, _temp, std::move(raw));
 	}

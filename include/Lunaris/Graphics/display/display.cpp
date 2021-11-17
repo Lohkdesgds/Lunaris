@@ -244,7 +244,9 @@ namespace Lunaris {
 
 	LUNARIS_DECL bool display::create(const display_config& conf)
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Display %p is being (re)created", this);
+#endif
 		destroy();
 		__display_allegro_start();
 		
@@ -466,11 +468,15 @@ namespace Lunaris {
 	{
 		if (auto* __d = al_get_current_display(); __d != window && window)
 		{
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display %p post tasked destroy", this);
+#endif
 			post_task([this] {destroy(); return true; });
 		}
 		else {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display %p is destroying now", this);
+#endif
 			if (timed_draw) {
 				al_stop_timer(timed_draw);
 				if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(timed_draw));
@@ -499,7 +505,9 @@ namespace Lunaris {
 				last_icon_handle = nullptr;
 			}
 #endif
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display %p successfully destroyed everything", this);
+#endif
 		}
 	}
 
@@ -622,11 +630,15 @@ namespace Lunaris {
 			}
 		}
 		catch (const std::exception& e) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display exception %p: %s", this, e.what());
+#endif
 			m_err.csafe([&e](const std::function<void(const std::exception&)>& f) {if (f) f(e); });
 		}
 		catch (...) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display exception %p: UNCAUGHT", this);
+#endif
 			m_err.csafe([](const std::function<void(const std::exception&)>& f) {if (f) f(std::runtime_error("UNCAUGHT")); });
 		}
 	}
@@ -694,12 +706,24 @@ namespace Lunaris {
 		future<bool> fut1 = prom.get_future();
 		future<bool> fut2 = fut1.then([&conf, this](auto) {
 			bool gud = this->display::create(conf); 
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display %p is async", this);
+#endif
 			return gud;
 		});
 
 		promises.push_back(std::move(prom));
-		thr.task_async([this] { async_run(); }, thread::speed::UNLEASHED, 0.0, [this](const std::exception& e){m_err.csafe([&e](const std::function<void(const std::exception&)>& f) { PRINT_DEBUG("Display async exception (display %p): %s", al_get_current_display(), e.what()); if (f) f(e); }); });
+		thr.task_async(
+			[this] { async_run(); }, 
+			thread::speed::UNLEASHED, 0.0, 
+			[this](const std::exception& e){m_err.csafe([&e](const std::function<void(const std::exception&)>& f) { 
+#ifdef LUNARIS_VERBOSE_BUILD
+					PRINT_DEBUG("Display async exception (display %p): %s", al_get_current_display(), e.what());
+#endif
+					if (f) f(e); 
+				});
+			}
+		);
 
 		fut2.wait();
 

@@ -14,7 +14,9 @@ namespace Lunaris {
 	{
 		install(events::KEYBOARD);
 		get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("%p is KEYS object", get_core_ptr());
+#endif
 	}
 
 	LUNARIS_DECL void keys::hook_event(const std::function<void(const key_event&)> f)

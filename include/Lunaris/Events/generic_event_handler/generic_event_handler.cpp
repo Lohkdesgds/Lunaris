@@ -5,7 +5,9 @@ namespace Lunaris {
 	LUNARIS_DECL void generic_event_handler::core::_async()
 	{
 		m_run_confirm = true;
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Event handler thread spawned %p", this);
+#endif
 
 		for (bool keep = true; keep;) {
 			ALLEGRO_EVENT ev;
@@ -22,34 +24,48 @@ namespace Lunaris {
 				if (m_evhlr) m_evhlr(ev);
 			}
 			catch (const std::exception& e) {
+#ifdef LUNARIS_VERBOSE_BUILD
 				PRINT_DEBUG("Event queue exception %p: %s", this, e.what());
+#endif
 				if (m_err) m_err(e);
 			}
 			catch (...) {
+#ifdef LUNARIS_VERBOSE_BUILD
 				PRINT_DEBUG("Event queue exception %p: UNCAUGHT", this);
+#endif
 				if (m_err) m_err(std::runtime_error("UNCAUGHT"));
 			}
 		}
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Event handler thread ended %p", this);
+#endif
 		m_run_confirm = false;
 	}
 
 	LUNARIS_DECL generic_event_handler::core::core()
 		: m_queue(make_unique_queue()), m_custom(make_unique_user_event_source())
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Created event queue %p", this);
+#endif
 		al_register_event_source(m_queue.get(), m_custom.get());
 		m_thr = std::thread([this] { _async(); });
 	}
 
 	LUNARIS_DECL generic_event_handler::core::~core()
 	{
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Destroyed event queue %p", this);
+#endif
 		if (m_run_confirm) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Event handler waiting async event thread to stop.");
+#endif
 			signal_stop();
 			if (m_thr.joinable()) m_thr.join();
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Event handler has ended all tasks.");
+#endif
 		}
 		m_queue.reset(); // first
 	}
@@ -57,12 +73,16 @@ namespace Lunaris {
 	LUNARIS_DECL void generic_event_handler::core::signal_stop()
 	{
 		if (!m_run_confirm) return; // not running
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Signal stop event queue %p", this);
+#endif
 		ALLEGRO_EVENT ev;
 		ev.user.type = +__internal_events::THREAD_QUIT;
 		ev.user.source = m_custom.get();
 		if (!al_emit_user_event(m_custom.get(), &ev, nullptr)) {
+#ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Skipped emit user event kill thread @ common event. Probably already ended?!");
+#endif
 		}
 	}
 
@@ -166,7 +186,9 @@ namespace Lunaris {
 	{
 		if (!src) return;
 		build_if_none();
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Installing event source %p <- %p", m_movable.get(), src);
+#endif
 		m_movable->add_event_source(src);
 	}
 
@@ -179,7 +201,9 @@ namespace Lunaris {
 	{
 		if (!src) return;
 		build_if_none();
+#ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Removing event source %p </- %p", m_movable.get(), src);
+#endif
 		m_movable->remove_event_source(src);
 	}
 
