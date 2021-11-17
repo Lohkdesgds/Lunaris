@@ -13,7 +13,7 @@ namespace Lunaris {
 				al_wait_for_event(m_queue.get(), &ev);
 
 				switch (ev.type) {
-				case event_thread_quit:
+				case +__internal_events::THREAD_QUIT:
 					keep = false;
 					continue;
 				}
@@ -59,7 +59,7 @@ namespace Lunaris {
 		if (!m_run_confirm) return; // not running
 		PRINT_DEBUG("Signal stop event queue %p", this);
 		ALLEGRO_EVENT ev;
-		ev.user.type = event_thread_quit;
+		ev.user.type = +__internal_events::THREAD_QUIT;
 		ev.user.source = m_custom.get();
 		if (!al_emit_user_event(m_custom.get(), &ev, nullptr)) {
 			PRINT_DEBUG("Skipped emit user event kill thread @ common event. Probably already ended?!");

@@ -52,11 +52,12 @@ namespace Lunaris {
 	
 	template<class EventHandlerType, class SourceClass>
 	inline specific_event_handler<EventHandlerType, SourceClass>::specific_event_handler(SourceClass& rf)
-		: generic_event_handler(), __ref(rf), timer(make_unique_timer(0.5, true))
+		: generic_event_handler(), __ref(rf), timer(make_unique_timer(2.5, true))
 	{
 		install(timer);
 		get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
 		PRINT_DEBUG("%p is SPECIFIC object (class: %s)", get_core_ptr(), typeid(SourceClass).name());
+		check_time();
 	}
 	
 	template<class EventHandlerType, class SourceClass>

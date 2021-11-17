@@ -464,33 +464,43 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::destroy()
 	{
-		if (timed_draw) {
-			al_stop_timer(timed_draw);
-			if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(timed_draw));
-			al_destroy_timer(timed_draw);
-			timed_draw = nullptr;
+		if (auto* __d = al_get_current_display(); __d != window && window)
+		{
+			PRINT_DEBUG("Display %p post tasked destroy", this);
+			post_task([this] {destroy(); return true; });
 		}
-		if (update_tasks) {
-			al_stop_timer(update_tasks);
-			if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(update_tasks));
-			al_destroy_timer(update_tasks);
-			update_tasks = nullptr;
-		}
-		if (window) {
-			al_destroy_display(window);
-			window = nullptr;
-		}
-		if (ev_qu) {
-			al_destroy_user_event_source(&evsrc);
-			al_destroy_event_queue(ev_qu);
-			ev_qu = nullptr;
-		}
+		else {
+			PRINT_DEBUG("Display %p is destroying now", this);
+			if (timed_draw) {
+				al_stop_timer(timed_draw);
+				if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(timed_draw));
+				al_destroy_timer(timed_draw);
+				timed_draw = nullptr;
+			}
+			if (update_tasks) {
+				al_stop_timer(update_tasks);
+				if (ev_qu) al_unregister_event_source(ev_qu, al_get_timer_event_source(update_tasks));
+				al_destroy_timer(update_tasks);
+				update_tasks = nullptr;
+			}
+			if (window) {
+				al_set_display_menu(window, nullptr); // detach any menu lol
+				al_destroy_display(window);
+				window = nullptr;
+			}
+			if (ev_qu) {
+				al_destroy_user_event_source(&evsrc);
+				al_destroy_event_queue(ev_qu);
+				ev_qu = nullptr;
+			}
 #ifdef _WIN32
-		if (last_icon_handle) {
-			DestroyIcon(last_icon_handle);
-			last_icon_handle = nullptr;
-		}
+			if (last_icon_handle) {
+				DestroyIcon(last_icon_handle);
+				last_icon_handle = nullptr;
+			}
 #endif
+			PRINT_DEBUG("Display %p successfully destroyed everything", this);
+		}
 	}
 
 	LUNARIS_DECL ALLEGRO_DISPLAY* display::get_raw_display() const
@@ -531,6 +541,11 @@ namespace Lunaris {
 	LUNARIS_DECL void display::flip()
 	{
 		try {
+			if (!window) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			}
+			if (_can_draw_now && !totally_hold_draw) al_flip_display();
+
 			ALLEGRO_EVENT ev;
 			while (!flag_draw_timed && auto_get_next_event(ev)) // drop if draw, always
 			{
@@ -599,10 +614,8 @@ namespace Lunaris {
 				}
 			}
 
-			const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
+			_can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
 			flag_draw_timed = false;
-
-			if (can_draw_now) al_flip_display();
 
 			if (promises.size()) { // maybe there's something to do before that's available
 				promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });

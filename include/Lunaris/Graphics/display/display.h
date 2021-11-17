@@ -100,6 +100,7 @@ namespace Lunaris {
 		bool totally_hold_draw = false;
 		bool flag_draw_timed = false; // when timer, this is used
 		bool wait_for_display_flip_before_drop = true;
+		bool _can_draw_now = false;
 
 		double economy_fps = 0.0; // 0 == no delay
 		double default_fps = 0.0; // 0 == no delay

@@ -15,8 +15,11 @@ namespace Lunaris {
 		CONTROL = JOYSTICK,
 		TOUCH		= 1 << 3
 	};
-	constexpr int event_thread_quit = 1024;
-
+	enum class __internal_events {
+		THREAD_QUIT = 2048
+	};
+	constexpr int operator+(__internal_events a) { return static_cast<int>(a); }
+	
 	constexpr events operator|(events a, events b) { return static_cast<events>(static_cast<int>(a) | static_cast<int>(b)); }
 	constexpr int operator&(events a, events b) { return (static_cast<int>(a) & static_cast<int>(b)); }
 	constexpr events operator^(events a, events b) { return static_cast<events>(static_cast<int>(a) & static_cast<int>(b)); }

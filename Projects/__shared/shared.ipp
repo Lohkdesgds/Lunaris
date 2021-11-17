@@ -144,8 +144,8 @@ int main(int argc, char* argv[]) {
 	return 0;
 #endif
 
-	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
-	if (AUTOEXCEPT(audio_test()) != 0) return 1;
+	//if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+	//if (AUTOEXCEPT(audio_test()) != 0) return 1;
 	if (AUTOEXCEPT(events_test()) != 0) return 1;
 	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
 }
@@ -1308,9 +1308,9 @@ int graphics_test()
 
 		topleft_dc.draw();
 
-		if (al_get_time() - __time_count > 1.0) {
+		if (al_get_time() - __time_count > 10.0) {
 			__time_count = al_get_time();
-			cout << "Display loops: " << loops_call;
+			cout << "Display loops: " << loops_call * 0.1;
 			loops_call = 0;
 		}
 		++loops_call;
@@ -1358,6 +1358,10 @@ int graphics_test()
 				return true;
 			});
 		}
+	});
+
+	dispevh.hook_exception_handler([](const std::exception& e) {
+		cout << console::color::RED << "DISPLAY EVENT EXCEPTION: " << e.what();
 	});
 
 

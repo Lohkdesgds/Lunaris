@@ -29,6 +29,9 @@ namespace Lunaris {
 
 		void hook_event_handler(const std::function<void(EventHandlerType&)>);
 		void unhook_event_handler();
+
+		using generic_event_handler::hook_exception_handler;
+		using generic_event_handler::unhook_exception_handler;
 	};
 }
 
