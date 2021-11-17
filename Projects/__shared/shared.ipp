@@ -123,11 +123,14 @@ int main(int argc, char* argv[]) {
 	TESTLU(argc >= 1, "IRREGULAR STARTUP! Can't proceed.");
 	const std::string currpath = argv[0];
 
+	PRINT_DEBUG("Test!");
+
 	cout << console::color::YELLOW << "Lunaris version short: " << LUNARIS_VERSION_SHORT;
 	cout << console::color::YELLOW << "Lunaris version long:  " << LUNARIS_VERSION_LONG;
 	cout << console::color::YELLOW << "Lunaris version date:  " << LUNARIS_VERSION_DATE;
 
-	
+	PRINT_DEBUG("Test2!");
+		
 
 	if (argc > 1) {
 		cout << "Hello someone calling me with custom arguments! I received those:";
@@ -1059,7 +1062,7 @@ int audio_test()
 	while (std::chrono::system_clock::now() < time_after) {
 		const double dt = cos(al_get_time() * 3.0);
 		my_track.set_pan(dt);
-		std::cout << "PAN: " << dt << "      \r";
+		cout << "PAN: " << dt;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 
@@ -1073,7 +1076,7 @@ int audio_test()
 	while (std::chrono::system_clock::now() < time_after) {
 		const bool mt = cos(al_get_time() * 3.0) > 0.0;
 		my_submixer.mute(mt);
-		std::cout << "MUTE: " << (mt ? "ON" : "OFF") << " \r";
+		cout << "MUTE: " << (mt ? "ON" : "OFF");
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	my_submixer.mute(false);
@@ -1085,7 +1088,7 @@ int audio_test()
 	while (std::chrono::system_clock::now() < time_after) {
 		const float dt = cos(al_get_time() * 3.0) * 0.5f + 0.5f;
 		my_submixer.set_gain(dt);
-		std::cout << "VOL: " << static_cast<int>(100.0 * dt) << "%      \r";
+		cout << "VOL: " << static_cast<int>(100.0 * dt) << "%";
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	my_submixer.set_gain(1.0f);
@@ -1097,7 +1100,7 @@ int audio_test()
 	while (std::chrono::system_clock::now() < time_after) {
 		const float dt = sin(al_get_time() * 3.0) * 0.5f + 0.5f;
 		my_mixer.set_gain(dt);
-		std::cout << "VOL: " << static_cast<int>(100.0 * dt) << "%      \r";
+		cout << "VOL: " << static_cast<int>(100.0 * dt) << "%";
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	my_mixer.set_gain(1.0f);
@@ -1113,7 +1116,7 @@ int audio_test()
 			break;
 		}
 		else {
-			std::cout << "MUTE: " << (mt ? "ON" : "OFF") << " \r";
+			cout << "MUTE: " << (mt ? "ON" : "OFF");
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
@@ -1740,7 +1743,7 @@ int events_test()
 
 		cout << console::color::YELLOW << "Please type \"LunARiS\" and hit ENTER (yes, with those CAPS there) (you have 60 seconds to do it).";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(60);
-		while (std::chrono::system_clock::now() < timeoutt && (last_string != "LunARiS")) { std::this_thread::sleep_for(std::chrono::milliseconds(200)); std::cout << "Currently detected: " << curr_string << "   \r"; }
+		while (std::chrono::system_clock::now() < timeoutt && (last_string != "LunARiS")) { std::this_thread::sleep_for(std::chrono::milliseconds(500)); cout << "Currently detected: " << curr_string; }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.        ");
 		cout << console::color::GREEN << "Good!                            ";
 
@@ -1799,28 +1802,28 @@ int events_test()
 
 		cout << console::color::YELLOW << "Ok, now move the mouse to the left side of the WINDOW.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(15);
-		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posx > -0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); std::cout << "RELPOSX: " << mousse.current_mouse().relative_posx << "   \r"; }
+		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posx > -0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(250)); cout << "RELPOSX: " << mousse.current_mouse().relative_posx; }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 		cout << console::color::GREEN << "Good!                          ";
 		++step;
 
 		cout << console::color::YELLOW << "Ok, now to the right side!";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(15);
-		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posx < 0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); std::cout << "RELPOSX: " << mousse.current_mouse().relative_posx << "   \r"; }
+		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posx < 0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(250)); cout << "RELPOSX: " << mousse.current_mouse().relative_posx; }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 		cout << console::color::GREEN << "Good!                          ";
 		++step;
 
 		cout << console::color::YELLOW << "Now to the top!";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(15);
-		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posy > -0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); std::cout << "RELPOSY: " << mousse.current_mouse().relative_posy << "   \r"; }
+		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posy > -0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(250)); cout << "RELPOSY: " << mousse.current_mouse().relative_posy; }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 		cout << console::color::GREEN << "Good!                          ";
 		++step;
 
 		cout << console::color::YELLOW << "Now to the bottom!";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(15);
-		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posy < 0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); std::cout << "RELPOSY: " << mousse.current_mouse().relative_posy << "   \r"; }
+		while (std::chrono::system_clock::now() < timeoutt && mousse.current_mouse().relative_posy < 0.9f) { std::this_thread::sleep_for(std::chrono::milliseconds(250)); cout << "RELPOSY: " << mousse.current_mouse().relative_posy; }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 		cout << console::color::GREEN << "Good!                          ";
 

@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Projects/LIB_GEN/Release_verbose
+/Projects/LIB_GEN/x64/Release_verbose
+/Projects/TEST/Release_verbose/TEST.tlog
+/Projects/TEST/x64/Release_verbose
+/Projects/TEST_NOLIB/Release_verbose/TEST_NOLIB.tlog
+*.recipe
+*.tlog
+/Release_verbose
+/x64/Release_verbose

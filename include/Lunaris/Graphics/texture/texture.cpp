@@ -54,6 +54,7 @@ namespace Lunaris {
 		if ((al_get_bitmap_flags(bitmap) & ALLEGRO_MEMORY_BITMAP) && al_get_current_display() != nullptr) {
 			//al_set_new_display_flags(ALLEGRO_VIDEO_BITMAP);
 			//printf_s("Would convert #%p\n", (void*)bitmap);
+			PRINT_DEBUG("Converting bitmap %p", bitmap);
 			al_convert_bitmap(bitmap);
 		}
 		return bitmap != nullptr;
@@ -71,12 +72,14 @@ namespace Lunaris {
 
 	LUNARIS_DECL texture::texture(texture&& oth) noexcept
 		: bitmap(oth.bitmap), fileref(std::move(oth.fileref))
-	{		
+	{
+		PRINT_DEBUG("Moved bitmap (new <-  %p)", oth.bitmap);
 		oth.bitmap = nullptr;
 	}
 
 	LUNARIS_DECL void texture::operator=(texture&& oth) noexcept
 	{
+		PRINT_DEBUG("Moved bitmap (%p <- %p)", bitmap, oth.bitmap);
 		destroy();
 		bitmap = oth.bitmap;
 		fileref = std::move(oth.fileref);
@@ -84,8 +87,13 @@ namespace Lunaris {
 	}
 
 	LUNARIS_DECL bool texture::create(const texture_config& conf)
-	{		
+	{
 		__bitmap_allegro_start();
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (bitmap) PRINT_DEBUG("Recreating bitmap for %p (texture %p)", bitmap, this);
+		else PRINT_DEBUG("Creating bitmap (texture %p)", this);
+#endif
 		destroy();
 
 		if (conf.format > 0) 
@@ -106,6 +114,11 @@ namespace Lunaris {
 			bitmap = al_create_bitmap(conf.width, conf.height);
 		}
 		else throw std::runtime_error("Invalid bitmap creation configuration!");
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (bitmap) PRINT_DEBUG("Good bitmap %p (texture %p)", bitmap, this);
+		else PRINT_DEBUG("Bad bitmap creation (texture %p)", this);
+#endif
 
 		return bitmap != nullptr;
 	}
@@ -146,20 +159,24 @@ namespace Lunaris {
 
 	LUNARIS_DECL texture texture::duplicate()
 	{
+		PRINT_DEBUG("Duplicating bitmap %p", bitmap);
 		ALLEGRO_BITMAP* bmp = get_raw_bitmap();
 		if (!bmp) throw std::runtime_error("Invalid texture!");
 		texture temp;
 		if (!(temp.bitmap = al_clone_bitmap(bmp))) throw std::runtime_error("Can't duplicate texture!");
+		PRINT_DEBUG("Duplicated bitmap (%p -> %p)", bitmap, temp.bitmap);
 		return temp;
 	}
 
 	LUNARIS_DECL texture texture::create_sub(const int px, const int py, const int dx, const int dy)
 	{
+		PRINT_DEBUG("Sub creating bitmap %p", bitmap);
 		ALLEGRO_BITMAP* bmp = get_raw_bitmap();
 		if (!bmp) throw std::runtime_error("Invalid texture!");
 		if (px + dx > al_get_bitmap_width(bmp) || py + dy > al_get_bitmap_height(bmp) || px < 0 || py < 0 || dx <= 0 || dy <= 0) throw std::runtime_error("Invalid size or position to create a sub texture!");
 		texture temp;
 		if (!(temp.bitmap = al_create_sub_bitmap(bmp, px, py, dx, dy))) throw std::runtime_error("Can't create sub bitmap!");
+		PRINT_DEBUG("Sub created bitmap (%p -> %p)", bitmap, temp.bitmap);
 		return temp;
 	}
 
@@ -205,6 +222,7 @@ namespace Lunaris {
 	LUNARIS_DECL void texture::destroy()
 	{
 		if (bitmap) {
+			PRINT_DEBUG("Del bitmap %p", bitmap);
 			al_destroy_bitmap(bitmap);
 			bitmap = nullptr;
 		}

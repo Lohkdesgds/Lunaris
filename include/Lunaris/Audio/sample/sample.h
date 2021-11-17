@@ -9,7 +9,7 @@ namespace Lunaris {
 	/// <summary>
 	/// <para>A sample is a music file or stream itself. You load a sample and then play/control with a Track.</para>
 	/// </summary>
-	class sample {
+	class sample : public NonCopyable {
 		/*
 		* Friend class Track: because Track should link to/with a sample. get_instance is just another friend-like.
 		*/
@@ -22,8 +22,6 @@ namespace Lunaris {
 		sample();
 		~sample();
 
-		sample(const sample&) = delete;
-		void operator=(const sample&) = delete;
 		sample(sample&&) noexcept;
 		void operator=(sample&&) noexcept;
 

@@ -77,6 +77,8 @@ namespace Lunaris {
 			return false;
 		}
 
+		PRINT_DEBUG("Loading config %p <- '%s'", this, path.c_str());
+
 		ALLEGRO_CONFIG* conf = nullptr;
 		conf = al_load_config_file(str.c_str());
 		if (!conf) {
@@ -116,13 +118,16 @@ namespace Lunaris {
 
 		}
 		al_destroy_config(conf);
+
+		PRINT_DEBUG("Loaded config %p <- '%s'", this, path.c_str());
+
 		return true;
 	}
 
 	LUNARIS_DECL void config::save_path(std::string str)
 	{
 		if (str.empty()) {
-			throw std::runtime_error("Null path is not a valid path at save_path!");
+			throw std::invalid_argument("Null path is not a valid path at save_path!");
 		}
 		path = str;
 	}
@@ -132,6 +137,8 @@ namespace Lunaris {
 		__config_allegro_start();
 
 		if (path.empty()) return false;
+
+		PRINT_DEBUG("Saving config %p -> '%s'", this, path.c_str());
 
 		ALLEGRO_CONFIG* conf = al_create_config();
 		if (!conf) return false;
@@ -149,6 +156,8 @@ namespace Lunaris {
 			return false;
 		}
 		al_destroy_config(conf);
+
+		PRINT_DEBUG("Saved config %p -> '%s'", this, path.c_str());
 		return true;
 	}
 

@@ -6,33 +6,26 @@ namespace Lunaris {
 	{
 		if (ev.type != ALLEGRO_EVENT_KEY_UP && ev.type != ALLEGRO_EVENT_KEY_DOWN) return;
 
-		auto lucky = get_lock();
-
 		keychain[ev.keyboard.keycode] = (ev.type == ALLEGRO_EVENT_KEY_DOWN);
 		if (event_handler) event_handler({ ev.keyboard.keycode, ev.type == ALLEGRO_EVENT_KEY_DOWN });
 	}
 
-	LUNARIS_DECL keys::keys() : __common_event()
+	LUNARIS_DECL keys::keys() : generic_event_handler()
 	{
-		__keyboard_allegro_start();
-		
-		al_register_event_source(get_event_queue(), al_get_keyboard_event_source());
-	}
-
-	LUNARIS_DECL keys::~keys()
-	{
-		this->stop(); // stop before this is destroyed
+		install(events::KEYBOARD);
+		get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
+		PRINT_DEBUG("%p is KEYS object", get_core_ptr());
 	}
 
 	LUNARIS_DECL void keys::hook_event(const std::function<void(const key_event&)> f)
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		event_handler = f;
 	}
 
 	LUNARIS_DECL void keys::unhook_event()
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		event_handler = {};
 	}
 

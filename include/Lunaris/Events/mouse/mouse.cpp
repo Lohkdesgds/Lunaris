@@ -28,9 +28,6 @@ namespace Lunaris {
 
 	LUNARIS_DECL void mouse::handle_events(const ALLEGRO_EVENT& ev)
     {
-        if (hint_changes_coming) std::this_thread::sleep_for(std::chrono::milliseconds(15)); // someone is trying to lock, hold a sec
-        auto lucky = get_lock();
-
         switch (ev.type) {
         case ALLEGRO_EVENT_MOUSE_AXES:
         {
@@ -49,6 +46,7 @@ namespace Lunaris {
             al_transform_coordinates(&curr_transf, &max_x, &max_y);
             al_transform_coordinates(&curr_transf, &quick_mx, &quick_my);
 
+            mouse_rn.raw_mouse_event = ev.mouse;
             mouse_rn.real_posx = quick_mx;
             mouse_rn.real_posy = quick_my;
             mouse_rn.relative_posx = mouse_rn.real_posx * 1.0 / fabsf(max_x);
@@ -59,6 +57,7 @@ namespace Lunaris {
         }
             break;
         case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+            mouse_rn.raw_mouse_event = ev.mouse;
             if (ev.mouse.button <= 32) {
                 mouse_rn.buttons_pressed |= 1 << (ev.mouse.button - 1); // starts at #1
                 if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_BUTTON_DOWN, mouse_rn);
@@ -66,6 +65,7 @@ namespace Lunaris {
             }
             break;
         case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+            mouse_rn.raw_mouse_event = ev.mouse;
             if (ev.mouse.button <= 32) {
                 mouse_rn.buttons_pressed &= ~(1 << (ev.mouse.button - 1)); // starts at #1
                 if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_BUTTON_UP, mouse_rn);
@@ -75,35 +75,25 @@ namespace Lunaris {
         }
     }
 
-    LUNARIS_DECL mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) : __common_event()
+    LUNARIS_DECL mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) : generic_event_handler()
     {
-        if (!f) throw std::runtime_error("No function detected in mouse! Mouse needs a valid function to get transformation of current display so it can translate coords!");
-
-        __mouse_allegro_start();
+        if (!f) throw std::invalid_argument("Mouse needs a valid ALLEGRO_TRANSFORM source. This is normally given by a display (it should be castable directly).");
 
         current_transform_getter = f;
-
-        al_register_event_source(get_event_queue(), al_get_mouse_event_source());
-    }
-
-    LUNARIS_DECL mouse::~mouse()
-    {
-        this->stop(); // stop before this is destroyed
+        install(events::MOUSE);
+        get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
+        PRINT_DEBUG("%p is MOUSE object", get_core_ptr());
     }
 
 	LUNARIS_DECL void mouse::hook_event(const std::function<void(const int, const mouse_event&)> f)
     {
-        hint_changes_coming = true;
-        auto lucky = get_lock();
-        hint_changes_coming = false;
+        std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
         event_handler = f;
     }
 
 	LUNARIS_DECL void mouse::unhook_event()
     {
-        hint_changes_coming = true;
-        auto lucky = get_lock();
-        hint_changes_coming = false;
+        std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
         event_handler = {};
     }
 

@@ -76,7 +76,7 @@ namespace Lunaris {
 		void modify_no_destroy(const bool);
 	public:
 		file() = default;
-		file(file&&);
+		file(file&&) noexcept;
 		virtual void operator=(file&&) noexcept;
 		virtual ~file();
 

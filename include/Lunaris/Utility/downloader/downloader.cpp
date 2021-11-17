@@ -6,6 +6,8 @@ namespace Lunaris {
 	{
 		constexpr size_t max_block_size = 1536;
 
+		PRINT_DEBUG("Downloader %p downloading '%s'", this, url.c_str());
+
 #ifdef UNICODE
 		HINTERNET connect = InternetOpen(L"Lunaris Downloader V6.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 #else
@@ -29,6 +31,9 @@ namespace Lunaris {
 
 		InternetCloseHandle(OpenAddress);
 		InternetCloseHandle(connect);
+
+		PRINT_DEBUG("Downloader %p downloaded '%s'", this, url.c_str());
+
 		return true;
 	}
 

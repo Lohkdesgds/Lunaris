@@ -12,6 +12,10 @@ namespace Lunaris {
 	LUNARIS_DECL bool voice::set(ALLEGRO_VOICE* nc)
 	{
 		if (nc) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			if (device) PRINT_DEBUG("Moved voice %p <- %p", device, nc);
+			else PRINT_DEBUG("New voice %p", nc);
+#endif
 			destroy();
 			device = nc;
 			return true;
@@ -32,11 +36,13 @@ namespace Lunaris {
 	LUNARIS_DECL voice::voice(voice&& vc) noexcept
 		: device(vc.device)
 	{
+		PRINT_DEBUG("Moved voice new <- %p", vc.device);
 		vc.device = nullptr;
 	}
 
 	LUNARIS_DECL void voice::operator=(voice&& vc) noexcept
 	{
+		PRINT_DEBUG("Moved voice %p <- %p", device, vc.device);
 		destroy();
 		device = vc.device;
 		vc.device = nullptr;
@@ -50,6 +56,7 @@ namespace Lunaris {
 	LUNARIS_DECL void voice::destroy()
 	{
 		if (device) {
+			PRINT_DEBUG("Del voice %p", device);
 			al_destroy_voice(device);
 			device = nullptr;
 		}

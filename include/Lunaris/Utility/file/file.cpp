@@ -29,7 +29,7 @@ namespace Lunaris {
 		else	        this->fp = std::unique_ptr<ALLEGRO_FILE, bool(*)(ALLEGRO_FILE*)>(tmpfp, [](ALLEGRO_FILE*) {return true; });
 	}
 
-	LUNARIS_DECL file::file(file&& oth)
+	LUNARIS_DECL file::file(file&& oth) noexcept
 		: fp(std::move(oth.fp)), path(std::move(oth.path))
 	{
 	}
@@ -48,6 +48,12 @@ namespace Lunaris {
 	LUNARIS_DECL bool file::open(const std::string& pth, const open_mode_e& mode)
 	{
 		__file_allegro_start();
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (fp) PRINT_DEBUG("Opening file class %p (was %p) <- '%s' (%d)", this, fp.get(), pth.c_str(), static_cast<int>(mode));
+		else PRINT_DEBUG("Opening file class %p <- '%s' (%d)", this, pth.c_str(), static_cast<int>(mode));
+#endif
+
 		close();
 
 		const std::string mode_transl = transl(mode);
@@ -57,12 +63,18 @@ namespace Lunaris {
 
 		seek(0, seek_mode_e::BEGIN);
 
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (fp) PRINT_DEBUG("Good opened file %p (file class %p)", fp.get(), this);
+		else PRINT_DEBUG("Bad opened file %p (file class %p)", fp.get(), this);
+#endif
+
 		return this->fp != nullptr;
 	}
 
 	LUNARIS_DECL void file::close()
 	{
 		if (fp) {
+			PRINT_DEBUG("Close file %p - '%s'", this, path.c_str());
 			fp.reset();
 			path.clear();
 		}
@@ -140,6 +152,12 @@ namespace Lunaris {
 	LUNARIS_DECL bool tempfile::open(const std::string& templ)
 	{
 		__file_allegro_start();
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (fp) PRINT_DEBUG("Opening tempfile %p (was %p) <- '%s' (%d)", this, fp.get(), templ.c_str());
+		else PRINT_DEBUG("Opening tempfile %p <- '%s' (%d)", this, templ.c_str());
+#endif
+
 		close();
 
 		ALLEGRO_PATH* var = al_create_path(nullptr);
@@ -158,14 +176,23 @@ namespace Lunaris {
 
 		seek(0, seek_mode_e::BEGIN);
 
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (fp) PRINT_DEBUG("Good opened file %p (tempfile %p)", fp.get(), this);
+		else PRINT_DEBUG("Bad opened file %p (tempfile %p)", fp.get(), this);
+#endif
+
 		return this->fp != nullptr;
 	}
 
 	LUNARIS_DECL void tempfile::close()
 	{
-		if (fp) fp.reset();
+		if (fp) {
+			fp.reset();
+			PRINT_DEBUG("Close tempfile %p - '%s'", this, path.c_str());
+		}
 
 		if (!path.empty()) {
+			PRINT_DEBUG("Remove file tempfile '%s'", path.c_str());
 			::remove(path.c_str());
 			path.clear();
 		}
@@ -194,6 +221,12 @@ namespace Lunaris {
 	LUNARIS_DECL bool memfile::open(const size_t len)
 	{
 		__file_allegro_start();
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (fp) PRINT_DEBUG("Opening memfile %p (was %p) [size %zu]", this, fp.get(), len);
+		else PRINT_DEBUG("Opening memfile %p [size %zu]", this, len);
+#endif
+
 		close();
 
 		this->mem = std::unique_ptr<char[]>(new char[len]);
@@ -201,13 +234,22 @@ namespace Lunaris {
 
 		seek(0, seek_mode_e::BEGIN);
 
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (fp) PRINT_DEBUG("Good opened file %p (tempfile %p) [size %zu]", fp.get(), this, len);
+		else PRINT_DEBUG("Bad opened file %p (tempfile %p) [size %zu]", fp.get(), this, len);
+#endif
+
 		return this->fp != nullptr;
 	}
 
 	LUNARIS_DECL void memfile::close()
 	{
 		this->file::close();
-		if (mem) mem.reset();
+		if (mem) {
+			PRINT_DEBUG("Freeing memfile %p", this);
+			mem.reset();
+			PRINT_DEBUG("Freed memfile %p", this);
+		}
 	}
 
 

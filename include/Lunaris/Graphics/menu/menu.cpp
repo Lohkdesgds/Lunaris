@@ -278,6 +278,8 @@ namespace Lunaris {
 
 	LUNARIS_DECL void menu::make_happen(const menu_type mod)
 	{
+		PRINT_DEBUG("Building (make_happen) menu %p (param num: %d)", this, static_cast<int>(mod));
+
 		std::vector<ALLEGRO_MENU_INFO> vc;
 		for (const auto& it : menus) {
 			const std::vector<ALLEGRO_MENU_INFO> _t = it.generate();
@@ -286,6 +288,8 @@ namespace Lunaris {
 		vc.push_back(ALLEGRO_END_OF_MENU);
 
 		if (ptr) al_disable_menu_event_source(ptr.get());
+		ev_source = nullptr;
+		ptr.reset();
 
 		auto _tmp = std::shared_ptr<ALLEGRO_MENU>(al_build_menu(vc.data()), al_destroy_menu);
 
@@ -298,20 +302,26 @@ namespace Lunaris {
 		latest = mod;
 
 		if (!(ev_source = al_enable_menu_event_source(ptr.get()))) throw std::runtime_error("Could not load menu properly");
+
+		PRINT_DEBUG("Built menu %p", this);
 	}
 
 	LUNARIS_DECL menu::menu(display& d, std::vector<menu_each_menu> lst, const menu_type mod)
 		: disp(d), menus(lst.begin(), lst.end())
 	{
+		PRINT_DEBUG("Created menu %p", this);
 		__display_menu_allegro_start();
-
 		make_happen(mod);
 	}
 
 	LUNARIS_DECL menu::~menu()
 	{
+		PRINT_DEBUG("Destryed menu %p", this);
 		hide();
+		if (ptr) al_disable_menu_event_source(ptr.get());
+		ev_source = nullptr;
 		ptr.reset();
+		PRINT_DEBUG("Destroyed menu %p", this);
 	}
 
 	LUNARIS_DECL menu_each_menu& menu::index(const size_t p)
@@ -328,9 +338,11 @@ namespace Lunaris {
 	LUNARIS_DECL void menu::update()
 	{
 		if (!ptr) return;
+		PRINT_DEBUG("Updating menu %p", this);
 		for (auto& o : menus) {
 			o.update_self(ptr.get());
 		}
+		PRINT_DEBUG("Updated menu %p", this);
 	}
 
 	LUNARIS_DECL bool menu::patch_name_of(const uint16_t id, const std::string& var)

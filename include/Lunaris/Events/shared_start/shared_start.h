@@ -6,6 +6,8 @@
 #include <thread>
 #include <mutex>
 #include <stdexcept>
+#include <functional>
+#include <memory>
 
 namespace Lunaris {
 
@@ -13,31 +15,31 @@ namespace Lunaris {
 	void __mouse_allegro_start();
 	void __joystick_allegro_start();
 	void __touch_allegro_start();
+	void __generic_events_start();
 
-	class __common_event {
-		std::thread thr;
-		std::recursive_mutex safety;
-		bool keep_running = false;
-		bool thread_working = false;
-		ALLEGRO_EVENT_QUEUE* ev_qu = nullptr;
+	namespace specific {
+		// raw new, use make_**_user_event_source instead!!
+		ALLEGRO_EVENT_SOURCE* __new_user_event();
+		// raw delete, use make_**_user_event_source instead!!
+		void __del_user_event(ALLEGRO_EVENT_SOURCE*);
+	}
 
-		void running_thread();
-	protected:
-		void start();
-		void stop();
-		virtual void handle_events(const ALLEGRO_EVENT&) = 0;
+	using user_unique = std::unique_ptr<ALLEGRO_EVENT_SOURCE, void(*)(ALLEGRO_EVENT_SOURCE*)>;
+	using user_shared = std::shared_ptr<ALLEGRO_EVENT_SOURCE>;
+	using queue_unique = std::unique_ptr<ALLEGRO_EVENT_QUEUE, void(*)(ALLEGRO_EVENT_QUEUE*)>;
+	using queue_shared = std::shared_ptr<ALLEGRO_EVENT_QUEUE>;
+	using timer_unique = std::unique_ptr<ALLEGRO_TIMER, void(*)(ALLEGRO_TIMER*)>;
+	using timer_shared = std::shared_ptr<ALLEGRO_TIMER>;
 
-		// deferred (no locking)?
-		std::unique_lock<std::recursive_mutex> get_lock(const bool = false);
-		ALLEGRO_EVENT_QUEUE* get_event_queue() const;
-	public:
-		__common_event();
-		~__common_event();
+	user_unique make_unique_user_event_source();
+	user_shared make_shared_user_event_source();
 
-		__common_event(const __common_event&) = delete;
-		__common_event(__common_event&&) = delete;
-		void operator=(const __common_event&) = delete;
-		void operator=(__common_event&&) = delete;
-	};
+	queue_unique make_unique_queue();
+	queue_shared make_shared_queue();
+
+	// create timer. time? start already?
+	timer_unique make_unique_timer(const double, const bool);
+	// create timer. time? start already?
+	timer_shared make_shared_timer(const double, const bool);
 
 }

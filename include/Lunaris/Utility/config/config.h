@@ -17,7 +17,7 @@ namespace Lunaris {
 	/// <para>Config handles both saved configurations and temporary (while running) settings.</para>
 	/// <para>The type of data is set by section.</para>
 	/// </summary>
-	class config {
+	class config : public NonCopyable {
 	public:
 		enum class config_section_mode { SAVE, MEMORY_ONLY };
 	private:
@@ -42,7 +42,6 @@ namespace Lunaris {
 		bool _has(const std::string&) const;
 	public:
 		config() = default;
-		config(const config&) = delete;
 
 		/// <summary>
 		/// <para>Move constructor.</para>
@@ -558,8 +557,6 @@ namespace Lunaris {
 		/// <param name="{std::string}">Key.</param>
 		/// <returns>{std::vector} Vector of values.</returns>
 		template<> std::vector<unsigned long long> get_array(const std::string&, const std::string&) const;
-
-		void operator=(const config&) = delete;
 
 		/// <summary>
 		/// <para>Move operator.</para>

@@ -169,6 +169,9 @@
     <Filter Include="include\Lunaris\Utility\__impl\mutex">
       <UniqueIdentifier>{176c4559-7582-4d64-8288-d3f769801770}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\Events\__impl\specific_event_handler">
+      <UniqueIdentifier>{62993fb7-7ed2-42b2-9462-325f6fb84da0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -435,14 +438,20 @@
     <ClInclude Include="..\..\include\Lunaris\Graphics\menu\menu.h">
       <Filter>include\Lunaris\Graphics\__impl\menu</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\Lunaris\Events\generic_event_handler\generic_event_handler.ipp">
-      <Filter>include\Lunaris\Events\__impl\generic_event_handler</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.h">
       <Filter>include\Lunaris\Utility\__impl\mutex</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\mutex.h">
       <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\specific_event_handler.h">
+      <Filter>include\Lunaris\Events\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\specific_event_handler\specific_event_handler.h">
+      <Filter>include\Lunaris\Events\__impl\specific_event_handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Events\specific_event_handler\specific_event_handler.ipp">
+      <Filter>include\Lunaris\Events\__impl\specific_event_handler</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

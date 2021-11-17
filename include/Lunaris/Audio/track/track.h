@@ -10,7 +10,7 @@ namespace Lunaris {
 	/// <summary>
 	/// <para>track is a playable sample commonly attached to a mixer.</para>
 	/// </summary>
-	class track {
+	class track : public NonCopyable {
 		ALLEGRO_SAMPLE_INSTANCE* playing = nullptr;
 		unsigned paused_at = 0;
 
@@ -19,8 +19,6 @@ namespace Lunaris {
 		track();
 		~track();
 
-		track(const track&) = delete;
-		void operator=(const track&) = delete;
 		track(track&&) noexcept;
 		void operator=(track&&) noexcept;
 

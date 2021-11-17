@@ -8,7 +8,7 @@ namespace Lunaris {
 	/// <summary>
 	/// <para>mixer is the track manager. You can attach this to a voice device and play some tracks in it.</para>
 	/// </summary>
-	class mixer {
+	class mixer : public NonCopyable {
 		/*
 		* Friend class track: because track should link to a mixer, and it's better if you just set(mixer). get_instance is just another friend-like.
 		*/
@@ -21,8 +21,6 @@ namespace Lunaris {
 		mixer();
 		~mixer();
 
-		mixer(const mixer&) = delete;
-		void operator=(const mixer&) = delete;
 		mixer(mixer&&) noexcept;
 		void operator=(mixer&&) noexcept;
 

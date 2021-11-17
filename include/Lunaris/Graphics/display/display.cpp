@@ -244,6 +244,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL bool display::create(const display_config& conf)
 	{
+		PRINT_DEBUG("Display %p is being (re)created", this);
 		destroy();
 		__display_allegro_start();
 		
@@ -287,6 +288,11 @@ namespace Lunaris {
 		fix_timers();
 
 		if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (window != nullptr) PRINT_DEBUG("Display %p successfully launched", this);
+		else PRINT_DEBUG("Display %p failed to launch", this);
+#endif
 
 		return window != nullptr;
 	}
@@ -524,81 +530,91 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::flip()
 	{
-		ALLEGRO_EVENT ev;
-		while (!flag_draw_timed && auto_get_next_event(ev)) // drop if draw, always
-		{
-			switch (ev.type) {
+		try {
+			ALLEGRO_EVENT ev;
+			while (!flag_draw_timed && auto_get_next_event(ev)) // drop if draw, always
+			{
+				switch (ev.type) {
 
-			case ALLEGRO_EVENT_DISPLAY_EXPOSE:
-			case ALLEGRO_EVENT_DISPLAY_FOUND:
-			case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+				case ALLEGRO_EVENT_DISPLAY_EXPOSE:
+				case ALLEGRO_EVENT_DISPLAY_FOUND:
+				case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
 
-				economy_mode = false;
-				fix_timers();
-				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-				break;
-
-			case ALLEGRO_EVENT_DISPLAY_LOST:
-			case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
-
-				economy_mode = true;
-				fix_timers();
-				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-				break;
-
-			case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
-
-				hold_draw(true);
-				al_acknowledge_drawing_halt(window);
-
-				break;
-
-			case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
-
-				al_acknowledge_drawing_resume(window);
-				hold_draw(false);
-				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-				break;
-
-			case ALLEGRO_EVENT_DISPLAY_RESIZE:
-
-				acknowledge_resize();
-				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-
-				break;
-
-			case static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE):
-
-				if (auto* c = al_get_current_transform(); c) latest_transform = *c;
-				break;
-
-			case ALLEGRO_EVENT_TIMER: // DRAW EVENT!
-
-				if (ev.timer.source == update_tasks) {
+					economy_mode = false;
+					fix_timers();
 					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
 
-					if (promises.size()) {
-						promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
-					}
-				}
-				else {
-					flag_draw_timed = true;					
-				}
+					break;
 
-				break;
+				case ALLEGRO_EVENT_DISPLAY_LOST:
+				case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+
+					economy_mode = true;
+					fix_timers();
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+					break;
+
+				case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING:
+
+					hold_draw(true);
+					al_acknowledge_drawing_halt(window);
+
+					break;
+
+				case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING:
+
+					al_acknowledge_drawing_resume(window);
+					hold_draw(false);
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+					break;
+
+				case ALLEGRO_EVENT_DISPLAY_RESIZE:
+
+					acknowledge_resize();
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+					break;
+
+				case static_cast<int>(custom_events::DISPLAY_FLAG_TOGGLE):
+
+					if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+					break;
+
+				case ALLEGRO_EVENT_TIMER: // DRAW EVENT!
+
+					if (ev.timer.source == update_tasks) {
+						if (auto* c = al_get_current_transform(); c) latest_transform = *c;
+
+						if (promises.size()) {
+							promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
+						}
+					}
+					else {
+						flag_draw_timed = true;
+					}
+
+					break;
+				}
+			}
+
+			const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
+			flag_draw_timed = false;
+
+			if (can_draw_now) al_flip_display();
+
+			if (promises.size()) { // maybe there's something to do before that's available
+				promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
 			}
 		}
-
-		const bool can_draw_now = (flag_draw_timed || !timed_draw) && !totally_hold_draw && window;
-		flag_draw_timed = false;
-
-		if (can_draw_now) al_flip_display();
-
-		if (promises.size()) { // maybe there's something to do before that's available
-			promises.safe([](std::vector<promise<bool>>& vec) { for (auto& i : vec) { i.set_value(true); } vec.clear(); });
+		catch (const std::exception& e) {
+			PRINT_DEBUG("Display exception %p: %s", this, e.what());
+			m_err.csafe([&e](const std::function<void(const std::exception&)>& f) {if (f) f(e); });
+		}
+		catch (...) {
+			PRINT_DEBUG("Display exception %p: UNCAUGHT", this);
+			m_err.csafe([](const std::function<void(const std::exception&)>& f) {if (f) f(std::runtime_error("UNCAUGHT")); });
 		}
 	}
 
@@ -608,6 +624,16 @@ namespace Lunaris {
 			if (window) return al_acknowledge_resize(window);
 			return false;
 		});
+	}
+
+	LUNARIS_DECL void display::hook_exception_handler(std::function<void(const std::exception&)> f)
+	{
+		m_err = f;
+	}
+
+	LUNARIS_DECL void display::unhook_exception_handler()
+	{
+		m_err = std::function<void(const std::exception&)>{};
 	}
 
 	LUNARIS_DECL bool display_async::safe_run::can_run()
@@ -653,10 +679,14 @@ namespace Lunaris {
 	{
 		promise<bool> prom;
 		future<bool> fut1 = prom.get_future();
-		future<bool> fut2 = fut1.then([&conf, this](auto) { return this->display::create(conf); });
+		future<bool> fut2 = fut1.then([&conf, this](auto) {
+			bool gud = this->display::create(conf); 
+			PRINT_DEBUG("Display %p is async", this);
+			return gud;
+		});
 
 		promises.push_back(std::move(prom));
-		thr.task_async([this] { async_run(); }, thread::speed::UNLEASHED);
+		thr.task_async([this] { async_run(); }, thread::speed::UNLEASHED, 0.0, [this](const std::exception& e){m_err.csafe([&e](const std::function<void(const std::exception&)>& f) { PRINT_DEBUG("Display async exception (display %p): %s", al_get_current_display(), e.what()); if (f) f(e); }); });
 
 		fut2.wait();
 
@@ -776,7 +806,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL future<bool> display_event::post_task(std::function<bool(void)> f)
 	{
-		return _ref.add_run_once_in_drawing_thread(f);
+		return _ref.post_task(f);
 	}
 
 	LUNARIS_DECL const ALLEGRO_DISPLAY_EVENT& display_event::as_display() const

@@ -4,7 +4,7 @@
 #include <Lunaris/Utility/future.h>
 #include <Lunaris/Utility/thread.h>
 #include <Lunaris/Utility/safe_data.h>
-#include <Lunaris/Events/generic_event_handler.h>
+#include <Lunaris/Events/specific_event_handler.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
@@ -112,6 +112,7 @@ namespace Lunaris {
 		bool auto_get_next_event(ALLEGRO_EVENT&);
 	protected:
 		safe_vector<promise<bool>> promises; // when events, they can list things to do here, or maybe another thread somewhere else, idk
+		safe_data<std::function<void(const std::exception&)>> m_err; // on error
 	public:
 		display() = default;
 		display(const display_config&);
@@ -177,6 +178,9 @@ namespace Lunaris {
 
 		// not needed if use_basic_internal_event_system was on (defaults to on)
 		future<bool> acknowledge_resize();
+
+		void hook_exception_handler(std::function<void(const std::exception&)>);
+		void unhook_exception_handler();
 	};
 
 	class display_async : public display {
@@ -235,6 +239,9 @@ namespace Lunaris {
 		using display::get_event_sources;
 		using display::get_current_transform_function;
 		using display::operator std::function<ALLEGRO_TRANSFORM(void)>;
+		using display::acknowledge_resize;
+		using display::hook_exception_handler;
+		using display::unhook_exception_handler;
 	};
 
 	class display_event : public NonCopyable, public NonMovable {

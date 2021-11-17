@@ -83,18 +83,34 @@ namespace Lunaris {
 	LUNARIS_DECL bool font::create_builtin_font()
 	{
 		__font_allegro_start();
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (font_ptr) PRINT_DEBUG("Recreating font for %p (font class %p) [builtin]", font_ptr, this);
+		else PRINT_DEBUG("Creating font (font class %p) [builtin]", this);
+#endif
+
 		destroy();
 
-		return (font_ptr = al_create_builtin_font()) != nullptr;
+		font_ptr = al_create_builtin_font();
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (font_ptr) PRINT_DEBUG("Good [builtin] font %p (font class %p)", font_ptr, this);
+		else PRINT_DEBUG("Bad [builtin] font creation (font class %p)", this);
+#endif
+
+		return font_ptr != nullptr;
 	}
 
 	LUNARIS_DECL bool font::load(const font_config& conf)
 	{
 		__font_allegro_start();
-		destroy();
 
-//		if (conf.path->empty() || conf.resolution == 0) 
-//			return false;
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (font_ptr) PRINT_DEBUG("Recreating font for %p (font class %p)", font_ptr, this);
+		else PRINT_DEBUG("Creating font (font class %p)", this);
+#endif
+
+		destroy();
 
 		if (conf.bmp_flags != 0)
 			al_set_new_bitmap_flags(conf.bmp_flags);
@@ -120,6 +136,11 @@ namespace Lunaris {
 				font_ptr = al_load_font(fileref->get_path().c_str(), conf.resolution, conf.font_flags); // al_load_font_f is not supported
 			}
 		}
+
+#ifdef LUNARIS_VERBOSE_BUILD
+		if (font_ptr) PRINT_DEBUG("Good font %p (font class %p)", font_ptr, this);
+		else PRINT_DEBUG("Bad font creation (font class %p)", this);
+#endif
 
 		return font_ptr != nullptr;
 	}
@@ -153,6 +174,7 @@ namespace Lunaris {
 	LUNARIS_DECL void font::destroy()
 	{
 		if (font_ptr) {
+			PRINT_DEBUG("Del font %p", font_ptr);
 			al_destroy_font(font_ptr);
 			font_ptr = nullptr;
 		}

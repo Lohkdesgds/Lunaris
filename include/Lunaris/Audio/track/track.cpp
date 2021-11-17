@@ -5,6 +5,10 @@ namespace Lunaris {
 	LUNARIS_DECL bool track::set(ALLEGRO_SAMPLE_INSTANCE* si)
 	{
 		if (si) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			if (playing) PRINT_DEBUG("Moved track %p <- %p", playing, si);
+			else PRINT_DEBUG("New track %p", si);
+#endif
 			destroy();
 			playing = si;
 			return true;
@@ -25,12 +29,14 @@ namespace Lunaris {
 	LUNARIS_DECL track::track(track&& tk) noexcept
 		: playing(tk.playing), paused_at(tk.paused_at)
 	{
+		PRINT_DEBUG("Moved track new <- %p", tk.playing);
 		tk.playing = nullptr;
 		tk.paused_at = 0;
 	}
 
 	LUNARIS_DECL void track::operator=(track&& tk) noexcept
 	{
+		PRINT_DEBUG("Moved track %p <- %p", playing, tk.playing);
 		destroy();
 		playing = tk.playing;
 		paused_at = tk.paused_at;
@@ -57,6 +63,7 @@ namespace Lunaris {
 	LUNARIS_DECL void track::destroy()
 	{
 		if (playing) {
+			PRINT_DEBUG("Del track %p", playing);
 			al_destroy_sample_instance(playing);
 			playing = nullptr;
 		}

@@ -5,6 +5,10 @@ namespace Lunaris {
 	LUNARIS_DECL bool mixer::set(ALLEGRO_MIXER* mx)
 	{
 		if (mx) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			if (mixing) PRINT_DEBUG("Moved mixer %p <- %p", mixing, mx);
+			else PRINT_DEBUG("New mixer %p", mx);
+#endif
 			destroy();
 			mixing = mx;
 			return true;
@@ -25,11 +29,13 @@ namespace Lunaris {
 	LUNARIS_DECL mixer::mixer(mixer&& mx) noexcept
 		: mixing(mx.mixing)
 	{
+		PRINT_DEBUG("Moved mixer new <- %p", mx.mixing);
 		mx.mixing = nullptr;
 	}
 
 	LUNARIS_DECL void mixer::operator=(mixer&& mx) noexcept
 	{
+		PRINT_DEBUG("Moved mixer %p <- %p", mixing, mx.mixing);
 		destroy();
 		mixing = mx.mixing;
 		mx.mixing = nullptr;
@@ -43,6 +49,7 @@ namespace Lunaris {
 	LUNARIS_DECL void mixer::destroy()
 	{
 		if (mixing) {
+			PRINT_DEBUG("Del mixer %p", mixing);
 			al_destroy_mixer(mixing);
 			mixing = nullptr;
 		}

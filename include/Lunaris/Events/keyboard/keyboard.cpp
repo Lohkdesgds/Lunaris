@@ -13,8 +13,6 @@ namespace Lunaris {
 	{
 		if (ev.type != ALLEGRO_EVENT_KEY_CHAR) return;
 
-		auto safe = get_lock();
-
 		const bool was_enter = ev.keyboard.keycode == ALLEGRO_KEY_ENTER || ev.keyboard.keycode == ALLEGRO_KEY_PAD_ENTER;
 
 		if (ev.keyboard.unichar >= 32)
@@ -65,57 +63,53 @@ namespace Lunaris {
 		for (size_t a = 0; a < len; a++) str += multibyte[a];
 	}
 
-	LUNARIS_DECL keyboard::keyboard() : __common_event()
+	LUNARIS_DECL keyboard::keyboard() : generic_event_handler()
 	{
-		__keyboard_allegro_start();
-
-		al_register_event_source(get_event_queue(), al_get_keyboard_event_source());
-	}
-
-	LUNARIS_DECL keyboard::~keyboard()
-	{
-		this->stop(); // stop before this is destroyed
+		// because of this line here we don't need to check if m_movable exists (it must exist)
+		install(events::KEYBOARD);
+		get_core().set_event_handler([this](const ALLEGRO_EVENT& ev) { handle_events(ev); });
+		PRINT_DEBUG("%p is KEYBOARD object", get_core_ptr());
 	}
 
 	LUNARIS_DECL void keyboard::hook_each_key_event(const std::function<void(keyboard&, const int)> f)
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		each_key = f;
 	}
 
 	LUNARIS_DECL void keyboard::hook_each_key_phrase_event(const std::function<void(keyboard&, const std::string&)> f)
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		each_combined = f;
 	}
 
 	LUNARIS_DECL void keyboard::hook_enter_line_phrase_event(const std::function<void(keyboard&, const std::string&)> f)
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		enter_combined = f;
 	}
 
 	LUNARIS_DECL void keyboard::unhook_each_key_event()
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		each_key = {};
 	}
 
 	LUNARIS_DECL void keyboard::unhook_each_key_phrase_event()
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		each_combined = {};
 	}
 
 	LUNARIS_DECL void keyboard::unhook_enter_line_phrase_event()
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		enter_combined = {};
 	}
 
 	LUNARIS_DECL void keyboard::clear()
 	{
-		auto lucky = get_lock();
+		std::lock_guard<std::recursive_mutex> luck(get_core().m_safe);
 		data.clear();
 	}
 

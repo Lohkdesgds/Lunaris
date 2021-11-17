@@ -3,7 +3,7 @@
 
 namespace Lunaris {
 
-	inline console::_block_control::_block_control(std::unique_lock<std::mutex>&& lock)
+	inline console::_block_control::_block_control(std::unique_lock<mutex_type>&& lock)
 		: m_lock_safe(std::move(lock))
 	{
 	}
@@ -45,7 +45,12 @@ namespace Lunaris {
 	template<typename T>
 	inline console::_block_control console::operator<<(const T& var)
 	{
-		std::unique_lock<std::mutex> lock(m_safe);
+#ifdef LUNARIS_VERBOSE_BUILD
+		std::unique_lock<mutex_type> lock(__g_verbose_lock); // global mutex for print
+#else
+		std::unique_lock<mutex_type> lock(m_safe);
+#endif
+		PRINT_DEBUG(nullptr);
 		console::_block_control _block(std::move(lock));
 		_block << var;
 		return _block;

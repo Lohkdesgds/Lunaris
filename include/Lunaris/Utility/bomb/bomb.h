@@ -9,6 +9,8 @@
 #include <mutex>
 #include <memory>
 
+// Bomb has debug commented because it's widely used now
+
 namespace Lunaris {
 
 	class bomb : public NonCopyable {

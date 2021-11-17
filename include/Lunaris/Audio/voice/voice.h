@@ -16,7 +16,7 @@ namespace Lunaris {
 	/// <summary>
 	/// <para>voice is an audio device. You can attach ONE mixer to this.</para>
 	/// </summary>
-	class voice {
+	class voice : public NonCopyable {
 		/*
 		* Friend class mixer: because mixer should link to a voice, and it's better if you just set(voice). get_instance is just another friend-like.
 		*/
@@ -29,8 +29,6 @@ namespace Lunaris {
 		voice();
 		~voice();
 
-		voice(const voice&) = delete;
-		void operator=(const voice&) = delete;
 		voice(voice&&) noexcept;
 		void operator=(voice&&) noexcept;
 

@@ -26,78 +26,65 @@ namespace Lunaris {
 		if (!al_is_touch_input_installed() && !al_install_touch_input()) throw std::runtime_error("Can't start Touch!");
 	}
 
-	LUNARIS_DECL void __common_event::running_thread()
+	LUNARIS_DECL void __generic_events_start()
 	{
-		thread_working = true;
-		while (keep_running) {
-			ALLEGRO_EVENT ev;
-			try {
-				auto lucky = get_lock(true);
-				if (!lucky.try_lock()) continue; // as fast as it can
-
-				if (ev_qu && al_wait_for_event_timed(ev_qu, &ev, 0.1f)) {
-					//lucky.unlock();
-					handle_events(ev);
-				}
-				else {
-					lucky.unlock(); // free up for a while
-					std::this_thread::sleep_for(std::chrono::milliseconds(10));
-				}
-			}
-			catch (const std::exception& e) {
-				printf_s("FATAL ERROR: %s\n", e.what());
-			}
-			catch (...) {
-				printf_s("FATAL ERROR: UNCAUGHT!\n");
-			}
-		}
-		thread_working = false;
-	}
-
-	LUNARIS_DECL void __common_event::start()
-	{
-		if (ev_qu) return;// throw std::runtime_error("Tried to start twice?");
-
 		if (!al_is_system_installed() && !al_init()) throw std::runtime_error("Can't start Allegro!");
-
-		keep_running = true;
-
-		if (!(ev_qu = al_create_event_queue())) throw std::bad_alloc();
-
-		thr = std::thread([&] {running_thread(); });
 	}
 
-	LUNARIS_DECL void __common_event::stop()
-	{
-		if (ev_qu) {
-			keep_running = false;
-			while (thread_working) std::this_thread::sleep_for(std::chrono::milliseconds(50));
-			auto lucky = get_lock();
-			if (thr.joinable()) thr.join();
-			al_destroy_event_queue(ev_qu);
-			ev_qu = nullptr;
+	namespace specific {
+
+		LUNARIS_DECL ALLEGRO_EVENT_SOURCE* __new_user_event()
+		{
+			ALLEGRO_EVENT_SOURCE* ev = new ALLEGRO_EVENT_SOURCE();
+			al_init_user_event_source(ev);
+			return ev;
+		}
+
+		LUNARIS_DECL void __del_user_event(ALLEGRO_EVENT_SOURCE* ev)
+		{
+			al_destroy_user_event_source(ev);
+			delete ev;
 		}
 	}
 
-	LUNARIS_DECL std::unique_lock<std::recursive_mutex> __common_event::get_lock(const bool deferred)
+	LUNARIS_DECL user_unique make_unique_user_event_source()
 	{
-		if (deferred) return std::unique_lock<std::recursive_mutex>(safety, std::defer_lock);
-		return std::unique_lock<std::recursive_mutex>(safety);
+		__generic_events_start();
+		return user_unique(specific::__new_user_event(), specific::__del_user_event);
 	}
 
-	LUNARIS_DECL ALLEGRO_EVENT_QUEUE* __common_event::get_event_queue() const
+	LUNARIS_DECL user_shared make_shared_user_event_source()
 	{
-		return ev_qu;
+		__generic_events_start();
+		return user_shared(specific::__new_user_event(), specific::__del_user_event);
 	}
 
-	LUNARIS_DECL __common_event::__common_event()
+	LUNARIS_DECL queue_unique make_unique_queue()
 	{
-		start();
+		__generic_events_start();
+		return queue_unique(al_create_event_queue(), al_destroy_event_queue);
 	}
 
-	LUNARIS_DECL __common_event::~__common_event()
+	LUNARIS_DECL queue_shared make_shared_queue()
 	{
-		stop();
+		__generic_events_start();
+		return queue_shared(al_create_event_queue(), al_destroy_event_queue);
+	}
+
+	LUNARIS_DECL timer_unique make_unique_timer(const double dt, const bool st)
+	{
+		__generic_events_start();
+		auto _r = timer_unique(al_create_timer(dt), al_destroy_timer);
+		if (st) al_start_timer(_r.get());
+		return _r;
+	}
+
+	LUNARIS_DECL timer_shared make_shared_timer(const double dt, const bool st)
+	{
+		__generic_events_start();
+		auto _r = timer_shared(al_create_timer(dt), al_destroy_timer);
+		if (st) al_start_timer(_r.get());
+		return _r;
 	}
 
 }

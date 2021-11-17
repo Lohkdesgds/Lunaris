@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Lunaris/__macro/macros.h>
-#include <Lunaris/Events/shared_start.h>
+#include <Lunaris/Events/generic_event_handler.h>
 
 #include <allegro5/allegro.h>
 #include <thread>
@@ -12,13 +12,14 @@ namespace Lunaris {
 
 	const double default_mouse_update_rate = 1.0 / 60;
 
-	class mouse : public __common_event {
+	class mouse : protected generic_event_handler {
 	public:
 		struct mouse_event {
 			float real_posx = -1.0f, real_posy = 1.0f; // may change if proportion is not 1:1, but lower goes [-1.0f, 1.0f]
 			float relative_posx = -1.0f, relative_posy = -1.0f; // [-1.0f, 1.0f]
 			int buttons_pressed = 0;
 			uint8_t scroll_event = 0; // updated each event.
+			ALLEGRO_MOUSE_EVENT raw_mouse_event;
 
 			bool is_button_pressed(const int) const;
 			bool got_scroll_event() const;
@@ -26,12 +27,7 @@ namespace Lunaris {
 		};
 	private:
 		mouse_event mouse_rn;
-		bool hint_changes_coming = false;
 
-		//bool had_mouse_event = false;
-		//float quick_cpy_mouse[2] = { 0.0f,0.0f };
-
-		//ALLEGRO_TIMER* timer = nullptr;
 		std::function<void(const int, const mouse_event&)> event_handler;
 		std::function<ALLEGRO_TRANSFORM(void)> current_transform_getter;
 
@@ -40,12 +36,14 @@ namespace Lunaris {
 		void handle_events(const ALLEGRO_EVENT&);
 	public:
 		mouse(std::function<ALLEGRO_TRANSFORM(void)>);
-		~mouse();
 
 		void hook_event(const std::function<void(const int, const mouse_event&)>); // ALLEGRO_EVENT thing, mouse info
 		void unhook_event();
 
 		const mouse_event& current_mouse() const;
+
+		using generic_event_handler::hook_exception_handler;
+		using generic_event_handler::unhook_exception_handler;
 	};
 
 }

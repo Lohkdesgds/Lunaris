@@ -8,64 +8,73 @@
 
 namespace Lunaris {
 
-	// generic all_in_one handler (to be implemented)
-	
-	class generic_event_handler : public __common_event {
+	enum class events {
+		KEYBOARD	= 1 << 0,
+		MOUSE		= 1 << 1,
+		JOYSTICK	= 1 << 2,
+		CONTROL = JOYSTICK,
+		TOUCH		= 1 << 3
+	};
+	constexpr int event_thread_quit = 1024;
 
-		std::function<void(const ALLEGRO_EVENT&)> generic_event;
+	constexpr events operator|(events a, events b) { return static_cast<events>(static_cast<int>(a) | static_cast<int>(b)); }
+	constexpr int operator&(events a, events b) { return (static_cast<int>(a) & static_cast<int>(b)); }
+	constexpr events operator^(events a, events b) { return static_cast<events>(static_cast<int>(a) & static_cast<int>(b)); }
 
-		void handle_events(const ALLEGRO_EVENT&);
+	class generic_event_handler : public NonCopyable {
+		struct core : public NonCopyable, public NonMovable {
+			std::thread m_thr;
+			std::recursive_mutex m_safe;
+			bool m_run_confirm = false; // m_thr return
+			std::function<void(const std::exception&)> m_err; // on error
+			std::function<void(ALLEGRO_EVENT&)> m_evhlr; // on event
+			queue_unique m_queue;
+			user_unique m_custom;
 
+			void _async(); // m_thr run
+
+			core();
+			~core();
+
+			void signal_stop(); // deleting calls this
+			void set_event_handler(std::function<void(ALLEGRO_EVENT&)>);
+			void set_exception_handler(std::function<void(const std::exception&)>);
+			void add_event_source(ALLEGRO_EVENT_SOURCE*);
+			void remove_event_source(ALLEGRO_EVENT_SOURCE*);
+		};
+		std::unique_ptr<core> m_movable;
+
+		void build_if_none();
+	protected:
+		core& get_core();
+		core* get_core_ptr() const;
 	public:
-		generic_event_handler();
+		generic_event_handler() = default;
 
-		void install_keyboard();
-		void install_mouse();
-		void install_joystick();
-		void install_touch();
+		void install(const events);
+		void uninstall(const events);
+
+		void install(const user_unique&);
+		void install(const user_shared&);
+		void install(const timer_unique&);
+		void install(const timer_shared&);
+
+		void uninstall(const user_unique&);
+		void uninstall(const user_shared&);
+		void uninstall(const timer_unique&);
+		void uninstall(const timer_shared&);
 
 		void install_other(ALLEGRO_EVENT_SOURCE*);
 		void install_other(std::vector<ALLEGRO_EVENT_SOURCE*>);
 
-		void uninstall_keyboard();
-		void uninstall_mouse();
-		void uninstall_joystick();
-		void uninstall_touch();
-
 		void uninstall_other(ALLEGRO_EVENT_SOURCE*);
 		void uninstall_other(std::vector<ALLEGRO_EVENT_SOURCE*>);
 
-		void hook_event_handler(const std::function<void(const ALLEGRO_EVENT&)>);
-		void unhook_event_handler();
-	};
-
-	/// <summary>
-	/// <para>Build a generic event handler that handles events with this class.</para>
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template<class EventHandlerType, class SourceClass>
-	class specific_event_handler : public __common_event {
-
-		std::function<void(EventHandlerType&)> generic_event;
-		std::function<void(const std::exception&)> exception_work;
-
-		ALLEGRO_TIMER* timer_check = nullptr;
-		std::vector<ALLEGRO_EVENT_SOURCE*> last_event_source;
-
-		void handle_events(const ALLEGRO_EVENT&);
-		void check_time();
-
-		SourceClass& __ref;
-	public:
-		specific_event_handler(SourceClass&);
-		~specific_event_handler();
-
-		void hook_event_handler(const std::function<void(EventHandlerType&)>);
+		void hook_event_handler(std::function<void(const ALLEGRO_EVENT&)>);
 		void unhook_event_handler();
 
-		void hook_exception_handler(const std::function<void(const std::exception&)>);
+		void hook_exception_handler(std::function<void(const std::exception&)>);
 		void unhook_exception_handler();
 	};
-}
 
-#include "generic_event_handler.ipp"
+}

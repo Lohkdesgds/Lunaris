@@ -5,6 +5,10 @@ namespace Lunaris {
 	LUNARIS_DECL bool sample::set(ALLEGRO_SAMPLE* sp)
 	{
 		if (sp) {
+#ifdef LUNARIS_VERBOSE_BUILD
+			if (file_sample) PRINT_DEBUG("Moved sample %p <- %p", file_sample, sp);
+			else PRINT_DEBUG("New sample %p", sp);
+#endif
 			destroy();
 			file_sample = sp;
 			return true;
@@ -25,11 +29,13 @@ namespace Lunaris {
 	LUNARIS_DECL sample::sample(sample&& sp) noexcept
 		: file_sample(sp.file_sample)
 	{
+		PRINT_DEBUG("Moved sample new <- %p", sp.file_sample);
 		sp.file_sample = nullptr;
 	}
 
 	LUNARIS_DECL void sample::operator=(sample&& sp) noexcept
 	{
+		PRINT_DEBUG("Moved sample %p <- %p", file_sample, sp.file_sample);
 		destroy();
 		file_sample = sp.file_sample;
 		sp.file_sample = nullptr;
@@ -43,6 +49,7 @@ namespace Lunaris {
 	LUNARIS_DECL void sample::destroy()
 	{
 		if (file_sample) {
+			PRINT_DEBUG("Del sample %p", file_sample);
 			al_destroy_sample(file_sample);
 			file_sample = nullptr;
 		}

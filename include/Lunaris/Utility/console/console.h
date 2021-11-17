@@ -29,16 +29,21 @@ namespace Lunaris {
 		enum class color { BLACK, DARK_RED, DARK_GREEN, GOLD, DARK_BLUE, DARK_PURPLE, DARK_AQUA, GRAY, DARK_GRAY, RED, GREEN, YELLOW, BLUE, LIGHT_PURPLE, AQUA, WHITE };
 #endif
 	private:
+#ifndef LUNARIS_VERBOSE_BUILD
 		std::mutex m_safe;
+		using mutex_type = std::mutex;
+#else
+		using mutex_type = std::recursive_mutex;
+#endif
 
 		class _block_control {
-			std::unique_lock<std::mutex> m_lock_safe;
+			std::unique_lock<mutex_type> m_lock_safe;
 		public:
 			// newline on death
 			~_block_control();
 
 			// Start block with locked argument
-			_block_control(std::unique_lock<std::mutex>&&);
+			_block_control(std::unique_lock<mutex_type>&&);
 
 			// So it does move stuff around, hm? (VS asked for this lmao)
 			_block_control(_block_control&&) noexcept;
