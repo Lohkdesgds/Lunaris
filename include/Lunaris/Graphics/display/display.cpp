@@ -688,7 +688,8 @@ namespace Lunaris {
 
 		flip();
 
-		if (hooked_draw) hooked_draw(*this);
+		if (hooked_draw && !empty()) 
+			hooked_draw(*this);
 	}
 
 	LUNARIS_DECL display_async::display_async(const display_config& conf)
