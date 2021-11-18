@@ -234,7 +234,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL display::~display()
 	{
-		destroy();
+		destroy().wait();
 	}
 
 	LUNARIS_DECL display::_clipboard display::clipboard() const
@@ -247,7 +247,7 @@ namespace Lunaris {
 #ifdef LUNARIS_VERBOSE_BUILD
 		PRINT_DEBUG("Display %p is being (re)created", this);
 #endif
-		destroy();
+		destroy().wait();
 		__display_allegro_start();
 		
 		al_set_new_display_flags(conf.flags_combine());
@@ -464,14 +464,14 @@ namespace Lunaris {
 		return window == nullptr;
 	}
 
-	LUNARIS_DECL void display::destroy()
+	LUNARIS_DECL future<bool> display::destroy()
 	{
 		if (auto* __d = al_get_current_display(); __d != window && window)
 		{
 #ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display %p post tasked destroy", this);
 #endif
-			post_task([this] {destroy(); return true; });
+			return post_task([this] {return destroy().get(); });
 		}
 		else {
 #ifdef LUNARIS_VERBOSE_BUILD
@@ -508,6 +508,7 @@ namespace Lunaris {
 #ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Display %p successfully destroyed everything", this);
 #endif
+			return make_empty_future<bool>(true);
 		}
 	}
 
@@ -687,7 +688,8 @@ namespace Lunaris {
 
 		flip();
 
-		if (hooked_draw) hooked_draw(*this);
+		if (hooked_draw && !empty()) 
+			hooked_draw(*this);
 	}
 
 	LUNARIS_DECL display_async::display_async(const display_config& conf)
@@ -697,7 +699,8 @@ namespace Lunaris {
 
 	LUNARIS_DECL display_async::~display_async()
 	{
-		destroy();
+		destroy(m_destroy_silent).get();
+		thr.join(m_destroy_silent);
 	}
 
 	LUNARIS_DECL bool display_async::create(const display_config& conf)
@@ -765,10 +768,13 @@ namespace Lunaris {
 		safer.unlock();
 	}
 
-	LUNARIS_DECL void display_async::destroy(const bool skip_except)
+	LUNARIS_DECL future<bool> display_async::destroy(const bool skip_except)
 	{
-		thr.join(skip_except);
-		this->display::destroy();
+		m_destroy_silent = skip_except;
+		auto fut = this->display::destroy();
+		fut.wait();
+		thr.signal_stop();
+		return fut;
 	}
 
 	LUNARIS_DECL display_event::display_event(display& rf, const ALLEGRO_EVENT& ev)

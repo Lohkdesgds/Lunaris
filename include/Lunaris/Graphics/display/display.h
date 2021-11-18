@@ -164,7 +164,7 @@ namespace Lunaris {
 
 		bool empty() const;
 
-		void destroy();
+		future<bool> destroy();
 
 		ALLEGRO_DISPLAY* get_raw_display() const;
 
@@ -196,6 +196,7 @@ namespace Lunaris {
 
 		thread thr;
 		std::function<void(const display_async&)> hooked_draw;
+		bool m_destroy_silent = false;
 
 		void async_run();
 	public:
@@ -211,7 +212,7 @@ namespace Lunaris {
 		void unhook_draw_function();
 
 		// skip exceptions? DO NOT CALL FROM ITSELF
-		void destroy(const bool = false);
+		future<bool> destroy(const bool = false);
 
 		using display::clipboard;
 		using display::set_window_title;

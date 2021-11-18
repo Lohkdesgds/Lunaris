@@ -153,6 +153,12 @@ namespace Lunaris {
 		void set_value();
 	};
 
+	template<typename T, std::enable_if_t<!std::is_void_v<T>, int> = 0>
+	future<T> make_empty_future(const T&);
+
+	template<typename T, std::enable_if_t<std::is_void_v<T>, int> = 0>
+	future<T> make_empty_future();
+
 }
 
 #include "future.ipp"
