@@ -411,6 +411,9 @@ namespace Lunaris {
 				case SocketCONNRESET: // still offline or became offline right now
 					this->close_socket();
 					return raw;
+				default: // undefined (probably bad)
+					this->close_socket();
+					return raw;
 				}
 			}
 			else if (res == 0) { // disconnect
@@ -526,6 +529,9 @@ namespace Lunaris {
 				}
 				case SocketNETRESET: // failed in the middle of something
 				case SocketCONNRESET: // still offline or became offline right now
+					this->close_socket();
+					return raw;
+				default: // undefined (probably bad)
 					this->close_socket();
 					return raw;
 				}
