@@ -403,7 +403,7 @@ namespace Lunaris {
 				switch (err) {
 				case SocketWOULDBLOCK: // no data to read
 				{
-					if (raw.size() && ++blocks_tries > 3) return raw;
+					if (++blocks_tries > 3) return raw;
 					std::this_thread::yield();
 					continue;
 				}
@@ -510,6 +510,8 @@ namespace Lunaris {
 
 		const int expected = static_cast<int>(amount > socket_maximum_udp_buffer_size ? socket_maximum_udp_buffer_size : amount);
 
+		size_t blocks_tries = 0;
+
 		raw.resize(expected);
 
 		for (size_t blocks_tries = 0; blocks_tries < 3; blocks_tries++) {
@@ -524,6 +526,7 @@ namespace Lunaris {
 				switch (err) {
 				case SocketWOULDBLOCK: // no data to read
 				{
+					if (++blocks_tries > 3) return raw;
 					std::this_thread::yield();
 					continue;
 				}
