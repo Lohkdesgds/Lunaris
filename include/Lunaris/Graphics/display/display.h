@@ -185,14 +185,7 @@ namespace Lunaris {
 	};
 
 	class display_async : public display {
-		struct safe_run {
-			volatile bool is_lock = false; // user changing things
-			bool is_paused = false; // tell user thread ack
-
-			bool can_run(); // true if good, false if wait (continue;)
-			void lock(const bool = false); // tell thread to stop, wait for ack (if false)
-			void unlock(); // tell thread it's good, no wait
-		} safer;
+		fast_one_way_mutex safer;
 
 		thread thr;
 		std::function<void(const display_async&)> hooked_draw;

@@ -662,26 +662,9 @@ namespace Lunaris {
 		m_err = std::function<void(const std::exception&)>{};
 	}
 
-	LUNARIS_DECL bool display_async::safe_run::can_run()
-	{
-		return !(is_paused = is_lock);
-	}
-
-	LUNARIS_DECL void display_async::safe_run::lock(const bool skip_wait)
-	{
-		is_lock = true;
-		if (skip_wait) return;
-		while (!is_paused) std::this_thread::sleep_for(std::chrono::milliseconds(5));
-	}
-
-	LUNARIS_DECL void display_async::safe_run::unlock() 
-	{
-		is_lock = false;
-	}
-
 	LUNARIS_DECL void display_async::async_run()
 	{
-		if (!safer.can_run()) {
+		if (!safer.run()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			return;
 		}
@@ -756,16 +739,14 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display_async::hook_draw_function(std::function<void(const display_async&)> f)
 	{
-		safer.lock();
+		fast_lock_guard luck(safer);
 		hooked_draw = f;
-		safer.unlock();
 	}
 
 	LUNARIS_DECL void display_async::unhook_draw_function()
 	{
-		safer.lock();
+		fast_lock_guard luck(safer);
 		hooked_draw = {};
-		safer.unlock();
 	}
 
 	LUNARIS_DECL future<bool> display_async::destroy(const bool skip_except)

@@ -10,8 +10,11 @@
 
 namespace Lunaris {
 
-	const double default_mouse_update_rate = 1.0 / 60;
-
+	/// <summary>
+	/// <para>mouse is a must have when you're working with transform and mice.</para>
+	/// <para>This translates the most common values for you automatically (camera-based coords, -1 to 1 compared to screen, translated buttons and events and even the raw information if you really need it)</para>
+	/// <para>This NEEDS A DISPLAY WHEN CREATED because it will use that as reference for the coordinate translations (the function is a operator available directly from display class).</para>
+	/// </summary>
 	class mouse : protected generic_event_handler {
 	public:
 		struct mouse_event {
@@ -37,9 +40,21 @@ namespace Lunaris {
 	public:
 		mouse(std::function<ALLEGRO_TRANSFORM(void)>);
 
-		void hook_event(const std::function<void(const int, const mouse_event&)>); // ALLEGRO_EVENT thing, mouse info
+		/// <summary>
+		/// <para>Hook a function to handle mouse events.</para>
+		/// </summary>
+		/// <param name="{function}">A function to do something with the mouse information.</param>
+		void hook_event(const std::function<void(const int, const mouse_event&)>);
+
+		/// <summary>
+		/// <para>Unhook old function tied to mouse events.</para>
+		/// </summary>
 		void unhook_event();
 
+		/// <summary>
+		/// <para>Read the latest mouse value (the values may change, but the memory is valid while the object exists).</para>
+		/// </summary>
+		/// <returns>{mouse_event} Latest mouse event reference (may update itself while reading).</returns>
 		const mouse_event& current_mouse() const;
 
 		using generic_event_handler::hook_exception_handler;

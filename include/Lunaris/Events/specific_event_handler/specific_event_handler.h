@@ -12,7 +12,8 @@ namespace Lunaris {
 	/// <para>Build a generic event handler that handles events with this class.</para>
 	/// <para>IMPORTANT NOTE: The class MUST EXIST while THIS THING HERE exists. MAKE SURE IT EXISTS!</para>
 	/// </summary>
-	/// <typeparam name="{EventHandlerType}"></typeparam>
+	/// <typeparam name="{EventHandlerType}">The class that eats an ALLEGRO_EVENT and transforms it to another class object easier or fancier (enhancing the event). This is the type handled by the function.</typeparam>
+	/// <typeparam name="{SourceClass}">The source of the event(s). This class must be castable to a vector of ALLEGRO_SOURCE_EVENT* so if you reload your object this can reset the event sources easily (reload-proof).</typeparam>
 	template<class EventHandlerType, class SourceClass>
 	class specific_event_handler : protected generic_event_handler, public NonMovable {
 
@@ -27,7 +28,15 @@ namespace Lunaris {
 	public:
 		specific_event_handler(SourceClass&);
 
+		/// <summary>
+		/// <para>Hook a function to handle the EventHandlerType class object (that resulted from an ALLEGRO_EVENT).</para>
+		/// </summary>
+		/// <param name="{function}">Function to handle interpreted events.</param>
 		void hook_event_handler(const std::function<void(EventHandlerType&)>);
+
+		/// <summary>
+		/// <para>Unhook any hooked function to events.</para>
+		/// </summary>
 		void unhook_event_handler();
 
 		using generic_event_handler::hook_exception_handler;

@@ -172,6 +172,9 @@
     <Filter Include="include\Lunaris\Events\__impl\specific_event_handler">
       <UniqueIdentifier>{62993fb7-7ed2-42b2-9462-325f6fb84da0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\Graphics\__impl\vertex">
+      <UniqueIdentifier>{593dad6a-86cb-426f-87b2-a9a702309a65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -453,6 +456,12 @@
     <ClInclude Include="..\..\include\Lunaris\Events\specific_event_handler\specific_event_handler.ipp">
       <Filter>include\Lunaris\Events\__impl\specific_event_handler</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\vertex\vertex.h">
+      <Filter>include\Lunaris\Graphics\__impl\vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\vertex.h">
+      <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">
@@ -547,6 +556,9 @@
     </ClCompile>
     <ClCompile Include="..\..\include\Lunaris\Utility\mutex\mutex.cpp">
       <Filter>include\Lunaris\Utility\__impl\mutex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\Lunaris\Graphics\vertex\vertex.cpp">
+      <Filter>include\Lunaris\Graphics\__impl\vertex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -72,6 +72,8 @@
     <ClInclude Include="..\..\include\Lunaris\Graphics\text\text.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\transform.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\transform\transform.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\vertex.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\vertex\vertex.h" />
     <ClInclude Include="..\..\include\Lunaris\Imported\algif5.h" />
     <ClInclude Include="..\..\include\Lunaris\Imported\algif5\algif.h" />
     <ClInclude Include="..\..\include\Lunaris\utility.h" />
@@ -141,6 +143,7 @@
     <ClCompile Include="..\..\include\Lunaris\Graphics\texture\texture.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\text\text.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Graphics\transform\transform.cpp" />
+    <ClCompile Include="..\..\include\Lunaris\Graphics\vertex\vertex.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\algif.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\bitmap.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\gif.cpp" />

@@ -307,6 +307,47 @@ namespace Lunaris {
 		if (bitmap) al_set_target_bitmap(bitmap);
 	}
 
+	LUNARIS_DECL functional_texture::~functional_texture()
+	{
+		destroy();
+	}
+
+	LUNARIS_DECL bool functional_texture::check_ready() const
+	{
+		if (!this->texture::check_ready()) return false;
+		for (size_t err = 0; !fastmu.run(); ++err) {
+			if (err > 25) throw std::runtime_error("Timedout function texture safe mutex (took too long to unlock)"); // 250 ms
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+		ALLEGRO_BITMAP* oldtg = al_get_target_bitmap();
+		ALLEGRO_BITMAP* curr = get_raw_bitmap();
+		al_set_target_bitmap(curr);
+		func(curr); // be sure you do the exception testing. You may draw into the bitmap.
+		al_set_target_bitmap(oldtg); // good to go.
+		return true;
+	}
+
+	LUNARIS_DECL functional_texture::functional_texture(functional_texture&& oth) noexcept
+		: texture(std::move(oth)), func(std::move(oth.func))
+	{
+	}
+
+	LUNARIS_DECL void functional_texture::operator=(functional_texture&& oth) noexcept
+	{
+		this->texture::operator=(std::move(oth));
+		func = std::move(oth.func);
+	}
+
+	LUNARIS_DECL void functional_texture::hook_function(std::function<void(ALLEGRO_BITMAP*)> f)
+	{
+		func = f;
+	}
+
+	LUNARIS_DECL void functional_texture::unhook_function()
+	{
+		func = {};
+	}
+
 	LUNARIS_DECL bool texture_gif::check_ready() const
 	{
 		if (!animation) return false;
@@ -396,6 +437,11 @@ namespace Lunaris {
 	LUNARIS_DECL ALLEGRO_BITMAP* texture_gif::get_raw_bitmap() const
 	{
 		return animation ? algif_get_bitmap(animation, al_get_time() - start_time) : nullptr;
+	}
+
+	LUNARIS_DECL texture_gif::operator ALLEGRO_BITMAP* () const
+	{
+		return get_raw_bitmap();
 	}
 
 	LUNARIS_DECL bool texture_gif::empty()

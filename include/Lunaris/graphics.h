@@ -7,6 +7,7 @@
 #include <Lunaris/Graphics/display.h> // depends on EVENT
 #include <Lunaris/Graphics/menu.h> // depends on DISPLAY, EVENT
 #include <Lunaris/Graphics/texture.h> // depends on COLOR
+#include <Lunaris/Graphics/vertex.h> // depends on COLOR, TEXTURE
 #include <Lunaris/Graphics/font.h> // depends on COLOR, TEXTURE
 #include <Lunaris/Graphics/sprite.h> // depends on TEXTURE, TRANSFORM, COLOR, Utility/memory, Utility/multi_map
 #include <Lunaris/Graphics/block.h>  // depends on SPRITE, TRANSFORM

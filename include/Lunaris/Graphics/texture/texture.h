@@ -5,6 +5,7 @@
 #include <Lunaris/Imported/algif5.h>
 #include <Lunaris/Utility/file.h>
 #include <Lunaris/Utility/memory.h>
+#include <Lunaris/Utility/mutex.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
@@ -34,7 +35,7 @@ namespace Lunaris {
 		texture_config& set_file(const hybrid_memory<file>&);
 	};
 
-	class texture {
+	class texture : public NonCopyable {
 	protected:
 		ALLEGRO_BITMAP* bitmap = nullptr;
 		hybrid_memory<file> fileref;
@@ -47,9 +48,6 @@ namespace Lunaris {
 
 		texture(texture&&) noexcept;
 		void operator=(texture&&) noexcept;
-
-		texture(const texture&) = delete;
-		void operator=(const texture&) = delete;
 
 		bool create(const texture_config&);
 		bool create(const int, const int);
@@ -68,7 +66,7 @@ namespace Lunaris {
 		int get_flags() const;
 
 		virtual ALLEGRO_BITMAP* get_raw_bitmap() const;
-		operator ALLEGRO_BITMAP* () const;
+		virtual operator ALLEGRO_BITMAP* () const;
 
 		virtual bool empty() const;
 
@@ -215,6 +213,47 @@ namespace Lunaris {
 		void set_as_target() const;
 	};
 
+	class functional_texture : public texture {
+		std::function<void(ALLEGRO_BITMAP*)> func; // tied to check_ready()
+		mutable fast_one_way_mutex fastmu;
+
+		bool check_ready() const;
+	public:
+		functional_texture() = default;
+		~functional_texture();
+
+		functional_texture(functional_texture&&) noexcept;
+		void operator=(functional_texture&&) noexcept;
+
+		void hook_function(std::function<void(ALLEGRO_BITMAP*)>);
+		void unhook_function();
+
+		using texture::create;
+		using texture::load;
+		using texture::duplicate;
+		using texture::create_sub;
+		using texture::get_width;
+		using texture::get_height;
+		using texture::get_format;
+		using texture::get_flags;
+		using texture::get_raw_bitmap;
+		using texture::operator ALLEGRO_BITMAP*;
+		using texture::empty;
+		using texture::destroy;
+		using texture::draw_at;
+		using texture::draw_tinted_at;
+		using texture::draw_region_at;
+		using texture::draw_tinted_region_at;
+		using texture::draw_rotated_at;
+		using texture::draw_tinted_rotated_at;
+		using texture::draw_scaled_rotated_at;
+		using texture::draw_tinted_scaled_rotated_at;
+		using texture::draw_scaled_at;
+		using texture::draw_scaled_region_at;
+		using texture::draw_tinted_scaled_at;
+		using texture::draw_tinted_scaled_region_at;
+	};
+
 	class texture_gif : public texture {
 		ALGIF_ANIMATION* animation = nullptr;
 		double start_time = 0.0;
@@ -227,9 +266,6 @@ namespace Lunaris {
 		texture_gif(texture_gif&&) noexcept;
 		void operator=(texture_gif&&) noexcept;
 
-		texture_gif(const texture_gif&) = delete;
-		void operator=(const texture_gif&) = delete;
-
 		bool load(const std::string&);
 		bool load(const hybrid_memory<file>&);
 
@@ -237,6 +273,7 @@ namespace Lunaris {
 		int get_height() const;
 
 		ALLEGRO_BITMAP* get_raw_bitmap() const;
+		operator ALLEGRO_BITMAP* () const;
 		bool empty();
 		void destroy();
 

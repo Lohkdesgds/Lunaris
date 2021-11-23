@@ -77,6 +77,19 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} True if exists.</returns>
 		bool exists() const;
+
+		/// <summary>
+		/// <para>Is this mixer loaded and ready?</para>
+		/// </summary>
+		/// <returns>{bool} True means not ready/set.</returns>
+		bool empty() const;
+
+		/// <summary>
+		/// <para>Is this mixer loaded and ready?</para>
+		/// </summary>
+		/// <returns>{bool} True if exists.</returns>
+		bool valid() const;
+
 	};
 
 }
