@@ -70,6 +70,8 @@ namespace Lunaris {
 		types type = types::TRIANGLE_LIST;
 		mutable std::shared_mutex safe_mtx;
 	public:
+		vertexes();
+
 		/// <summary>
 		/// <para>Add a vertex point to the existing list of vertex points.</para>
 		/// </summary>
@@ -104,6 +106,18 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} True if has texture set.</returns>
 		bool has_texture() const;
+
+		/// <summary>
+		/// <para>Set points interpretation mode.</para>
+		/// </summary>
+		/// <param name="{types}">Which type?</param>
+		void set_mode(types);
+
+		/// <summary>
+		/// <para>Get the mode set.</para>
+		/// </summary>
+		/// <returns>{types} The mode being used.</returns>
+		types get_mode() const;
 
 		/// <summary>
 		/// <para>Draws itself on screen.</para>

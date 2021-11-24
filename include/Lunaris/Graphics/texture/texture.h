@@ -214,7 +214,7 @@ namespace Lunaris {
 	};
 
 	class functional_texture : public texture {
-		std::function<void(ALLEGRO_BITMAP*)> func; // tied to check_ready()
+		std::function<void(texture&)> func; // tied to check_ready()
 		mutable fast_one_way_mutex fastmu;
 
 		bool check_ready() const;
@@ -225,8 +225,11 @@ namespace Lunaris {
 		functional_texture(functional_texture&&) noexcept;
 		void operator=(functional_texture&&) noexcept;
 
-		void hook_function(std::function<void(ALLEGRO_BITMAP*)>);
+		void hook_function(std::function<void(texture&)>);
 		void unhook_function();
+
+		ALLEGRO_BITMAP* get_raw_bitmap() const;
+		operator ALLEGRO_BITMAP* () const;
 
 		using texture::create;
 		using texture::load;
@@ -236,8 +239,6 @@ namespace Lunaris {
 		using texture::get_height;
 		using texture::get_format;
 		using texture::get_flags;
-		using texture::get_raw_bitmap;
-		using texture::operator ALLEGRO_BITMAP*;
 		using texture::empty;
 		using texture::destroy;
 		using texture::draw_at;

@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
 	if (AUTOEXCEPT(events_test()) != 0) return 1;
-	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
+	if (AUTOEXCEPT(graphics_test()) != 0) return 1;
 }
 
 void hold_user()
@@ -1151,12 +1151,14 @@ int graphics_test()
 	const color mouse_has_collision = color(255, 127, 255);
 	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
-	auto bmppp = make_hybrid<texture>();
-	auto giffye = make_hybrid_derived<texture, texture_gif>();
+	auto ffbmp = make_hybrid_derived<texture, functional_texture>(); // self changing texture
+	auto bmppp = make_hybrid<texture>(); // random img from internet
+	auto giffye = make_hybrid_derived<texture, texture_gif>(); // gif
 	auto tempfp = make_hybrid_derived<file, tempfile>(); // random file
 	tempfile* fp = (tempfile*)tempfp.get();
 	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
 	tempfile* fp2 = (tempfile*)tempfp2.get();
+	vertexes polygony;
 	
 
 	cout << "Creating display...";
@@ -1252,6 +1254,22 @@ int graphics_test()
 	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.5f);
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 
+	{
+		functional_texture* ftt = (functional_texture*)ffbmp.get();
+		TESTLU(ftt->create(512, 512), "Couldn't create texture/font for test!");
+		ftt->hook_function([](texture& self) {
+			const float dtim = static_cast<float>(al_get_time());
+			al_draw_filled_rectangle(0, 0, self.get_width(), self.get_height(), color(0.6f + 0.8f * cosf(dtim * 1.3f), 0.6f + 0.8f * cosf(dtim * 0.57f + 0.8754f), 0.6f + 0.8f * cosf(dtim * 2.25f + 1.8896f)));
+		});
+	}
+
+	polygony.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
+	polygony.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
+	polygony.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
+	polygony.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
+	polygony.set_mode(vertexes::types::TRIANGLE_STRIP);
+	polygony.set_texture(ffbmp);
+
 	cout << "Applying default transformation to display...";
 
 	my_display.add_run_once_in_drawing_thread([&my_display,&fixprop] {
@@ -1302,6 +1320,7 @@ int graphics_test()
 		blk_fixed.draw();
 		blk_mouse.draw();
 		txt_main.draw();
+		polygony.draw();
 
 		topleft_dc.draw();
 

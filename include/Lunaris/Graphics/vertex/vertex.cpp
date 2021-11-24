@@ -40,6 +40,11 @@ namespace Lunaris {
 		this->color = _c;
 	}
 
+	LUNARIS_DECL vertexes::vertexes()
+	{
+		__vertex_allegro_start();
+	}
+
 	LUNARIS_DECL void vertexes::push_back(const vertex_point& v)
 	{
 		std::unique_lock<std::shared_mutex>(safe_mtx);
@@ -76,11 +81,21 @@ namespace Lunaris {
 		return textur.valid() && !textur->empty();
 	}
 
+	LUNARIS_DECL void vertexes::set_mode(types t)
+	{
+		type = t;
+	}
+
+	LUNARIS_DECL vertexes::types vertexes::get_mode() const
+	{
+		return type;
+	}
+
 	LUNARIS_DECL void vertexes::draw()
 	{
 		std::shared_lock<std::shared_mutex>(safe_mtx);
 		if (!points.size()) return;
-		al_draw_prim(points.data(), nullptr, (textur.valid() && !textur->empty()) ? textur->get_raw_bitmap() : nullptr, 0, static_cast<int>(points.size()), static_cast<int>(type));
+		al_draw_prim(points.data(), nullptr, textur.valid() ? textur->get_raw_bitmap() : nullptr, 0, static_cast<int>(points.size()), static_cast<int>(type));
 	}
 
 }
