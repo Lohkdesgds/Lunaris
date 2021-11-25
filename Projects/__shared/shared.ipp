@@ -204,7 +204,7 @@ int utility_test(const std::string& self_path)
 		cout << "Defuse works!";
 
 		cout << "Creating a timed bomb with time = 2.2 sec...";
-		
+
 		realboom = false;
 		{
 			timed_bomb mybomb([&] {realboom = true; }, 2.2);
@@ -277,7 +277,7 @@ int utility_test(const std::string& self_path)
 			TESTLU(info.has_ended(), "Future value was not set!");
 
 		}
-		
+
 		counter = 0;
 		cout << "Launching totally async this time!";
 
@@ -329,7 +329,7 @@ int utility_test(const std::string& self_path)
 		cout << "Removed " << amount << " paths.";
 
 		TESTLU(amount == 4, "Wait, that's not right... Wrong number of paths erased!");
-		
+
 		cout << console::color::GREEN << "PASSED!";
 	}
 
@@ -516,6 +516,33 @@ int utility_test(const std::string& self_path)
 				memfp.close();
 			}
 		}
+	}
+
+	cout << console::color::LIGHT_PURPLE << "Testing 'hash' (comparing SHA256 to supermess)...";
+	{
+		cout << "Creating random string of characters...";
+
+		std::vector<char> rngg;
+		for (size_t p = 0; p < (1 << 16); p++)
+		{
+			rngg.push_back(static_cast<char>(random() % 0xFF));
+		}
+
+		cout << "Checking the time to hash with SHA256 once...";
+
+		auto rn1 = std::chrono::high_resolution_clock::now();
+		const auto __s256 = sha256(rngg);
+		auto l81 = std::chrono::high_resolution_clock::now();
+
+		cout << "Now a messy string one...";
+		auto rn2 = std::chrono::high_resolution_clock::now();
+		const auto __smes = encrypt_supermess_auto(rngg);
+		auto l82 = std::chrono::high_resolution_clock::now();
+
+		cout << "SHA256 took: " << std::chrono::duration_cast<std::chrono::duration<double>>(l81 - rn1).count() * 1e6 << " us";
+		cout << "SPMESS took: " << std::chrono::duration_cast<std::chrono::duration<double>>(l82 - rn2).count() * 1e6 << " us";
+
+		cout << console::color::YELLOW << "PASSED?";
 	}
 
 	{

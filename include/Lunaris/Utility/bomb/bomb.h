@@ -13,6 +13,11 @@
 
 namespace Lunaris {
 
+	/// <summary>
+	/// <para>bomb is a really good tool when you need something to run then everything is destroyed (when things goes out of scope).</para>
+	/// <para>You create the bomb with a function. The function is run when the object is destroyed. Easy, right?</para>
+	/// <para>You can defuse the bomb if you don't want the function running at the end, maybe you've set the bomb for exception recovery and if things goes right you defuse it, I don't know.</para>
+	/// </summary>
 	class bomb : public NonCopyable {
 		mutable std::mutex saf;
 		std::function<void(void)> boom;
@@ -50,8 +55,23 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} Defused?</returns>
 		bool is_defused() const;
+
+		/// <summary>
+		/// <para>If not defused, it's considered valid.</para>
+		/// </summary>
+		/// <returns>{bool} is it still valid (not defused)?</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If defused, it's considered empty.</para>
+		/// </summary>
+		/// <returns>{bool} has bomb set?</returns>
+		bool empty() const;
 	};
 
+	/// <summary>
+	/// <para>A timed_bomb should feel like a bomb, but it has a timer trigger too! If timed out or destroyed, BOOM.</para>
+	/// </summary>
 	class timed_bomb : public NonCopyable {
 		struct _bomb {
 			bomb _bmb;
@@ -94,6 +114,18 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} Defused?</returns>
 		bool is_defused() const;
+
+		/// <summary>
+		/// <para>If not defused, it's considered valid.</para>
+		/// </summary>
+		/// <returns>{bool} is it still valid (not defused)?</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If defused, it's considered empty.</para>
+		/// </summary>
+		/// <returns>{bool} has bomb set?</returns>
+		bool empty() const;
 	};
 
 }

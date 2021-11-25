@@ -82,7 +82,7 @@ namespace Lunaris {
 		}
 	}
 
-	LUNARIS_DECL const std::string& file::get_path()
+	LUNARIS_DECL const std::string& file::get_path() const
 	{
 		return path;
 	}
@@ -130,6 +130,16 @@ namespace Lunaris {
 	LUNARIS_DECL bool file::is_open() const
 	{
 		return fp.operator bool();
+	}
+
+	LUNARIS_DECL bool file::valid() const
+	{
+		return is_open();
+	}
+
+	LUNARIS_DECL bool file::empty() const
+	{
+		return !is_open();
 	}
 
 	LUNARIS_DECL tempfile::tempfile(tempfile&& oth) noexcept
@@ -275,7 +285,7 @@ namespace Lunaris {
 				void* pMyBinaryData = LockResource(myResourceData);
 
 				tempfile fp;
-				if (!fp.open("theblast_temp_XXXX" + extn)) {
+				if (!fp.open("lunaris_XXXXXXX" + extn)) {
 					FreeResource(myResourceData);
 					return {};
 				}

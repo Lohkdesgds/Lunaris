@@ -12,6 +12,11 @@
 #pragma comment (lib, "wininet.lib")
 
 namespace Lunaris {
+
+	/// <summary>
+	/// <para>downloader is a tool to download files from the internet.</para>
+	/// <para>It is able to store in a buffer internally or directly flush to somewhere using a function many times.</para>
+	/// </summary>
 	class downloader {
 		std::vector<char> buf;
 		size_t TotalBytesRead = 0;
