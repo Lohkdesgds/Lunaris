@@ -63,6 +63,7 @@ namespace Lunaris {
 			TRIANGLE_LIST,		// Triangle list (each three vertex points make a triangle). Expects multiple of 3.
 			TRIANGLE_STRIP,		// Triangle strip is a "keep going" triangle list. 3 points make one triangle one by one ([0,1,2], [1,2,3], [2,3,4], ...)
 			TRIANGLE_FAN		// A "center" point and triangles around. All triangles share the first vertex point.
+			// if changed later, update valid()
 		};
 	private:
 		std::vector<vertex_point> points;
@@ -83,6 +84,12 @@ namespace Lunaris {
 		/// </summary>
 		/// <param name="{vertex_point}">A vertex point to add.</param>
 		void push_back(vertex_point&&);
+
+		/// <summary>
+		/// <para>Add multiple vertex points at once (to the end of the list).</para>
+		/// </summary>
+		/// <param name="{initializer_list}">A list of vertex points.</param>
+		void push_back(std::initializer_list<vertex_point>);
 
 		/// <summary>
 		/// <para>Set a texture to the triangles/lines</para>
@@ -123,6 +130,18 @@ namespace Lunaris {
 		/// <para>Draws itself on screen.</para>
 		/// </summary>
 		void draw();
+
+		/// <summary>
+		/// <para>Is this a valid well built object? Some mode types require special vertex sizes, so this checks that as well.</para>
+		/// </summary>
+		/// <returns>{bool} True if good.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If there's a vertex set, it's NOT empty.</para>
+		/// </summary>
+		/// <returns>{bool} True if no vertex is set.</returns>
+		bool empty() const;
 	};
 
 }

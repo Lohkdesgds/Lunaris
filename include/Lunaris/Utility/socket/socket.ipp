@@ -296,9 +296,21 @@ namespace Lunaris {
 	}
 
 	template<int protocol, bool host>
-	inline bool socket_client<protocol, host>::has_socket()
+	inline bool socket_client<protocol, host>::has_socket() const
 	{
 		return data->connection != SocketInvalid;
+	}
+
+	template<int protocol, bool host>
+	inline bool socket_client<protocol, host>::valid() const
+	{
+		return has_socket();
+	}
+
+	template<int protocol, bool host>
+	inline bool socket_client<protocol, host>::empty() const
+	{
+		return !has_socket();
 	}
 
 	template<int protocol, bool host>
@@ -345,11 +357,22 @@ namespace Lunaris {
 	}
 
 	template<int protocol, bool host>
-	inline bool socket_host<protocol, host>::has_socket()
+	inline bool socket_host<protocol, host>::has_socket() const
 	{
 		return data->listeners.size() != 0;
 	}
 
+	template<int protocol, bool host>
+	inline bool socket_host<protocol, host>::valid() const
+	{
+		return has_socket();
+	}
+
+	template<int protocol, bool host>
+	inline bool socket_host<protocol, host>::empty() const
+	{
+		return !has_socket();
+	}
 
 	inline bool TCP_client::send(const std::vector<char>& raw)
 	{
@@ -429,10 +452,17 @@ namespace Lunaris {
 	}
 
 	template<typename T, std::enable_if_t<std::is_pod_v<T>, int>>
-	inline bool TCP_client::recv(T& var, const bool wait)
+	inline bool TCP_client::recv(T& var, const bool wait, const std::function<void(std::vector<char>&)> fback)
 	{
-		auto vec = this->recv(sizeof(T), wait);
-		if (vec.size() != sizeof(T)) return false;
+		std::vector<char> vec;
+		for (size_t _tries = 0; _tries < 3 && vec.size() != sizeof(T); _tries++) {
+			vec.insert(vec.end(), this->recv((sizeof(T) - vec.size()), wait)); // may slice, this merge back
+		}
+
+		if (vec.size() != sizeof(T)) {
+			if (vec.size() && fback) fback(vec);
+			return false;
+		}
 #ifdef _WIN32
 		return memcpy_s(&var, sizeof(var), vec.data(), vec.size()) == 0;
 #else
@@ -557,7 +587,7 @@ namespace Lunaris {
 	template<typename T, std::enable_if_t<std::is_pod_v<T>, int>>
 	inline bool UDP_client::recv(T& var, const bool wait)
 	{
-		auto vec = this->recv(sizeof(T), wait);
+		auto vec = this->recv(sizeof(T), wait); // as UDP is about packages, there's no reason to merge packages. The size must be right from the beginning.
 		if (vec.size() != sizeof(T)) return false;
 #ifdef _WIN32
 		return memcpy_s(&var, sizeof(var), vec.data(), vec.size()) == 0;
@@ -621,6 +651,11 @@ namespace Lunaris {
 		return socket != SocketInvalid;
 	}
 
+	inline bool UDP_host::UDP_host_handler::empty() const
+	{
+		return socket == SocketInvalid;
+	}
+
 	inline const std::vector<char>& UDP_host::UDP_host_handler::get() const // not recv
 	{
 		return data;
@@ -635,6 +670,11 @@ namespace Lunaris {
 #else
 		return memcpy(&var, data.data(), data.size()) != nullptr;
 #endif
+	}
+
+	inline size_t UDP_host::UDP_host_handler::size() const
+	{
+		return data.size();
 	}
 
 	inline bool UDP_host::UDP_host_handler::send(const std::vector<char>& raw)

@@ -57,6 +57,12 @@ namespace Lunaris {
 		points.push_back(std::move(v));
 	}
 
+	LUNARIS_DECL void vertexes::push_back(std::initializer_list<vertex_point> l)
+	{
+		std::unique_lock<std::shared_mutex>(safe_mtx);
+		points.insert(points.end(), l.begin(), l.end());
+	}
+
 	LUNARIS_DECL void vertexes::set_texture(const hybrid_memory<texture>& t)
 	{
 		std::unique_lock<std::shared_mutex>(safe_mtx);
@@ -96,6 +102,32 @@ namespace Lunaris {
 		std::shared_lock<std::shared_mutex>(safe_mtx);
 		if (!points.size()) return;
 		al_draw_prim(points.data(), nullptr, textur.valid() ? textur->get_raw_bitmap() : nullptr, 0, static_cast<int>(points.size()), static_cast<int>(type));
+	}
+
+	LUNARIS_DECL bool vertexes::valid() const
+	{
+		switch (type) {
+		case types::POINT_LIST:
+			return points.size() > 0;
+		case types::LINE_LIST:
+			return (points.size() > 1) && ((points.size() % 2) == 0);
+		case types::LINE_STRIP:
+			return points.size() > 1;
+		case types::LINE_LOOP:
+			return points.size() > 1;
+		case types::TRIANGLE_LIST:
+			return (points.size() > 2) && ((points.size() % 3) == 0);
+		case types::TRIANGLE_STRIP:
+			return points.size() > 2;
+		case types::TRIANGLE_FAN:
+			return points.size() > 2;
+		}
+		return false;
+	}
+
+	LUNARIS_DECL bool vertexes::empty() const
+	{
+		return points.size() == 0;
 	}
 
 }

@@ -68,4 +68,14 @@ namespace Lunaris {
 		buf.clear();
 	}
 
+	LUNARIS_DECL bool downloader::valid() const
+	{
+		return buf.size() != 0;
+	}
+
+	LUNARIS_DECL bool downloader::empty() const
+	{
+		return buf.empty();
+	}
+
 }

@@ -54,6 +54,11 @@ namespace Lunaris {
 		return oth.buf == buf;
 	}
 
+	inline bool package::operator!=(const package& oth) const 
+	{
+		return oth.buf != buf;
+	}
+
 	template<typename T, std::enable_if_t<std::is_pod_v<T> && !std::is_array_v<T> && !std::is_pointer_v<T>, int>>
 	inline package& package::operator>>(T& val)
 	{
@@ -129,9 +134,9 @@ namespace Lunaris {
 		return buf;
 	}
 
-	inline size_t package::read_as_data(char* ptr, const size_t max) const
+	inline size_t package::read_as_data(char* ptr, const size_t max, const size_t bgg) const
 	{
-		size_t p = 0;
+		size_t p = bgg;
 		for (; p < max && p < buf.size(); ++p) {
 			ptr[p] = buf[p];
 		}
@@ -151,6 +156,21 @@ namespace Lunaris {
 	inline package::operator const std::vector<char>&() const
 	{
 		return buf;
+	}
+
+	inline size_t package::size() const
+	{
+		return buf.size();
+	}
+
+	inline bool package::valid() const
+	{
+		return buf.size() != 0;
+	}
+
+	inline bool package::empty() const
+	{
+		return buf.empty();
 	}
 
 }

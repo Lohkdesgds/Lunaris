@@ -226,6 +226,11 @@ namespace Lunaris {
 		return get_raw_bitmap();
 	}
 
+	LUNARIS_DECL bool texture::valid() const
+	{
+		return bitmap != nullptr;
+	}
+
 	LUNARIS_DECL bool texture::empty() const
 	{
 		return bitmap == nullptr;
@@ -459,9 +464,14 @@ namespace Lunaris {
 		return get_raw_bitmap();
 	}
 
-	LUNARIS_DECL bool texture_gif::empty()
+	LUNARIS_DECL bool texture_gif::valid() const
 	{
 		return animation != nullptr && bitmap != nullptr;
+	}
+
+	LUNARIS_DECL bool texture_gif::empty() const
+	{
+		return !valid();
 	}
 
 	LUNARIS_DECL void texture_gif::destroy()

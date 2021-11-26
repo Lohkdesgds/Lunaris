@@ -7,6 +7,10 @@
 
 namespace Lunaris {
 
+	/// <summary>
+	/// <para>Hybrid memory is a shareable changeable pointer that enables you to share a pointer to many, change the shared pointer or your pointer itself, move, copy and safely delete if all of them are destroyed!</para>
+	/// <para>This is widely used in cases that we need a shareable pointer that may change itself in the future (like a texture in a sprite that can change from outside later, maybe).</para>
+	/// </summary>
 	template<typename T>
 	class hybrid_memory {
 		std::shared_ptr<std::unique_ptr<T>> m_ptr;
@@ -135,13 +139,37 @@ namespace Lunaris {
 		size_t use_count() const;
 	};
 
+	/// <summary>
+	/// <para>Create a hybrid_memory easily of a type.</para>
+	/// </summary>
+	/// <returns>{hybrid_memory} A hybrid_memory of this type.</returns>
 	template<typename T>
 	hybrid_memory<T> make_hybrid();
+
+	/// <summary>
+	/// <para>Create a hybrid_memory with T internally, but looking as their parent.</para>
+	/// <para>Like on raw pointers or variables, you can "cast" back to the parent class if you need that.</para>
+	/// <para>Examples: child of texture can be casted back to texture so they can be used as one!</para>
+	/// </summary>
+	/// <returns>{hybrid_memory} A hybrid_memory of the parent type (with this type in it).</returns>
 	template<typename T, typename K>
 	hybrid_memory<T> make_hybrid_derived();
 
+	/// <summary>
+	/// <para>Create a hybrid_memory easily of a type.</para>
+	/// <para>The arguments are the ones given to the new T(ARGS...).</para>
+	/// </summary>
+	/// <returns>{hybrid_memory} A hybrid_memory of this type.</returns>
 	template<typename T, class... Args>
 	hybrid_memory<T> make_hybrid(Args&&...);
+
+	/// <summary>
+	/// <para>Create a hybrid_memory with T internally, but looking as their parent.</para>
+	/// <para>Like on raw pointers or variables, you can "cast" back to the parent class if you need that.</para>
+	/// <para>Examples: child of texture can be casted back to texture so they can be used as one!</para>
+	/// <para>The arguments are the ones given to the new T(ARGS...).</para>
+	/// </summary>
+	/// <returns>{hybrid_memory} A hybrid_memory of the parent type (with this type in it).</returns>
 	template<typename T, typename K, class... Args>
 	hybrid_memory<T> make_hybrid_derived(Args&&...);
 }

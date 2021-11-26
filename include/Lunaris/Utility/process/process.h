@@ -10,6 +10,9 @@
 
 namespace Lunaris {
 
+	/// <summary>
+	/// <para>process handles a process for you in parallel. You set a function to get STDOUT and you can monitor it!</para>
+	/// </summary>
 	class process {
 	public:
 		enum class message_type {START /*Started process signal*/, APP_OUTPUT /*Each message*/, ENDED /*Ended process signal*/ };
@@ -69,6 +72,18 @@ namespace Lunaris {
 		/// <para>Set task to stop and wait.</para>
 		/// </summary>
 		void stop();
+
+		/// <summary>
+		/// <para>It is considered valid if it's running.</para>
+		/// </summary>
+		/// <returns>{bool} True if running.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>It is considered empty if there's nothing running.</para>
+		/// </summary>
+		/// <returns>{bool} True if stopped.</returns>
+		bool empty() const;
 	};
 
 }

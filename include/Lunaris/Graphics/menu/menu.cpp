@@ -104,7 +104,7 @@ namespace Lunaris {
 		if (const int gg = al_get_menu_item_flags(men, id); gg >= 0) flags = gg;
 	}
 
-	LUNARIS_DECL menu_each_menu::menu_each_menu(std::vector<__menu_each_generic> lst)
+	LUNARIS_DECL menu_each_menu::menu_each_menu(std::initializer_list<__menu_each_generic> lst)
 	{
 		for (auto& it : lst) {
 			switch (it.get_type()) {
@@ -137,7 +137,7 @@ namespace Lunaris {
 	{
 	}
 
-	LUNARIS_DECL menu_each_menu::menu_each_menu(const std::string& nam, const uint16_t i, const int flg, std::vector<__menu_each_generic> lst)
+	LUNARIS_DECL menu_each_menu::menu_each_menu(const std::string& nam, const uint16_t i, const int flg, std::initializer_list<__menu_each_generic> lst)
 		: name(nam), id(i), flags(flg)
 	{
 		for (auto& it : lst) {

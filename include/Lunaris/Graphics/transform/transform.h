@@ -9,6 +9,10 @@
 
 namespace Lunaris {
 
+	/// <summary>
+	/// <para>transform is widely used by many functions and classes around this library. It is the main transformation object.</para>
+	/// <para>Build, transform, translate, rotate, scale, whatever! Do whatever you want with this! You can translate coordinates and so on!</para>
+	/// </summary>
 	class transform {
 		ALLEGRO_TRANSFORM t;
 	public:

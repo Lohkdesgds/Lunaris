@@ -54,6 +54,20 @@ namespace Lunaris {
 		/// <para>Clears internal buffer.</para>
 		/// </summary>
 		void clear_buf();
+
+		/// <summary>
+		/// <para>If it has something saved internallly, it's considered VALID (to read()).</para>
+		/// <para>This doesn't work if you use get_store().</para>
+		/// </summary>
+		/// <returns>{bool} True if has content to read.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If there's nothing stored for read(), it's considered empty.</para>
+		/// <para>Empty doesn't mean fail (unless you tried get() and it didn't get any byte).</para>
+		/// </summary>
+		/// <returns>{bool} True if buffer is empty.</returns>
+		bool empty() const;
 	};
 
 }

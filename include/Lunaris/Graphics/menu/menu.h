@@ -78,9 +78,9 @@ namespace Lunaris {
 		std::vector<std::shared_ptr<__menu_each_generic>> sub_menus;
 	public:
 		menu_each_menu() = default;
-		menu_each_menu(std::vector<__menu_each_generic>);
+		menu_each_menu(std::initializer_list<__menu_each_generic>);
 		menu_each_menu(const std::string&, const uint16_t, const int = 0);
-		menu_each_menu(const std::string&, const uint16_t, const int, std::vector<__menu_each_generic>);
+		menu_each_menu(const std::string&, const uint16_t, const int, std::initializer_list<__menu_each_generic>);
 
 		menu_each_menu& set_name(const std::string&);
 		menu_each_menu& set_id(const uint16_t);

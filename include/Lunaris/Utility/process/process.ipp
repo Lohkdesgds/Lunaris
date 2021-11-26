@@ -1,3 +1,4 @@
+#include "process.h"
 #pragma once
 
 namespace Lunaris {
@@ -129,6 +130,16 @@ namespace Lunaris {
             }
             else if (thr_read.joinable()) thr_read.join();
         }
+    }
+
+    inline bool process::valid() const
+    {
+        return running();
+    }
+
+    inline bool process::empty() const
+    {
+        return !running();
     }
 
 }

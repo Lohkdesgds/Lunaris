@@ -23,12 +23,14 @@ namespace Lunaris {
 	template<typename Q, std::enable_if_t<std::is_void_v<Q>, int>>
 	inline void future<T>::_self::_int_data::handle_start()
 	{
+		// void does nothing
 	}
 
 	template<typename T>
 	template<typename Q, std::enable_if_t<std::is_void_v<Q>, int>>
 	inline void future<T>::_self::_int_data::handle_end()
 	{
+		// void does nothing
 	}
 
 	template<typename T>
@@ -77,7 +79,6 @@ namespace Lunaris {
 			if (redirect) _data._next(t);
 			else *_data.value = t;
 			_data.has_result = true;
-			//std::cout << " __ post posted val\n";
 		}
 
 		_data.triggered_result.notify_one();
@@ -93,7 +94,6 @@ namespace Lunaris {
 			std::unique_lock<std::mutex> safe(_data.triggered_mutex);
 			if (redirect) _data._next();
 			_data.has_result = true;
-			//std::cout << " __ post posted val\n";
 		}
 
 		_data.triggered_result.notify_one();

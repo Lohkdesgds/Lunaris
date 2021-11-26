@@ -18,7 +18,10 @@ namespace Lunaris {
 
 	void __bitmap_allegro_start();
 
-	// width and height OR path. Path is chosen if both situations.
+	/// <summary>
+	/// <para>Texture configuration.</para>
+	/// <para>You can't have size and path set at the same time. Only one of them is used.</para>
+	/// </summary>
 	struct texture_config {
 		int format = ALLEGRO_PIXEL_FORMAT_ANY;
 		int flags = ALLEGRO_CONVERT_BITMAP | ALLEGRO_MIN_LINEAR;
@@ -68,6 +71,7 @@ namespace Lunaris {
 		virtual ALLEGRO_BITMAP* get_raw_bitmap() const;
 		virtual operator ALLEGRO_BITMAP* () const;
 
+		virtual bool valid() const;
 		virtual bool empty() const;
 
 		virtual void destroy();
@@ -239,6 +243,7 @@ namespace Lunaris {
 		using texture::get_height;
 		using texture::get_format;
 		using texture::get_flags;
+		using texture::valid;
 		using texture::empty;
 		using texture::destroy;
 		using texture::draw_at;
@@ -275,7 +280,8 @@ namespace Lunaris {
 
 		ALLEGRO_BITMAP* get_raw_bitmap() const;
 		operator ALLEGRO_BITMAP* () const;
-		bool empty();
+		bool valid() const;
+		bool empty() const;
 		void destroy();
 
 		double get_interval_average() const;
