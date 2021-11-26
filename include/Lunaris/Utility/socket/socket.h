@@ -28,6 +28,7 @@
 #include <vector>
 #include <thread>
 #include <stdexcept>
+#include <functional>
 
 #ifdef _WIN32
 using SocketType = SOCKET;
