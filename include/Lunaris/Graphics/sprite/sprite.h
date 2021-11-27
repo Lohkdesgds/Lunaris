@@ -150,7 +150,10 @@ namespace Lunaris {
 		{color( 85, 85,190,130),		enum_sprite_color_e::DRAW_THINK_BOX}
 	};
 
-
+	/// <summary>
+	/// <para>Sprite is a combo used by many other classes. It's a basic, yet powerful and complete, set of properties good enough to guarantee enough drawing and collision information.</para>
+	/// <para>Many are derived of this, so you can collide/update them and draw easily from the same think() and draw() functions.</para>
+	/// </summary>
 	class sprite :
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>,
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_double_e::_SIZE), double, enum_sprite_double_e>,
@@ -164,13 +167,17 @@ namespace Lunaris {
 		virtual void think_task() {}
 	public:
 		sprite();
-
+		
+		/// <summary>
+		/// <para>Draw current sprite.</para>
+		/// </summary>
 		void draw();
+
+		/// <summary>
+		/// <para>Think about position and collision positioning.</para>
+		/// </summary>
 		void think();
 
-		//int collide(const sprite&) const;
-
-		// inheritance
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::set;
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::get;
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::index;

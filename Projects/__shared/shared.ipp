@@ -1178,7 +1178,7 @@ int graphics_test()
 	const color mouse_has_collision = color(255, 127, 255);
 	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
-	auto ffbmp = make_hybrid_derived<texture, functional_texture>(); // self changing texture
+	auto ffbmp = make_hybrid_derived<texture, texture_functional>(); // self changing texture
 	auto bmppp = make_hybrid<texture>(); // random img from internet
 	auto giffye = make_hybrid_derived<texture, texture_gif>(); // gif
 	auto tempfp = make_hybrid_derived<file, tempfile>(); // random file
@@ -1282,7 +1282,7 @@ int graphics_test()
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 
 	{
-		functional_texture* ftt = (functional_texture*)ffbmp.get();
+		texture_functional* ftt = (texture_functional*)ffbmp.get();
 		TESTLU(ftt->create(512, 512), "Couldn't create texture/font for test!");
 		ftt->hook_function([](texture& self) {
 			const float dtim = static_cast<float>(al_get_time());
@@ -1626,13 +1626,13 @@ int events_test()
 	TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 	cout << console::color::GREEN << "Good!";
 
-	menu mymenu(disp, {
+	menu mymenu( disp, {
 		menu_each_menu()
 			.set_name("This one")
 			.set_id(9900)
 			.push(menu_each_default()
 				.set_name("Click me")
-				.set_id(10)
+				.set_id(910)
 			)
 			.push(menu_each_empty()
 			)
@@ -1641,12 +1641,12 @@ int events_test()
 				.set_id(9901)
 				.push(menu_each_default()
 					.set_name("Hey")
-					.set_id(1)
+					.set_id(301)
 					.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
 				)
 				.push(menu_each_default()
 					.set_name("Lists")
-					.set_id(2)
+					.set_id(302)
 					.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
 				)
 				.push(menu_each_menu()
@@ -1663,7 +1663,7 @@ int events_test()
 			.set_id(9903)
 			.push(menu_each_default()
 				.set_name("Copyright? Probably not")
-				.set_id(20)
+				.set_id(520)
 			)
 			.push(menu_each_empty()
 			)
@@ -1672,12 +1672,12 @@ int events_test()
 				.set_id(9904)
 				.push(menu_each_default()
 					.set_name("Lunaris B" + std::to_string(LUNARIS_BUILD_NUMBER))
-					.set_id(40)
+					.set_id(540)
 					.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
 				)
 				.push(menu_each_default()
 					.set_name("Beta testing")
-					.set_id(50)
+					.set_id(550)
 					.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
 				)
 			),
@@ -1710,31 +1710,44 @@ int events_test()
 			.push(menu_each_default()
 				.set_name("Keeps toggling lol")
 				.set_id(12345)
-			)
-		}
-	);
+			),
+		menu_each_menu()
+			.set_name("This is empty")
+			.set_id(3696),
+		menu_each_menu()
+			.set_name("List of times increasing...")
+			.set_id(3699)
+		});
 	{
 
 		//);
 
-		menu_event_handler menuev(mymenu);
-
-		mymenu.show();
 
 		bool clicked_right = false;
-		menuev.hook_event_handler([&](menu_event& mev) {
-			clicked_right |= ((mev.get_id() == 10) && (mev.get_name() == "Click me"));
+
+		const auto menu_f = [&](menu_event& mev) {
+			clicked_right |= (mev.get_name() == "Click me");
 			cout << mev.get_id() << " -> '" << mev.get_name() << "'";
 			if (mev.get_id() == 911) std::terminate(); // fatal error thingy
-			if (!clicked_right) {
-				mev.patch_toggle_flag(menu_item_flags::DISABLED);
+			if (!clicked_right && (mev.get_id() != 3696 && mev.get_id() != 3699)) {
+				mev.patch_toggle_flag(menu_flags::DISABLED);
 				mev.patch_name("This was not it. Random number voila: " + std::to_string(random()));
 			}
-			mymenu.update(); // test if works
-		});
+			//mymenu.apply(); // test if works
+		};
+
+		menu_event_handler menuev(mymenu);
+		mymenu.show();
+		menuev.hook_event_handler(menu_f);
+
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
-		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { disp.flip(); std::this_thread::sleep_for(std::chrono::milliseconds(500)); mymenu.patch_name_of(112, "Crash app (rng: " + std::to_string(random() % 1000) + ")"); mymenu.patch_toggle_flag(12345, menu_item_flags::DISABLED); }
+		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { 
+			disp.flip();
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			mymenu.find_id(112).set_caption("Crash app (rng: " + std::to_string(random() % 1000) + ")");
+			mymenu.find_id(12345).toggle_flags(menu_flags::DISABLED);
+		}
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
@@ -1743,18 +1756,30 @@ int events_test()
 
 		cout << console::color::YELLOW << "Do it again, please.";
 		clicked_right = false;
+		
+		auto mymenu2 = mymenu.duplicate_as(menu::menu_type::POPUP);
 
-		mymenu.remake_as(menu::menu_type::POPUP);
-
+		menu_event_handler menuev2(mymenu2);
+		mymenu2.show();
+		menuev2.hook_event_handler(menu_f);
+		
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
 		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { 
+
+			menu_handler submen = mymenu2["List of times increasing..."];
+			if (submen.size() > 5) submen.pop_front();
+			submen.push(menu_each_default().set_name("Yolo Time: " + std::to_string(al_get_time())).set_flags(menu_flags::DISABLED));
+
 			disp.flip();
-			mymenu.show();
+			mymenu2.show();
+
+			//mymenu2.show();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1500)); }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
+		mymenu2.hide();
 		disp.flip();
 	}
 

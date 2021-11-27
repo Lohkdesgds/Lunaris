@@ -72,6 +72,9 @@ namespace Lunaris {
 	constexpr size_t socket_default_tcp_buffer_size = 1 << 10;
 	constexpr size_t socket_maximum_udp_buffer_size = 508; // https://stackoverflow.com/questions/1098897/what-is-the-largest-safe-udp-packet-size-on-the-internet#:~:text=The%20maximum%20safe%20UDP%20payload%20is%20508%20bytes.&text=Any%20UDP%20payload%20this%20size,any%20router%20for%20any%20reason.
 
+	/// <summary>
+	/// <para>This is used to setup a socket.</para>
+	/// </summary>
 	struct socket_config {
 		enum class e_family { 
 			IPV4 = PF_INET,		// IPV4 is the good old XXX.XXX.XXX.XXX format IP
@@ -118,7 +121,9 @@ namespace Lunaris {
 		bool parse(const SocketStorage&);
 	};
 
-	// start WSA / stop WSA
+	/// <summary>
+	/// <para>This is the internal initializer thing.</para>
+	/// </summary>
 	class socket_core {
 #ifdef _WIN32
 		struct _data {
@@ -162,6 +167,9 @@ namespace Lunaris {
 		SocketType common_select(std::vector<SocketType>&, const long = 0);
 	};
 
+	/// <summary>
+	/// <para>This is an abstract socket class with the format of the things and look.</para>
+	/// </summary>
 	template<int protocol, bool host>
 	class socket : protected socket_core {
 	protected:
@@ -181,6 +189,9 @@ namespace Lunaris {
 		bool setup(const socket_config&);
 	};
 
+	/// <summary>
+	/// <para>This is the barebone client class (use TCP_client or UDP_client instead).</para>
+	/// </summary>
 	template<int protocol, bool host>
 	class socket_client : public socket<protocol, host> {
 	protected:
@@ -238,6 +249,9 @@ namespace Lunaris {
 		socket_config info() const;
 	};
 
+	/// <summary>
+	/// <para>This is the barebone host class (use TCP_host or UDP_host instead).</para>
+	/// </summary>
 	template<int protocol, bool host>
 	class socket_host : public socket<protocol, host> {
 	protected:
@@ -279,8 +293,9 @@ namespace Lunaris {
 		using socket<protocol, host>::setup;
 	};
 
-
-
+	/// <summary>
+	/// <para>TCP_client, as the name suggests, is a socket handler as client using TCP protocol.</para>
+	/// </summary>
 	class TCP_client : public socket_client<SOCK_STREAM, false> {
 	public:
 		using socket_client<SOCK_STREAM, false>::socket_client;
@@ -325,7 +340,10 @@ namespace Lunaris {
 		bool recv(T&, const bool = true, const std::function<void(std::vector<char>&)> = {});
 	};
 
-
+	/// <summary>
+	/// <para>TCP_host is the hosting socket manager that can listen to new clients and enables you to have a TCP host.</para>
+	/// <para>You use a TCP_client for each new connection.</para>
+	/// </summary>
 	class TCP_host : public socket_host<SOCK_STREAM, true> {
 	public:
 		using socket_host<SOCK_STREAM, true>::has_socket;
@@ -341,7 +359,9 @@ namespace Lunaris {
 		TCP_client listen(const long = 0);
 	};
 
-
+	/// <summary>
+	/// <para>UDP_client, as the name suggests, is a socket handler as client using UDP protocol.</para>
+	/// </summary>
 	class UDP_client : public socket_client<SOCK_DGRAM, false> {
 		socket_config conf;
 	public:
@@ -391,7 +411,11 @@ namespace Lunaris {
 		const socket_config& info() const;
 	};
 
-
+	/// <summary>
+	/// <para>UDP_host works like a server. The sockets in it can receive data from anyone, and you use the "from" information to answer back.</para>
+	/// <para>UDP is connectionless, so what this means is that the "clients" from this are not real unique clients, they're just a way to answer back using the socket that got the data in first place.</para>
+	/// <para>Because of that, there's no way to "recv" a specific address. You are always listening to everyone and answering as things happen.</para>
+	/// </summary>
 	class UDP_host : public socket_host<SOCK_DGRAM, true> {
 	public:
 		class UDP_host_handler;
@@ -411,6 +435,10 @@ namespace Lunaris {
 		UDP_host_handler recv(const size_t, const long = 0); // package size, timeout time
 	};
 
+	/// <summary>
+	/// <para>This is the way you can answer back to whoever sent you something. Sadly, as UDP is "from anyone", you can't recv from this, because it does not make sense.</para>
+	/// <para>The socket is the one that can listen to anyone, that's why it makes no sense.</para>
+	/// </summary>
 	class UDP_host::UDP_host_handler {
 		SocketStorage addr{};
 		socket_config conf;

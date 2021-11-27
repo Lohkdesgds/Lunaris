@@ -49,31 +49,131 @@ namespace Lunaris {
 		texture(const texture_config&);
 		virtual ~texture();
 
+		/// <summary>
+		/// <para>Move a texture to this.</para>
+		/// </summary>
+		/// <param name="{texture}">Texture being moved.</param>
 		texture(texture&&) noexcept;
+
+		/// <summary>
+		/// <para>Move a texture to this.</para>
+		/// </summary>
+		/// <param name="{texture}">Texture being moved.</param>
 		void operator=(texture&&) noexcept;
 
+		/// <summary>
+		/// <para>Create a texture using this configuration.</para>
+		/// </summary>
+		/// <param name="{texture_config}">A configuration.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool create(const texture_config&);
+
+		/// <summary>
+		/// <para>Directly create a texture of given size.</para>
+		/// </summary>
+		/// <param name="{int}">Width.</param>
+		/// <param name="{int}">Height.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool create(const int, const int);
+
+		/// <summary>
+		/// <para>Load a texture from a file path.</para>
+		/// </summary>
+		/// <param name="{std::string}">Path.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool create(const std::string&);
 
+		/// <summary>
+		/// <para>Load or create a texture with this configuration.</para>
+		/// </summary>
+		/// <param name="{texture_config}">A configuration.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool load(const texture_config&);
+
+		/// <summary>
+		/// <para>Load a texture from a file path.</para>
+		/// </summary>
+		/// <param name="{std::string}">Path.</param>
+		/// <returns>{bool} True if success.</returns>
 		virtual bool load(const std::string&);
+
+		/// <summary>
+		/// <para>Load and hook this texture to an already loaded file.</para>
+		/// <para>The hybrid_memory must not be deleted from outside. If you do nothing, this reference will keep it available while in use.</para>
+		/// </summary>
+		/// <param name="{hybrid_memory&lt;file&gt;}">A file.</param>
+		/// <returns>{bool} True if success.</returns>
 		virtual bool load(hybrid_memory<file>);
 
+		/// <summary>
+		/// <para>Duplicate internal texture.</para>
+		/// <para>If the texture was from a file, now it is completely duplicated in memory.</para>
+		/// </summary>
+		/// <returns>{texture} A duplicated texture of this.</returns>
 		texture duplicate();
+
+		/// <summary>
+		/// <para>Create a sub part of current texture (still targeting this one).</para>
+		/// <para>This original piece must still exist. The memory is shared.</para>
+		/// </summary>
+		/// <param name="{int}">Offset X.</param>
+		/// <param name="{int}">Offset Y.</param>
+		/// <param name="{int}">Width.</param>
+		/// <param name="{int}">Height.</param>
+		/// <returns>A sub texture of this.</returns>
 		texture create_sub(const int, const int, const int, const int);
 
+		/// <summary>
+		/// <para>Get the width of the texture bitmap.</para>
+		/// </summary>
+		/// <returns>{int} Width.</returns>
 		virtual int get_width() const;
+
+		/// <summary>
+		/// <para>Get the height of the texture bitmap.</para>
+		/// </summary>
+		/// <returns>{int} Height.</returns>
 		virtual int get_height() const;
+
+		/// <summary>
+		/// <para>Get the pixel format of the texture bitmap.</para>
+		/// </summary>
+		/// <returns>{int} Pixel format.</returns>
 		int get_format() const;
+
+		/// <summary>
+		/// <para>Get texture bitmap flags used to create this.</para>
+		/// </summary>
+		/// <returns>{int} Flags.</returns>
 		int get_flags() const;
 
+		/// <summary>
+		/// <para>Get the raw bitmap pointer.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_BITMAP*} Internal bitmap pointer.</returns>
 		virtual ALLEGRO_BITMAP* get_raw_bitmap() const;
+
+		/// <summary>
+		/// <para>Get the raw bitmap pointer.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_BITMAP*} Internal bitmap pointer.</returns>
 		virtual operator ALLEGRO_BITMAP* () const;
 
+		/// <summary>
+		/// <para>It is considered valid if the bitmap is not null.</para>
+		/// </summary>
+		/// <returns>{bool} Is there a bitmap?</returns>
 		virtual bool valid() const;
+
+		/// <summary>
+		/// <para>It's true if there's no bitmap loaded.</para>
+		/// </summary>
+		/// <returns>{bool} No bitmap around?</returns>
 		virtual bool empty() const;
 
+		/// <summary>
+		/// <para>Unload and unreference texture bitmap.</para>
+		/// </summary>
 		virtual void destroy();
 
 		/// <summary>
@@ -214,25 +314,54 @@ namespace Lunaris {
 		/// <param name="{int}">Flags.</param>
 		void draw_tinted_scaled_region_at(const color&, const float, const float, const float, const float, const float, const float, const float, const float, const int = 0) const;
 
+		/// <summary>
+		/// <para>Set this bitmap as target for this thread.</para>
+		/// </summary>
 		void set_as_target() const;
 	};
 
-	class functional_texture : public texture {
+	class texture_functional : public texture {
 		std::function<void(texture&)> func; // tied to check_ready()
 		mutable fast_one_way_mutex fastmu;
 
 		bool check_ready() const;
 	public:
-		functional_texture() = default;
-		~functional_texture();
+		texture_functional() = default;
+		~texture_functional();
 
-		functional_texture(functional_texture&&) noexcept;
-		void operator=(functional_texture&&) noexcept;
+		/// <summary>
+		/// <para>Move a functional texture to this.</para>
+		/// </summary>
+		/// <param name="{texture_functional}">A texture_functional.</param>
+		texture_functional(texture_functional&&) noexcept;
 
+		/// <summary>
+		/// <para>Move a functional texture to this.</para>
+		/// </summary>
+		/// <param name="{texture_functional}">A texture_functional.</param>
+		void operator=(texture_functional&&) noexcept;
+
+		/// <summary>
+		/// <para>Hook a function to this functional texture.</para>
+		/// </summary>
+		/// <param name="{function}">A function that does something with the texture.</param>
 		void hook_function(std::function<void(texture&)>);
+
+		/// <summary>
+		/// <para>Reset hooked function to none.</para>
+		/// </summary>
 		void unhook_function();
 
+		/// <summary>
+		/// <para>Get the raw bitmap pointer.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_BITMAP*} Internal bitmap pointer.</returns>
 		ALLEGRO_BITMAP* get_raw_bitmap() const;
+
+		/// <summary>
+		/// <para>Get the raw bitmap pointer.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_BITMAP*} Internal bitmap pointer.</returns>
 		operator ALLEGRO_BITMAP* () const;
 
 		using texture::create;
@@ -269,24 +398,105 @@ namespace Lunaris {
 		texture_gif() = default;
 		~texture_gif();
 
+		/// <summary>
+		/// <para>Move a texture_gif to this.</para>
+		/// </summary>
+		/// <param name="{texture_functional}">A texture_functional.</param>
 		texture_gif(texture_gif&&) noexcept;
+
+		/// <summary>
+		/// <para>Move a gif texture to this.</para>
+		/// </summary>
+		/// <param name="{texture_functional}">A texture_functional.</param>
 		void operator=(texture_gif&&) noexcept;
 
+		/// <summary>
+		/// <para>Load a gif from a file path.</para>
+		/// </summary>
+		/// <param name="{std::string}">Path.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool load(const std::string&);
+
+		/// <summary>
+		/// <para>Load and hook this gif texture to an already loaded file.</para>
+		/// <para>The hybrid_memory must not be deleted from outside. If you do nothing, this reference will keep it available while in use.</para>
+		/// </summary>
+		/// <param name="{hybrid_memory&lt;file&gt;}">A file.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool load(const hybrid_memory<file>&);
 
+		/// <summary>
+		/// <para>Get the width of the gif texture bitmap.</para>
+		/// </summary>
+		/// <returns>{int} Width.</returns>
 		int get_width() const;
+
+		/// <summary>
+		/// <para>Get the height of the gif texture bitmap.</para>
+		/// </summary>
+		/// <returns>{int} Height.</returns>
 		int get_height() const;
 
+		/// <summary>
+		/// <para>Get the raw bitmap pointer of this point in time.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_BITMAP*} Internal bitmap pointer.</returns>
 		ALLEGRO_BITMAP* get_raw_bitmap() const;
+
+		/// <summary>
+		/// <para>Get the raw bitmap pointer of this point in time.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_BITMAP*} Internal bitmap pointer.</returns>
 		operator ALLEGRO_BITMAP* () const;
+
+		/// <summary>
+		/// <para>It is considered valid if the bitmap and the gif buffer is not null.</para>
+		/// </summary>
+		/// <returns>{bool} Is there a gif?</returns>
 		bool valid() const;
+
+		/// <summary>
+		/// <para>It's true if there's no bitmap and gif buffer loaded.</para>
+		/// </summary>
+		/// <returns>{bool} No gif around?</returns>
 		bool empty() const;
+
+		/// <summary>
+		/// <para>Unload all frames and gif.</para>
+		/// </summary>
 		void destroy();
 
+		/// <summary>
+		/// <para>Get the average time of this GIF animation.</para>
+		/// </summary>
+		/// <returns>{double} Time, in seconds, or zero if empty or static.</returns>
 		double get_interval_average() const;
+
+		/// <summary>
+		/// <para>Get the longest interval between two frames of this GIF animation.</para>
+		/// </summary>
+		/// <returns>{double} Time, in seconds, or zero if empty or static.</returns>
 		double get_interval_longest() const;
+
+		/// <summary>
+		/// <para>Get the shortest interval between two frames of this GIF animation.</para>
+		/// </summary>
+		/// <returns>{double} Time, in seconds, or zero if empty or static.</returns>
 		double get_interval_shortest() const;
+
+		/// <summary>
+		/// <para>Get how many frames are in the animation.</para>
+		/// <para>This is not called size() because it could mean texture size or something.</para>
+		/// </summary>
+		/// <returns>{size_t} </returns>
+		size_t get_amount_of_frames() const;
+
+		/// <summary>
+		/// <para>Get a specific frame by index.</para>
+		/// </summary>
+		/// <param name="{size_t}">Frame number.</param>
+		/// <returns>{ALLEGRO_BITMAP*} Raw bitmap (null if out of range or empty).</returns>
+		ALLEGRO_BITMAP* index(const size_t) const;
 
 		using texture::duplicate;
 		using texture::draw_at;

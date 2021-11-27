@@ -542,6 +542,11 @@ namespace Lunaris {
 		return [&] {return latest_transform; };
 	}
 
+	LUNARIS_DECL display::operator ALLEGRO_DISPLAY* () const
+	{
+		return window;
+	}
+
 	LUNARIS_DECL void display::set_as_target() const
 	{
 		if (window) al_set_target_backbuffer(window);

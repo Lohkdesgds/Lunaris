@@ -174,6 +174,8 @@ namespace Lunaris {
 		std::function<ALLEGRO_TRANSFORM(void)> get_current_transform_function(); // keep this valid while using it!
 		operator std::function<ALLEGRO_TRANSFORM(void)>() const; // same as ^^
 
+		operator ALLEGRO_DISPLAY*() const;
+
 		void set_as_target() const;
 		void flip();
 
