@@ -456,7 +456,8 @@ namespace Lunaris {
 	{
 		std::vector<char> vec;
 		for (size_t _tries = 0; _tries < 3 && vec.size() != sizeof(T); _tries++) {
-			vec.insert(vec.end(), this->recv((sizeof(T) - vec.size()), wait)); // may slice, this merge back
+			const auto __tmp = this->recv((sizeof(T) - vec.size()), wait);
+			vec.insert(vec.end(), __tmp.begin(), __tmp.end()); // may slice, this merge back
 		}
 
 		if (vec.size() != sizeof(T)) {
