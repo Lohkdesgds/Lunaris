@@ -718,7 +718,7 @@ namespace Lunaris {
         if (!d) d = last_applied_display;
 
         if (d && _menu.menu) {
-            if (last_applied_display != d) al_remove_display_menu(last_applied_display);
+            if (last_applied_display != d && last_applied_display) al_remove_display_menu(last_applied_display);
 
             last_applied_display = d;
 
