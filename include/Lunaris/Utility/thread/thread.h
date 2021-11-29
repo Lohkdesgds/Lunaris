@@ -10,6 +10,11 @@
 
 namespace Lunaris {
 
+	/// <summary>
+	/// <para>thread is a std::thread with loop, timer and kill support. It's not perfect, but it works.</para>
+	/// <para>You can create one with a timed interval, performance mode, unleashed or run only once.</para>
+	/// <para>All others but once do call your function while valid. It's done automatically.</para>
+	/// </summary>
 	class thread : public NonCopyable {
 	public:
 		enum class speed {
@@ -38,25 +43,74 @@ namespace Lunaris {
 	public:
 		thread() = default;
 
-		// same as task_async
+		/// <summary>
+		/// <para>Create a thread directly from the constructor.</para>
+		/// </summary>
+		/// <param name="{function}">The looping function (or one run if speed is once).</param>
+		/// <param name="{speed}">Thread speed mode.</param>
+		/// <param name="{double}">Delta, in seconds, if the speed is the timed one (interval).</param>
+		/// <param name="{function}">Exception handler (automatically handle exceptions).</param>
 		thread(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60, std::function<void(const std::exception&)> = {});
+		
 		~thread();
 
+		/// <summary>
+		/// <para>Move the thread information around.</para>
+		/// </summary>
+		/// <param name="{thread}">Moving thread.</param>
 		thread(thread&&) noexcept;
+
+		/// <summary>
+		/// <para>Move the thread information around.</para>
+		/// </summary>
+		/// <param name="{thread}">Moving thread.</param>
 		void operator=(thread&&) noexcept;
 
-		// keep running undefinitely (double is only used if speed is set to interval)
+		/// <summary>
+		/// <para>Create a thread with these settings.</para>
+		/// </summary>
+		/// <param name="{function}">The looping function (or one run if speed is once).</param>
+		/// <param name="{speed}">Thread speed mode.</param>
+		/// <param name="{double}">Delta, in seconds, if the speed is the timed one (interval).</param>
+		/// <param name="{function}">Exception handler (automatically handle exceptions).</param>
 		void task_async(std::function<void(void)>, const speed = speed::HIGH_PERFORMANCE, const double = 1.0 / 60, std::function<void(const std::exception&)> = {});
 
+		/// <summary>
+		/// <para>Change speed mode and time on the fly.</para>
+		/// </summary>
+		/// <param name="{speed}">New thread speed mode.</param>
+		/// <param name="{double}">New delta, if speed is the timed one (interval).</param>
 		void set_speed(const speed, const double = 1.0 / 60);
 
+		/// <summary>
+		/// <para>Set to next cycle tell thread to stop.</para>
+		/// </summary>
 		void signal_stop();
 
-		// stop and join threads (bool: skip exception rethrow if any?)
+		/// <summary>
+		/// <para>Tells thread to stop and wait for join.</para>
+		/// </summary>
+		/// <param name="{bool}">Skip saved exceptions not handled? (if you had an exception handler, this shoudn't throw any exception anyway).</param>
 		void join(const bool = false);
 
-		// caution: may cause memory leak! Use at your own risk!
+		/// <summary>
+		/// <para>Force kill the thread. It'll end abruptly.</para>
+		/// <para>WARNING: This may cause memory leak! Some say it does, VS does not like what I did here, so use this only if you really need to!</para>
+		/// </summary>
+		/// <param name="{bool}">Skip saved exceptions not handled? (if you had an exception handler, this shoudn't throw any exception anyway).</param>
 		void force_kill(const bool = false);
+
+		/// <summary>
+		/// <para>If this is still a valid running thread.</para>
+		/// </summary>
+		/// <returns>{bool} True if there's something running.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If this has no things running.</para>
+		/// </summary>
+		/// <returns>{bool} True if there's no thread running (there shouldn't be).</returns>
+		bool empty() const;
 	};
 
 	struct async_thread_info {
@@ -66,10 +120,34 @@ namespace Lunaris {
 		std::thread::native_handle_type id = {};
 		std::future<bool> ended;
 
-		// by status
+		/// <summary>
+		/// <para>Get if the thread has ended its job (from std::future status)</para>
+		/// </summary>
+		/// <returns></returns>
 		bool has_ended() const;
+
+		/// <summary>
+		/// <para>Force thread to stop abruptly. This may cause memory leak, so this is last resort!</para>
+		/// </summary>
 		void force_destroy();
+
+		/// <summary>
+		/// <para>If there's any thread there.</para>
+		/// </summary>
+		/// <returns>{bool} True if this is still related to a valid thread.</returns>
 		bool exists() const;
+
+		/// <summary>
+		/// <para>If there's any thread there.</para>
+		/// </summary>
+		/// <returns>{bool} True if this is still related to a valid thread.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>Is this still something?</para>
+		/// </summary>
+		/// <returns>{bool} True if there's nothing to do anymore, this is empty or something.</returns>
+		bool empty() const;
 	};
 
 	/// <summary>

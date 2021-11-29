@@ -258,8 +258,10 @@ namespace Lunaris {
 		al_set_new_display_option(ALLEGRO_SINGLE_BUFFER, conf.single_buffer ? 1 : 0, ALLEGRO_SUGGEST);
 		if (conf.mode.freq > 0)
 			al_set_new_display_refresh_rate(conf.mode.freq);
-		if (!conf.window_title.empty())
+		if (!conf.window_title.empty()) {
+			latest_window_title = conf.window_title;
 			al_set_new_window_title(conf.window_title.c_str());
+		}
 
 
 		if (!(ev_qu = al_create_event_queue())) {
@@ -306,6 +308,7 @@ namespace Lunaris {
 		conf.mode.height = height;
 		conf.mode.freq = freq;
 		conf.fullscreen = false;
+		conf.max_frames = freq;
 		return create(conf);
 	}
 
@@ -315,6 +318,7 @@ namespace Lunaris {
 		conf.mode.width = width;
 		conf.mode.height = height;
 		conf.mode.freq = freq;
+		conf.max_frames = freq;
 		conf.fullscreen = false;
 		conf.window_title = wname;
 		return create(conf);
@@ -322,19 +326,36 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display::set_window_title(const std::string& str)
 	{
-		if (!empty() && !str.empty()) al_set_window_title(window, str.c_str());
+		if (!empty() && !str.empty()) {
+			latest_window_title = str;
+			al_set_window_title(window, str.c_str());
+		}
+	}
+
+	LUNARIS_DECL const std::string& display::get_window_title() const
+	{
+		return latest_window_title;
 	}
 
 	LUNARIS_DECL future<bool> display::post_task(std::function<bool(void)> f)
 	{
 		promise<bool> prom;
-		if (!f) {
-			auto fn = prom.get_future();
-			prom.set_value(false);
-			return fn;
-		}
+		
+		if (!f) return make_empty_future<bool>(false);
+
 		auto fn2 = prom.get_future().then([f](auto) -> bool { try { return f(); } catch (...) { return false; } });
 		promises.push_back(std::move(prom));
+		return fn2;
+	}
+
+	LUNARIS_DECL future<void> display::post_task_on_destroy(std::function<void(void)> f)
+	{
+		promise<void> prom;
+
+		if (!f) return make_empty_future<void>();
+
+		auto fn2 = prom.get_future().then([f]() { try { f(); } catch (...) {} });
+		promises_on_destroy.push_back(std::move(prom));
 		return fn2;
 	}
 
@@ -386,10 +407,11 @@ namespace Lunaris {
 		});
 	}
 
-	LUNARIS_DECL bool display::set_icon(ALLEGRO_BITMAP* bmp)
+	LUNARIS_DECL bool display::set_icon(const hybrid_memory<texture>& bmp)
 	{
-		if (window && bmp) {
-			al_set_display_icon(window, bmp);
+		if (window && bmp.valid() && bmp->valid()) {
+			al_set_display_icon(window, current_icon->get_raw_bitmap());
+			current_icon = bmp;
 			return true;
 		}
 		return false;
@@ -412,24 +434,24 @@ namespace Lunaris {
 		});
 	}
 #endif
+	LUNARIS_DECL bool display::has_event_queue() const
+	{
+		return ev_qu != nullptr;
+	}
+
 	LUNARIS_DECL bool display::get_is_economy_mode_activated() const
 	{
-		return economy_mode;
+		return ev_qu ? economy_mode : false;
 	}
 
 	LUNARIS_DECL double display::get_economy_fps() const
 	{
-		return economy_fps;
+		return ev_qu ? economy_fps : 0.0;
 	}
 
 	LUNARIS_DECL double display::get_fps_limit() const
 	{
-		return default_fps;
-	}
-
-	LUNARIS_DECL void display::set_is_auto_economy_set(const bool var)
-	{
-		set_economy_fps(var ? 30 : 0);
+		return ev_qu ? default_fps : 0.0;
 	}
 
 	LUNARIS_DECL void display::set_economy_fps(const double var)
@@ -464,8 +486,15 @@ namespace Lunaris {
 		return window == nullptr;
 	}
 
+	LUNARIS_DECL bool display::valid() const
+	{
+		return window != nullptr;
+	}
+
 	LUNARIS_DECL future<bool> display::destroy()
 	{
+		if (empty()) return make_empty_future<bool>(true); // already empty lmao
+
 		if (auto* __d = al_get_current_display(); __d != window && window)
 		{
 #ifdef LUNARIS_VERBOSE_BUILD
@@ -489,10 +518,20 @@ namespace Lunaris {
 				al_destroy_timer(update_tasks);
 				update_tasks = nullptr;
 			}
+			{
+				for (auto& it : promises_on_destroy) {
+					it.set_value();
+				}
+				promises_on_destroy.clear();
+			}
 			if (window) {
 				al_set_display_menu(window, nullptr); // detach any menu lol
 				al_destroy_display(window);
 				window = nullptr;
+			}
+			if (current_icon.valid() && current_icon->valid())
+			{
+				current_icon.reset_this();
 			}
 			if (ev_qu) {
 				al_destroy_user_event_source(&evsrc);
@@ -517,9 +556,9 @@ namespace Lunaris {
 		return window;
 	}
 
-	LUNARIS_DECL display::operator std::vector<ALLEGRO_EVENT_SOURCE*>() const
+	LUNARIS_DECL display::operator ALLEGRO_DISPLAY* () const
 	{
-		return get_event_sources();
+		return window;
 	}
 
 	LUNARIS_DECL std::vector<ALLEGRO_EVENT_SOURCE*> display::get_event_sources() const
@@ -530,6 +569,11 @@ namespace Lunaris {
 			_tmp.push_back((ALLEGRO_EVENT_SOURCE*)&evsrc);
 		}
 		return _tmp;
+	}
+
+	LUNARIS_DECL display::operator std::vector<ALLEGRO_EVENT_SOURCE*>() const
+	{
+		return get_event_sources();
 	}
 
 	LUNARIS_DECL std::function<ALLEGRO_TRANSFORM(void)> display::get_current_transform_function()
@@ -662,26 +706,9 @@ namespace Lunaris {
 		m_err = std::function<void(const std::exception&)>{};
 	}
 
-	LUNARIS_DECL bool display_async::safe_run::can_run()
-	{
-		return !(is_paused = is_lock);
-	}
-
-	LUNARIS_DECL void display_async::safe_run::lock(const bool skip_wait)
-	{
-		is_lock = true;
-		if (skip_wait) return;
-		while (!is_paused) std::this_thread::sleep_for(std::chrono::milliseconds(5));
-	}
-
-	LUNARIS_DECL void display_async::safe_run::unlock() 
-	{
-		is_lock = false;
-	}
-
 	LUNARIS_DECL void display_async::async_run()
 	{
-		if (!safer.can_run()) {
+		if (!safer.run()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			return;
 		}
@@ -690,6 +717,13 @@ namespace Lunaris {
 
 		if (hooked_draw && !empty()) 
 			hooked_draw(*this);
+
+		if (destroy_self_on_next) {
+			destroy_self_on_next = false; // just reset, no big deal.
+			thr.set_speed(thread::speed::ONCE); // goodbye world.
+			this->display::set_as_target(); // be SURE this is the target display here.			
+			on_self_destroy_set.set_value(this->display::destroy().get());// if locks here, that's because something really bad happened.
+		}
 	}
 
 	LUNARIS_DECL display_async::display_async(const display_config& conf)
@@ -756,25 +790,31 @@ namespace Lunaris {
 
 	LUNARIS_DECL void display_async::hook_draw_function(std::function<void(const display_async&)> f)
 	{
-		safer.lock();
+		fast_lock_guard luck(safer);
 		hooked_draw = f;
-		safer.unlock();
+	}
+
+	LUNARIS_DECL void display_async::hook_draw_function(std::function<void(void)> f)
+	{
+		fast_lock_guard luck(safer);
+		hooked_draw = [f](const auto&) { f(); };
 	}
 
 	LUNARIS_DECL void display_async::unhook_draw_function()
 	{
-		safer.lock();
+		fast_lock_guard luck(safer);
 		hooked_draw = {};
-		safer.unlock();
 	}
 
-	LUNARIS_DECL future<bool> display_async::destroy(const bool skip_except)
+	LUNARIS_DECL future<bool> display_async::destroy(const bool silent_d)
 	{
-		m_destroy_silent = skip_except;
-		auto fut = this->display::destroy();
-		fut.wait();
-		thr.signal_stop();
-		return fut;
+		if (empty()) return make_empty_future<bool>(true); // it is destroyed already lol
+
+		on_self_destroy_set = promise<bool>(); // if you recreate the display, this is a new fresh promise.
+		m_destroy_silent = silent_d;
+		destroy_self_on_next = true;
+
+		return on_self_destroy_set.get_future();
 	}
 
 	LUNARIS_DECL display_event::display_event(display& rf, const ALLEGRO_EVENT& ev)
@@ -805,6 +845,11 @@ namespace Lunaris {
 	LUNARIS_DECL bool display_event::valid() const
 	{
 		return source == _ref.get_raw_display();
+	}
+
+	LUNARIS_DECL bool display_event::empty() const
+	{
+		return source != _ref.get_raw_display();
 	}
 
 	LUNARIS_DECL bool display_event::is_close() const

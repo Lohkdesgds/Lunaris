@@ -12,6 +12,11 @@
 #pragma comment (lib, "wininet.lib")
 
 namespace Lunaris {
+
+	/// <summary>
+	/// <para>downloader is a tool to download files from the internet.</para>
+	/// <para>It is able to store in a buffer internally or directly flush to somewhere using a function many times.</para>
+	/// </summary>
 	class downloader {
 		std::vector<char> buf;
 		size_t TotalBytesRead = 0;
@@ -49,6 +54,20 @@ namespace Lunaris {
 		/// <para>Clears internal buffer.</para>
 		/// </summary>
 		void clear_buf();
+
+		/// <summary>
+		/// <para>If it has something saved internallly, it's considered VALID (to read()).</para>
+		/// <para>This doesn't work if you use get_store().</para>
+		/// </summary>
+		/// <returns>{bool} True if has content to read.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If there's nothing stored for read(), it's considered empty.</para>
+		/// <para>Empty doesn't mean fail (unless you tried get() and it didn't get any byte).</para>
+		/// </summary>
+		/// <returns>{bool} True if buffer is empty.</returns>
+		bool empty() const;
 	};
 
 }

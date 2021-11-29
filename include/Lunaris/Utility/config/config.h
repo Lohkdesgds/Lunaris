@@ -9,6 +9,9 @@
 #include <sstream>
 #include <stdexcept>
 
+// Note: this code was imported from an older project. It is not really optimized in size, but it works flawlessly.
+// I may change the behind the scenes in the future, but as I said, it already works as intended.
+
 namespace Lunaris {
 
 	void __config_allegro_start();
@@ -74,6 +77,18 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} True if success.</returns>
 		bool flush();
+
+		/// <summary>
+		/// <para>If has a path set it's considered valid.</para>
+		/// </summary>
+		/// <returns>{bool} has path ready to save?</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>If has any configuration and path set it's considered NOT empty. Empty means no configuration and path set.</para>
+		/// </summary>
+		/// <returns>{bool} Has anything set?</returns>
+		bool empty() const;
 
 		/// <summary>
 		/// <para>Change a existing section's mode.</para>

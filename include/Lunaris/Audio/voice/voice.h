@@ -58,6 +58,18 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} True if exists.</returns>
 		bool exists() const;
+
+		/// <summary>
+		/// <para>Is this voice loaded and ready?</para>
+		/// </summary>
+		/// <returns>{bool} True if not ready/set.</returns>
+		bool empty() const;
+
+		/// <summary>
+		/// <para>Is this voice loaded and ready?</para>
+		/// </summary>
+		/// <returns>{bool} True if exists.</returns>
+		bool valid() const;
 	};
 
 }

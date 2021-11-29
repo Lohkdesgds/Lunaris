@@ -16,7 +16,7 @@ namespace Lunaris {
 	/// <para>This holds a not yet set variable. You can get the value itself or link a function to run when the variable is ready.</para>
 	/// </summary>
 	template<typename T>
-	class future {
+	class future : public NonCopyable {
 		// internal use
 		struct _self {
 
@@ -63,8 +63,6 @@ namespace Lunaris {
 		template<typename V> friend class promise;
 		template<typename V> friend class future; // friend of any of this
 	public:
-		future(const future&) = delete;
-		void operator=(const future&) = delete;
 
 		future(future&&) noexcept;
 		void operator=(future&&) noexcept;
@@ -74,7 +72,7 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{T*} The value pointer (do not delete this).</returns>
 		template<typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0>
-		const T* get();
+		const Q* get();
 
 		/// <summary>
 		/// <para>Get if signal was set. Returns if yes, else wait (like wait()).</para>
@@ -91,7 +89,7 @@ namespace Lunaris {
 		/// <para>Set a function to handle variable when set (you should NOT get() after this).</para>
 		/// </summary>
 		/// <param name="{V}">V is a function or lambda that handles the required type and returns something or void.</param>
-		/// <returns>{future<V>} Future of variable set by this function.</returns>
+		/// <returns>{future&lt;V&gt;} Future of variable set by this function.</returns>
 		template<typename V, typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0, typename Res = std::result_of_t<V(Q)>, std::enable_if_t<!std::is_void_v<Res>, int> = 0>
 		auto then(V);
 
@@ -99,7 +97,7 @@ namespace Lunaris {
 		/// <para>Set a function to handle variable when set (you should NOT get() after this).</para>
 		/// </summary>
 		/// <param name="{V}">V is a function or lambda that handles the required type and returns something or void.</param>
-		/// <returns>{future<V>} Future of variable set by this function.</returns>
+		/// <returns>{future&lt;V&gt;} Future of variable set by this function.</returns>
 		template<typename V, typename Q = T, std::enable_if_t<std::is_void_v<Q>, int> = 0, typename Res = std::result_of_t<V()>, std::enable_if_t<!std::is_void_v<Res>, int> = 0>
 		auto then(V);
 
@@ -107,7 +105,7 @@ namespace Lunaris {
 		/// <para>Set a function to handle variable when set (you should NOT get() after this).</para>
 		/// </summary>
 		/// <param name="{V}">V is a function or lambda that handles the required type and returns something or void.</param>
-		/// <returns>{future<V>} Future of variable set by this function.</returns>
+		/// <returns>{future&lt;V&gt;} Future of variable set by this function.</returns>
 		template<typename V, typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0, typename Res = std::result_of_t<V(Q)>, std::enable_if_t<std::is_void_v<Res>, int> = 0>
 		auto then(V);
 
@@ -115,19 +113,20 @@ namespace Lunaris {
 		/// <para>Set a function to handle variable when set (you should NOT get() after this).</para>
 		/// </summary>
 		/// <param name="{V}">V is a function or lambda that handles the required type and returns something or void.</param>
-		/// <returns>{future<V>} Future of variable set by this function.</returns>
+		/// <returns>{future&lt;V&gt;} Future of variable set by this function.</returns>
 		template<typename V, typename Q = T, std::enable_if_t<std::is_void_v<Q>, int> = 0, typename Res = std::result_of_t<V()>, std::enable_if_t<std::is_void_v<Res>, int> = 0>
 		auto then(V);
 	};
 
+	/// <summary>
+	/// <para>You promise you'll have the value later, but not now!</para>
+	/// <para>Create a future from this and set the value in the future, somewhere else.</para>
+	/// </summary>
 	template<typename T>
-	class promise {
+	class promise : public NonCopyable {
 		std::function<void(T)> _next;
 	public:
 		promise() = default;
-
-		promise(const promise&) = delete;
-		void operator=(const promise&) = delete;
 
 		promise(promise&&);
 		void operator=(promise&&);
@@ -136,14 +135,22 @@ namespace Lunaris {
 		/// <para>Get future so next value is saved somewhere.</para>
 		/// </summary>
 		/// <returns>{future&lt;T&gt;} Future ready linked to this promise.</returns>
-		future<T> get_future();
+		template<typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0>
+		future<Q> get_future();
+
+		/// <summary>
+		/// <para>Get future so next value is saved somewhere.</para>
+		/// </summary>
+		/// <returns>{future&lt;T&gt;} Future ready linked to this promise.</returns>
+		template<typename Q = T, std::enable_if_t<std::is_void_v<Q>, int> = 0>
+		future<Q> get_future();
 
 		/// <summary>
 		/// <para>Set value and send to future (if any).</para>
 		/// </summary>
 		/// <param name="{T}">Value to be set.</param>
 		template<typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0>
-		void set_value(const T&);
+		void set_value(const Q&);
 
 		/// <summary>
 		/// <para>Set value and send to future (if any).</para>
@@ -152,10 +159,19 @@ namespace Lunaris {
 		template<typename Q = T, std::enable_if_t<std::is_void_v<Q>, int> = 0>
 		void set_value();
 	};
-
+	
+	/// <summary>
+	/// <para>If you were about to do something, but it didn't work even before knowing it, you can promise with a response already set (future with value set already).</para>
+	/// </summary>
+	/// <param name="{T}">The pre-determined value for the future.</param>
+	/// <returns>{future} The future with value already set.</returns>
 	template<typename T, std::enable_if_t<!std::is_void_v<T>, int> = 0>
 	future<T> make_empty_future(const T&);
 
+	/// <summary>
+	/// <para>If you were about to do something, but it didn't work even before knowing it, you can promise with a response already set (future with value set already).</para>
+	/// </summary>
+	/// <returns>{future} The future with value already set.</returns>
 	template<typename T, std::enable_if_t<std::is_void_v<T>, int> = 0>
 	future<T> make_empty_future();
 

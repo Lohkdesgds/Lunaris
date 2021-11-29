@@ -36,14 +36,14 @@ namespace Lunaris {
 	}
 	
 	template<typename T>
-	inline T safe_data<T>::read()
+	inline T safe_data<T>::read() const
 	{
 		std::shared_lock<shared_recursive_mutex> luck(shrmtx);
 		return data;
 	}
 
 	template<typename T>
-	inline void safe_data<T>::csafe(const std::function<void(const T&)> f)
+	inline void safe_data<T>::csafe(const std::function<void(const T&)> f) const
 	{
 		if (!f) return;
 		std::shared_lock<shared_recursive_mutex> luck(shrmtx);
@@ -82,7 +82,7 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	inline safe_data<T>::operator T()
+	inline safe_data<T>::operator T() const
 	{
 		std::shared_lock<shared_recursive_mutex> luck(shrmtx);
 		return data;
@@ -107,17 +107,17 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	inline void safe_data<T>::operator=(T&& var)
-	{
-		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
-		data = std::move(var);
-	}
-
-	template<typename T>
 	inline void safe_data<T>::operator=(const T& var)
 	{
 		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
 		data = var;
+	}
+
+	template<typename T>
+	inline void safe_data<T>::operator=(T&& var)
+	{
+		std::unique_lock<shared_recursive_mutex> luck(shrmtx);
+		data = std::move(var);
 	}
 
 	template<typename T>
@@ -178,13 +178,7 @@ namespace Lunaris {
 	inline T safe_vector<T>::index(const size_t& i) const
 	{
 		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
-		return data[i];
-	}
-
-	template<typename T>
-	inline T safe_vector<T>::index(const size_t& i)
-	{
-		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
+		if (i >= data.size()) throw std::out_of_range("index was beyond save_vector's size");
 		return data[i];
 	}
 
@@ -192,30 +186,44 @@ namespace Lunaris {
 	inline T safe_vector<T>::operator[](const size_t i) const
 	{
 		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
+		if (i >= data.size()) throw std::out_of_range("index was beyond save_vector's size");
 		return data[i];
 	}
 
 	template<typename T>
-	inline T safe_vector<T>::operator[](const size_t i)
-	{
-		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);
-		return data[i];
-	}
-
-	template<typename T>
-	inline bool safe_vector<T>::set(const size_t i, const T& var)
+	inline bool safe_vector<T>::set(const size_t i, const T& var, const bool forc)
 	{
 		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
-		if (i >= data.size()) return false;
+		if (i >= data.size()) {
+			if (forc) {
+				try {
+					data.resize(i + 1); // when i == 0, size is 1, and so on...
+				}
+				catch (...) { return false; } // failure
+				data[i] = var;
+				return true;
+			}
+			return false;
+		}
 		data[i] = var;
 		return true;
 	}
 
 	template<typename T>
-	inline bool safe_vector<T>::set(const size_t i, T&& var)
+	inline bool safe_vector<T>::set(const size_t i, T&& var, const bool forc)
 	{
 		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
-		if (i >= data.size()) return false;
+		if (i >= data.size()) {
+			if (forc) {
+				try {
+					data.resize(i + 1); // when i == 0, size is 1, and so on...
+				}
+				catch (...) { return false; } // failure
+				data[i] = std::move(var);
+				return true;
+			}
+			return false;
+		}
 		data[i] = std::move(var);
 		return true;
 	}

@@ -48,6 +48,18 @@ namespace Lunaris {
 		bool exists() const;
 
 		/// <summary>
+		/// <para>Is this loaded?</para>
+		/// </summary>
+		/// <returns>{bool} True if not ready/set.</returns>
+		bool empty() const;
+
+		/// <summary>
+		/// <para>Is this loaded?</para>
+		/// </summary>
+		/// <returns>{bool} True if loaded.</returns>
+		bool valid() const;
+
+		/// <summary>
 		/// <para>Play/Resume.</para>
 		/// </summary>
 		void play();

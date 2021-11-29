@@ -171,6 +171,11 @@ namespace Lunaris {
 		return font_ptr == nullptr;
 	}
 
+	LUNARIS_DECL bool font::valid() const
+	{
+		return font_ptr != nullptr;
+	}
+
 	LUNARIS_DECL void font::destroy()
 	{
 		if (font_ptr) {
@@ -180,6 +185,7 @@ namespace Lunaris {
 			al_destroy_font(font_ptr);
 			font_ptr = nullptr;
 		}
+		fileref.reset_this();
 	}
 
 	LUNARIS_DECL int font::get_line_ascent() const

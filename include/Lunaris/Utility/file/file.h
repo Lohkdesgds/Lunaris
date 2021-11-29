@@ -47,6 +47,10 @@ namespace Lunaris {
 
 	void __file_allegro_start();
 
+	/// <summary>
+	/// <para>file is a file interface using the Allegro's functions in a secure C++ way.</para>
+	/// <para>You can create, load, edit and save files with this easily.</para>
+	/// </summary>
 	class file : private NonCopyable {
 	public:
 		enum class open_mode_e {
@@ -67,43 +71,164 @@ namespace Lunaris {
 		std::string transl(const open_mode_e&);
 
 		friend class font; // font has to be able to "own" the file.
+
 		/// <summary>
 		/// <para>in very very specific cases sometimes you don't want the ALLEGRO_FILE to be destroyed. This unset/set current rule. Default is to destroy.</para>
 		/// <para>Example: loading font from file.</para>
 		/// <para>TRUE results in NO DESTRUCTION!</para>
 		/// </summary>
-		/// <param name=""></param>
+		/// <param name="{bool}">Disable "destruction"?</param>
 		void modify_no_destroy(const bool);
 	public:
 		file() = default;
+
+		/// <summary>
+		/// <para>Move a file handler to this.</para>
+		/// </summary>
+		/// <param name="{file}">The file being moved.</param>
 		file(file&&) noexcept;
+
+		/// <summary>
+		/// <para>Move a file handler to this.</para>
+		/// <para>If this had file, it is closed automatically.</para>
+		/// </summary>
+		/// <param name="{file}">The file being moved.</param>
 		virtual void operator=(file&&) noexcept;
+
+		/// <summary>
+		/// <para>Closes the file handle.</para>
+		/// </summary>
 		virtual ~file();
 
+		/// <summary>
+		/// <para>Open a file.</para>
+		/// <para>If this had file, it is closed automatically.</para>
+		/// </summary>
+		/// <param name="{std::string}">File path.</param>
+		/// <param name="{open_mode_e}">What mode to open the file.</param>
+		/// <returns>{bool} True if success.</returns>
 		virtual bool open(const std::string&, const open_mode_e&);
+
+		/// <summary>
+		/// <para>Closes any file handle it may have.</para>
+		/// </summary>
 		virtual void close();
 
-		const std::string& get_path();
+		/// <summary>
+		/// <para>Get the path of the latest file it's opened.</para>
+		/// </summary>
+		/// <returns>{std::string} The internal string containing the file path.</returns>
+		const std::string& get_path() const;
+
+		/// <summary>
+		/// <para>Get the file handler directly. DO NOT CLOSE THE FILE USING THIS!</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_FILE*} The file handle.</returns>
 		ALLEGRO_FILE* get_fp() const;
+
+		/// <summary>
+		/// <para>Gets the internal file handler via cast.</para>
+		/// </summary>
 		operator ALLEGRO_FILE*() const;
 
+		/// <summary>
+		/// <para>Read some bytes of the file (if the file was opened in read mode or equivalent).</para>
+		/// </summary>
+		/// <param name="{char*}">Buffer to write the data read.</param>
+		/// <param name="{size_t}">The buffer size or the amount of bytes you want to read (max).</param>
+		/// <returns>{size_t} How many bytes were really read.</returns>
 		size_t read(char*, const size_t);
+
+		/// <summary>
+		/// <para>Write some bytes into the file (if the file was opened in write mode or equivalent).</para>
+		/// </summary>
+		/// <param name="{char*}">The buffer to write.</param>
+		/// <param name="{size_t}">Buffer size.</param>
+		/// <returns>{size_t} How many bytes were really written.</returns>
 		size_t write(const char*, const size_t);
+
+		/// <summary>
+		/// <para>Where am I? Relative position compared to the beginning of the file, in bytes.</para>
+		/// </summary>
+		/// <returns>{size_t} Offset from start of the file</returns>
 		size_t tell();
+
+		/// <summary>
+		/// <para>Go to a specific point relative or absolute in position.</para>
+		/// </summary>
+		/// <param name="{int64_t}">Where to go?</param>
+		/// <param name="{seek_mode_e}">Relative to what?</param>
+		/// <returns>{bool} True if success.</returns>
 		bool seek(const int64_t, const seek_mode_e);
+
+		/// <summary>
+		/// <para>Flush cached stuff to the disk.</para>
+		/// </summary>
+		/// <returns>{bool} True if flushed successfully.</returns>
 		bool flush();
+
+		/// <summary>
+		/// <para>Get the file size.</para>
+		/// </summary>
+		/// <returns>{size_t} File size, in bytes.</returns>
 		size_t size() const;
+
+		/// <summary>
+		/// <para>Has any file open?</para>
+		/// </summary>
+		/// <returns>{bool} True if there's a file handle opened.</returns>
 		bool is_open() const;
+
+		/// <summary>
+		/// <para>It is considered valid if any file handle is open.</para>
+		/// </summary>
+		/// <returns>{bool} True if handleable (file open)</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>Same as "not open".</para>
+		/// </summary>
+		/// <returns>{bool} True if not opened</returns>
+		bool empty() const;
 	};
 
+	/// <summary>
+	/// <para>Behaves like a file, but the file is created in a temporary place.</para>
+	/// <para>The file is deleted after destroyed/closed.</para>
+	/// </summary>
 	class tempfile : public file {
 	public:
 		tempfile() = default;
+
+		/// <summary>
+		/// <para>Move a tempfile handler to this.</para>
+		/// </summary>
+		/// <param name="{tempfile}">The tempfile being moved.</param>
 		tempfile(tempfile&&) noexcept;
+
+		/// <summary>
+		/// <para>Move a tempfile handler to this.</para>
+		/// <para>If this had file, it is closed and erased automatically.</para>
+		/// </summary>
+		/// <param name="{tempfile}">The tempfile being moved.</param>
 		void operator=(tempfile&&) noexcept;
+
+		/// <summary>
+		/// <para>Closes the tempfile handle.</para>
+		/// </summary>
 		~tempfile();
 
+		/// <summary>
+		/// <para>Open a temporary file in the temporary path.</para>
+		/// <para>Use 'X' for random character format, like 'lala_XXXXX.tmp' may generate 'lala_AbC1j.tmp'.</para>
+		/// </summary>
+		/// <param name="{std::string}">File name format.</param>
+		/// <returns>{bool} True if good.</returns>
 		bool open(const std::string&);
+
+		/// <summary>
+		/// <para>Closes the temporary file and deletes it. It is temporary, right?</para>
+		/// </summary>
 		void close();
 
 		using file::get_path;
@@ -116,17 +241,48 @@ namespace Lunaris {
 		using file::flush;
 		using file::size;
 		using file::is_open;
+		using file::valid;
+		using file::empty;
 	};
 
+	/// <summary>
+	/// <para>Like a file, but the file itself is in memory.</para>
+	/// <para>The downside is that you have to use fixed file size. It won't grow bigger than initial size.</para>
+	/// <para>The size is defined by you.</para>
+	/// </summary>
 	class memfile : public file {
 		std::unique_ptr<char[]> mem;
 	public:
 		memfile() = default;
+
+		/// <summary>
+		/// <para>Move a memfile handler to this.</para>
+		/// </summary>
+		/// <param name="{memfile}">The memfile being moved.</param>
 		memfile(memfile&&) noexcept;
+
+		/// <summary>
+		/// <para>Move a memfile handler to this.</para>
+		/// <para>If this had file, it is closed and freed automatically.</para>
+		/// </summary>
+		/// <param name="{memfile}">The memfile being moved.</param>
 		void operator=(memfile&&) noexcept;
+
+		/// <summary>
+		/// <para>Closes the memfile handle.</para>
+		/// </summary>
 		~memfile();
 
+		/// <summary>
+		/// <para>Opens a memory file of that size (it's fixed in size).</para>
+		/// </summary>
+		/// <param name="{size_t}">The memory buffer size.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool open(const size_t);
+
+		/// <summary>
+		/// <para>Close and free memory.</para>
+		/// </summary>
 		void close();
 
 		using file::get_path;
@@ -139,16 +295,45 @@ namespace Lunaris {
 		using file::flush;
 		using file::size;
 		using file::is_open;
+		using file::valid;
+		using file::empty;
 	};
 
 #ifdef _WIN32 // && _MSC_VER
-	// resource.h defined value like IDR_TTF1, id, expected extension (".jpg", ".png", ...)
+
+	/// <summary>
+	/// <para>Get a Visual Studio resource as a tempfile.</para>
+	/// </summary>
+	/// <param name="{int}">The ID of the resource, found in a header like 'resource.h' like IDR_TTF1.</param>
+	/// <param name="{WinString}">A file type in string (if you're on unicode, this is WCHAR_T*, else probably CHAR*, and it may be "PNG", "TTF" or something like that).</param>
+	/// <param name="{std::string}">Custom format, also known as "what extension should the file have?". Examples: ".jpg", ".png", ".tmp", ...</param>
+	/// <returns>{tempfile} A tempfile with or without the content. Please check size != 0.</returns>
 	tempfile get_executable_resource_as_file(const int, const WinString&, const std::string&);
-	// resource.h defined value like IDR_TTF1, id as enum, expected extension (".jpg", ".png", ...)
+
+	/// <summary>
+	/// <para>Get a Visual Studio resource as a tempfile.</para>
+	/// </summary>
+	/// <param name="{int}">The ID of the resource, found in a header like 'resource.h' like IDR_TTF1.</param>
+	/// <param name="{resource_type_e}">Some types are defined as specific values instead of string. You should check the output anyways.</param>
+	/// <param name="{std::string}">Custom format, also known as "what extension should the file have?". Examples: ".jpg", ".png", ".tmp", ...</param>
+	/// <returns>{tempfile} A tempfile with or without the content. Please check size != 0.</returns>
 	tempfile get_executable_resource_as_file(const int, const resource_type_e, const std::string&);
-	// resource.h defined value like IDR_TTF1, id
+
+	/// <summary>
+	/// <para>Get a Visual Studio resource as a memfile.</para>
+	/// </summary>
+	/// <param name="{int}">The ID of the resource, found in a header like 'resource.h' like IDR_TTF1.</param>
+	/// <param name="{WinString}">A file type in string (if you're on unicode, this is WCHAR_T*, else probably CHAR*, and it may be "PNG", "TTF" or something like that).</param>
+	/// <returns>{memfile} A memfile with or without the content. Please check size != 0.</returns>
 	memfile get_executable_resource_as_memfile(const int, const WinString&);
-	// resource.h defined value like IDR_TTF1, id as enum
+
+	/// <summary>
+	/// <para>Get a Visual Studio resource as a memfile.</para>
+	/// </summary>
+	/// <param name="{int}">The ID of the resource, found in a header like 'resource.h' like IDR_TTF1.</param>
+	/// <param name="{resource_type_e}">Some types are defined as specific values instead of string. You should check the output anyways.</param>
+	/// <returns>{memfile} A memfile with or without the content. Please check size != 0.</returns>
 	memfile get_executable_resource_as_memfile(const int, const resource_type_e);
+
 #endif
 }

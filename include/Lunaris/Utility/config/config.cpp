@@ -168,6 +168,16 @@ namespace Lunaris {
 		return true;
 	}
 
+	LUNARIS_DECL bool config::valid() const
+	{
+		return !path.empty();
+	}
+
+	LUNARIS_DECL bool config::empty() const
+	{
+		return (!valid()) && (conff.size() == 0);
+	}
+
 	LUNARIS_DECL void config::set(const std::string& sec, const config::config_section_mode mode)
 	{
 		this->_get_to_set(sec, mode).mode = mode;

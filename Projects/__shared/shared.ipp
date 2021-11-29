@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
 	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 	if (AUTOEXCEPT(audio_test()) != 0) return 1;
 	if (AUTOEXCEPT(events_test()) != 0) return 1;
-	if (AUTOEXCEPT(graphics_test()) != 0) return 1; // todo
+	if (AUTOEXCEPT(graphics_test()) != 0) return 1;
 }
 
 void hold_user()
@@ -204,7 +204,7 @@ int utility_test(const std::string& self_path)
 		cout << "Defuse works!";
 
 		cout << "Creating a timed bomb with time = 2.2 sec...";
-		
+
 		realboom = false;
 		{
 			timed_bomb mybomb([&] {realboom = true; }, 2.2);
@@ -277,7 +277,7 @@ int utility_test(const std::string& self_path)
 			TESTLU(info.has_ended(), "Future value was not set!");
 
 		}
-		
+
 		counter = 0;
 		cout << "Launching totally async this time!";
 
@@ -329,7 +329,7 @@ int utility_test(const std::string& self_path)
 		cout << "Removed " << amount << " paths.";
 
 		TESTLU(amount == 4, "Wait, that's not right... Wrong number of paths erased!");
-		
+
 		cout << console::color::GREEN << "PASSED!";
 	}
 
@@ -516,6 +516,33 @@ int utility_test(const std::string& self_path)
 				memfp.close();
 			}
 		}
+	}
+
+	cout << console::color::LIGHT_PURPLE << "Testing 'hash' (comparing SHA256 to supermess)...";
+	{
+		cout << "Creating random string of characters...";
+
+		std::vector<char> rngg;
+		for (size_t p = 0; p < (1 << 16); p++)
+		{
+			rngg.push_back(static_cast<char>(random() % 0xFF));
+		}
+
+		cout << "Checking the time to hash with SHA256 once...";
+
+		auto rn1 = std::chrono::high_resolution_clock::now();
+		const auto __s256 = sha256(rngg);
+		auto l81 = std::chrono::high_resolution_clock::now();
+
+		cout << "Now a messy string one...";
+		auto rn2 = std::chrono::high_resolution_clock::now();
+		const auto __smes = encrypt_supermess_auto(rngg);
+		auto l82 = std::chrono::high_resolution_clock::now();
+
+		cout << "SHA256 took: " << std::chrono::duration_cast<std::chrono::duration<double>>(l81 - rn1).count() * 1e6 << " us";
+		cout << "SPMESS took: " << std::chrono::duration_cast<std::chrono::duration<double>>(l82 - rn2).count() * 1e6 << " us";
+
+		cout << console::color::YELLOW << "PASSED?";
 	}
 
 	{
@@ -1137,9 +1164,9 @@ int graphics_test()
 	const float fixprop = 1.0f; // global camera proportion
 
 	std::atomic<bool> keep_running_things = true;
+	display_async my_display;
 	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
-	display_async my_display;
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
@@ -1151,15 +1178,23 @@ int graphics_test()
 	const color mouse_has_collision = color(255, 127, 255);
 	//auto random_texture = make_hybrid<texture>();
 	auto font_u = make_hybrid<font>();
-	auto bmppp = make_hybrid<texture>();
-	auto giffye = make_hybrid_derived<texture, texture_gif>();
+	auto ffbmp = make_hybrid_derived<texture, texture_functional>(); // self changing texture
+	auto bmppp = make_hybrid<texture>(); // random img from internet
+	auto giffye = make_hybrid_derived<texture, texture_gif>(); // gif
 	auto tempfp = make_hybrid_derived<file, tempfile>(); // random file
 	tempfile* fp = (tempfile*)tempfp.get();
 	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
 	tempfile* fp2 = (tempfile*)tempfp2.get();
-	
+	vertexes polygony;
 
 	cout << "Creating display...";
+
+	my_display.post_task_on_destroy([&] {
+			font_u.reset_shared();
+			ffbmp.reset_shared();
+			bmppp.reset_shared();
+			giffye.reset_shared();
+		});
 
 	TESTLU(my_display.create(display_config()
 		.set_fullscreen(false)
@@ -1252,6 +1287,22 @@ int graphics_test()
 	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.5f);
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 
+	{
+		texture_functional* ftt = (texture_functional*)ffbmp.get();
+		TESTLU(my_display.post_task([&] {return ftt->create(512, 512); }).get(), "Couldn't create texture/font for test!");
+		ftt->hook_function([](texture& self) {
+			const float dtim = static_cast<float>(al_get_time());
+			al_draw_filled_rectangle(0, 0, self.get_width(), self.get_height(), color(0.6f + 0.8f * cosf(dtim * 1.3f), 0.6f + 0.8f * cosf(dtim * 0.57f + 0.8754f), 0.6f + 0.8f * cosf(dtim * 2.25f + 1.8896f)));
+		});
+	}
+
+	polygony.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
+	polygony.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
+	polygony.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
+	polygony.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
+	polygony.set_mode(vertexes::types::TRIANGLE_STRIP);
+	polygony.set_texture(ffbmp);
+
 	cout << "Applying default transformation to display...";
 
 	my_display.add_run_once_in_drawing_thread([&my_display,&fixprop] {
@@ -1302,6 +1353,7 @@ int graphics_test()
 		blk_fixed.draw();
 		blk_mouse.draw();
 		txt_main.draw();
+		polygony.draw();
 
 		topleft_dc.draw();
 
@@ -1367,13 +1419,8 @@ int graphics_test()
 
 		switch(ev.key_id) {
 		case ALLEGRO_KEY_F11:
-			//my_display.add_run_once_in_drawing_thread([&] {
-				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
-			//	transform transf;
-			//	transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
-			//	transf.apply();
-			//	return true;
-			//});
+			my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
 		case ALLEGRO_KEY_R:
@@ -1523,8 +1570,10 @@ int graphics_test()
 	}).wait();
 
 
-	my_display.destroy();
+	//my_display.destroy();
 	// the rest should be fine.
+
+	my_display.destroy().wait();
 
 	cout << console::color::DARK_GRAY << "Everything should be good now.";
 	
@@ -1580,13 +1629,13 @@ int events_test()
 	TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test last event properly. FAILED.");
 	cout << console::color::GREEN << "Good!";
 
-	menu mymenu(disp, {
+	menu mymenu( disp, {
 		menu_each_menu()
 			.set_name("This one")
 			.set_id(9900)
 			.push(menu_each_default()
 				.set_name("Click me")
-				.set_id(10)
+				.set_id(910)
 			)
 			.push(menu_each_empty()
 			)
@@ -1595,12 +1644,12 @@ int events_test()
 				.set_id(9901)
 				.push(menu_each_default()
 					.set_name("Hey")
-					.set_id(1)
+					.set_id(301)
 					.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
 				)
 				.push(menu_each_default()
 					.set_name("Lists")
-					.set_id(2)
+					.set_id(302)
 					.set_flags(ALLEGRO_MENU_ITEM_CHECKBOX)
 				)
 				.push(menu_each_menu()
@@ -1617,7 +1666,7 @@ int events_test()
 			.set_id(9903)
 			.push(menu_each_default()
 				.set_name("Copyright? Probably not")
-				.set_id(20)
+				.set_id(520)
 			)
 			.push(menu_each_empty()
 			)
@@ -1626,12 +1675,12 @@ int events_test()
 				.set_id(9904)
 				.push(menu_each_default()
 					.set_name("Lunaris B" + std::to_string(LUNARIS_BUILD_NUMBER))
-					.set_id(40)
+					.set_id(540)
 					.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
 				)
 				.push(menu_each_default()
 					.set_name("Beta testing")
-					.set_id(50)
+					.set_id(550)
 					.set_flags(ALLEGRO_MENU_ITEM_DISABLED)
 				)
 			),
@@ -1664,31 +1713,44 @@ int events_test()
 			.push(menu_each_default()
 				.set_name("Keeps toggling lol")
 				.set_id(12345)
-			)
-		}
-	);
+			),
+		menu_each_menu()
+			.set_name("This is empty")
+			.set_id(3696),
+		menu_each_menu()
+			.set_name("List of times increasing...")
+			.set_id(3699)
+		});
 	{
 
 		//);
 
-		menu_event_handler menuev(mymenu);
-
-		mymenu.show();
 
 		bool clicked_right = false;
-		menuev.hook_event_handler([&](menu_event& mev) {
-			clicked_right |= ((mev.get_id() == 10) && (mev.get_name() == "Click me"));
+
+		const auto menu_f = [&](menu_event& mev) {
+			clicked_right |= (mev.get_name() == "Click me");
 			cout << mev.get_id() << " -> '" << mev.get_name() << "'";
 			if (mev.get_id() == 911) std::terminate(); // fatal error thingy
-			if (!clicked_right) {
-				mev.patch_toggle_flag(menu_item_flags::DISABLED);
+			if (!clicked_right && (mev.get_id() != 3696 && mev.get_id() != 3699)) {
+				mev.patch_toggle_flag(menu_flags::DISABLED);
 				mev.patch_name("This was not it. Random number voila: " + std::to_string(random()));
 			}
-			mymenu.update(); // test if works
-		});
+			//mymenu.apply(); // test if works
+		};
+
+		menu_event_handler menuev(mymenu);
+		mymenu.show();
+		menuev.hook_event_handler(menu_f);
+
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
-		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { disp.flip(); std::this_thread::sleep_for(std::chrono::milliseconds(500)); mymenu.patch_name_of(112, "Crash app (rng: " + std::to_string(random() % 1000) + ")"); mymenu.patch_toggle_flag(12345, menu_item_flags::DISABLED); }
+		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { 
+			disp.flip();
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			mymenu.find_id(112).set_caption("Crash app (rng: " + std::to_string(random() % 1000) + ")");
+			mymenu.find_id(12345).toggle_flags(menu_flags::DISABLED);
+		}
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
@@ -1697,18 +1759,30 @@ int events_test()
 
 		cout << console::color::YELLOW << "Do it again, please.";
 		clicked_right = false;
+		
+		auto mymenu2 = mymenu.duplicate_as(menu::menu_type::POPUP);
 
-		mymenu.remake_as(menu::menu_type::POPUP);
-
+		menu_event_handler menuev2(mymenu2);
+		mymenu2.show();
+		menuev2.hook_event_handler(menu_f);
+		
 		cout << console::color::YELLOW << "Please go through the menu and select 'This one' -> 'Click me'.";
 		timeoutt = std::chrono::system_clock::now() + std::chrono::seconds(180);
 		while (std::chrono::system_clock::now() < timeoutt && !clicked_right) { 
+
+			menu_handler submen = mymenu2["List of times increasing..."];
+			if (submen.size() > 5) submen.pop_front();
+			submen.push(menu_each_default().set_name("Yolo Time: " + std::to_string(al_get_time())).set_flags(menu_flags::DISABLED));
+
 			disp.flip();
-			mymenu.show();
+			mymenu2.show();
+
+			//mymenu2.show();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1500)); }
 		TESTLU(std::chrono::system_clock::now() < timeoutt, "TIMED OUT! Couldn't test menus. FAILED.");
 		cout << console::color::GREEN << "Good!";
 
+		mymenu2.hide();
 		disp.flip();
 	}
 

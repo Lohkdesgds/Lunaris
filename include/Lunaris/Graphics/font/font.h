@@ -17,6 +17,11 @@ namespace Lunaris {
 
 	void __font_allegro_start();
 
+	/// <summary>
+	/// <para>Font creation configuration.</para>
+	/// <para>You can load a TTF font or non TTF easily with this.</para>
+	/// <para>When using file it NEEDS a real file, I mean, it can't be a memfile. It will fail.</para>
+	/// </summary>
 	struct font_config {
 		int bmp_flags = ALLEGRO_CONVERT_BITMAP | ALLEGRO_MIN_LINEAR;
 		int font_flags = 0;
@@ -33,7 +38,11 @@ namespace Lunaris {
 		font_config& set_file(const hybrid_memory<file>&);
 	};
 
-	class font {
+	/// <summary>
+	/// <para>font is the handle to work with text on screen.</para>
+	/// <para>This easily create, destroy, duplicate and draw the font in a very easy way.</para>
+	/// </summary>
+	class font : public NonCopyable {
 		ALLEGRO_FONT* font_ptr = nullptr;
 		hybrid_memory<file> fileref;
 
@@ -43,23 +52,67 @@ namespace Lunaris {
 		font(const font_config&);
 		~font();
 
+		/// <summary>
+		/// <para>Move the font.</para>
+		/// </summary>
+		/// <param name="{font&amp;&amp;}">Font being moved.</param>
 		font(font&&) noexcept;
+
+		/// <summary>
+		/// <para>Move the font.</para>
+		/// </summary>
+		/// <param name="{font&amp;&amp;}">Font being moved.</param>
 		void operator=(font&&) noexcept;
 
-		font(const font&) = delete;
-		void operator=(const font&) = delete;
-
+		/// <summary>
+		/// <para>Create the builtin font from Allegro.</para>
+		/// </summary>
+		/// <returns></returns>
 		bool create_builtin_font();
 
+		/// <summary>
+		/// <para>Load a font using this configuration.</para>
+		/// </summary>
+		/// <param name="{font_config}">A configuration.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool load(const font_config&);
+
+		/// <summary>
+		/// <para>Load a font from the path directly.</para>
+		/// </summary>
+		/// <param name="{std::string}">The path.</param>
+		/// <param name="{bool}">Is it TTF?</param>
+		/// <returns>{bool} True if success.</returns>
 		bool load(const std::string&, const bool);
-		// assume TTF
+		
+		/// <summary>
+		/// <para>Load a TTF font directly from a file.</para>
+		/// </summary>
+		/// <param name="{file}">A TTF file.</param>
+		/// <returns>{bool} True if success.</returns>
 		bool load(const hybrid_memory<file>&);
 
+		/// <summary>
+		/// <para>Get the raw ALLEGRO_FONT*.</para>
+		/// </summary>
+		/// <returns>{ALLEGRO_FONT*} The raw pointer.</returns>
 		ALLEGRO_FONT* get_raw_font() const;
 
+		/// <summary>
+		/// <para>Is this empty/null?</para>
+		/// </summary>
+		/// <returns>{bool} True if null.</returns>
 		bool empty() const;
 
+		/// <summary>
+		/// <para>Do you have something loaded in here?</para>
+		/// </summary>
+		/// <returns>{bool} True if not null.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>Unload the font and unref file.</para>
+		/// </summary>
 		void destroy();
 
 		/// <summary>

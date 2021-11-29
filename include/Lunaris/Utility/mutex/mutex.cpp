@@ -38,7 +38,33 @@ namespace Lunaris {
 		else { // count 0 or not owner
 			throw std::runtime_error("shared_recursive_mutex unlock on non-owned or already unlocked mutex!");
 		}
+	}
 
+	LUNARIS_DECL bool fast_one_way_mutex::run()
+	{
+		return slave_ack = !request_stop;
+	}
+
+	LUNARIS_DECL void fast_one_way_mutex::lock()
+	{
+		request_stop = true;
+		while (slave_ack) std::this_thread::sleep_for(std::chrono::milliseconds(10)); // fastest way is power hungry
+	}
+
+	LUNARIS_DECL void fast_one_way_mutex::unlock()
+	{
+		request_stop = false;
+	}
+
+	LUNARIS_DECL fast_lock_guard::fast_lock_guard(fast_one_way_mutex& r)
+		: ref(r)
+	{
+		ref.lock();
+	}
+
+	LUNARIS_DECL fast_lock_guard::~fast_lock_guard()
+	{
+		ref.unlock();
 	}
 
 }

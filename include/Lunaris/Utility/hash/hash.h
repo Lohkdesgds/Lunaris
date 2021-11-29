@@ -1,10 +1,14 @@
 #pragma once
 
 #include <Lunaris/__macro/macros.h>
+#include <Lunaris/Utility/random.h>
 
 #include <stdio.h>
 #include <string>
 #include <vector>
+
+// This was not made by me (the SHA256 part)
+// Source: http://www.zedwood.com/article/cpp-sha256-function (modified)
 
 #define SHA2_SHFR(x, n)    (x >> n)
 #define SHA2_ROTR(x, n)   ((x >> n) | (x << ((sizeof(x) << 3) - n)))
@@ -31,8 +35,6 @@
 }
 
 namespace Lunaris {
-
-    // from: http://www.zedwood.com/article/cpp-sha256-function (modified)
 
     const unsigned int sha256_k[64] = //UL = uint32
     { 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
@@ -93,4 +95,130 @@ namespace Lunaris {
     /// <param name="{std::string}">The path to the file.</param>
     /// <returns>{std::string} The hash.</returns>
     std::string sha256_f(const std::string&);
+
+    /// <summary>
+    /// <para>Very simple algorithm (better than nothing, fast) that adds a value to every character, every time adding itself too.</para>
+    /// </summary>
+    /// <param name="{std::string}">The original string.</param>
+    /// <param name="{unsigned char}">The value offset each step. (recommended: something bigger than 16, and not a multiple of 2).</param>
+    /// <returns>{std::string} Encrypted string (using this very simple algorithm)</returns>
+    std::string encrypt_one_sum_each(std::string, const unsigned char);
+
+    /// <summary>
+    /// <para>Decrypt the algorithm encrypted using one_sum_each.</para>
+    /// </summary>
+    /// <param name="{std::string}">The encrypted string.</param>
+    /// <param name="{unsigned char}">The secret value offset.</param>
+    /// <returns>{std::string} Decrypted string, if things were right.</returns>
+    std::string decrypt_one_sum_each(std::string, const unsigned char);
+
+    /// <summary>
+    /// <para>Very simple algorithm (better than nothing, slower than one_sum_each, but more complex) that moves the bits around each byte.</para>
+    /// </summary>
+    /// <param name="{std::string}">The original string.</param>
+    /// <param name="{unsigned char}">Special sauce (how many bits to move and sum every byte).</param>
+    /// <returns>{std::string} Encrypted string.</returns>
+    std::string encrypt_move_bytes(std::string, const unsigned);
+
+    /// <summary>
+    /// <para>Decrypt a encrypted string using move_bytes.</para>
+    /// </summary>
+    /// <param name="{std::string}">Encrypted string.</param>
+    /// <param name="{unsigned char}">The sauce used to encrypt.</param>
+    /// <returns>{std::string} Hopefully the string you have ever wanted.</returns>
+    std::string decrypt_move_bytes(std::string, const unsigned);
+
+    /// <summary>
+    /// <para>Move characters around in number times that argument, really funky mess algorithm, of course not secure, but maybe good if combined with others.</para>
+    /// </summary>
+    /// <param name="{std::string}">The original string.</param>
+    /// <param name="{unsigned char}">The secret value offset (it moves stuff using this number).</param>
+    /// <returns>{std::string} Encrypted string (more like randomized with seed string).</returns>
+    std::string encrypt_mess_string_order(std::string, const size_t);
+
+    /// <summary>
+    /// <para>Decrypts a messy string.</para>
+    /// </summary>
+    /// <param name="{std::string}">The encrypted string.</param>
+    /// <param name="{unsigned char}">The seed (used to mess around).</param>
+    /// <returns>{std::string} This should be your final string.</returns>
+    std::string decrypt_mess_string_order(std::string, const size_t);
+
+    /// <summary>
+    /// <para>This does the combo one_sum_each, move_bytes and mess_string_order in a random way, but keeping the key somewhere into it (randomly positioned).</para>
+    /// <para>Maybe this is good enough for *some* security. Probably not worth it, but different enough.</para>
+    /// </summary>
+    /// <param name="{std::string}">The original string.</param>
+    /// <returns>{std::string} Messy string.</returns>
+    std::string encrypt_supermess_auto(std::string);
+
+    /// <summary>
+    /// <para>Decrypts a supermessy string.</para>
+    /// </summary>
+    /// <param name="{std::string}">A supermessy string.</param>
+    /// <returns>{std::string} Hopefully your string.</returns>
+    std::string decrypt_supermess_auto(std::string);
+
+    /// <summary>
+    /// <para>Very simple algorithm (better than nothing, fast) that adds a value to every character, every time adding itself too.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">The original string.</param>
+    /// <param name="{unsigned char}">The value offset each step. (recommended: something bigger than 16, and not a multiple of 2).</param>
+    /// <returns>{std::vector<char>} Encrypted string (using this very simple algorithm)</returns>
+    std::vector<char> encrypt_one_sum_each(std::vector<char>, const unsigned char);
+
+    /// <summary>
+    /// <para>Decrypt the algorithm encrypted using one_sum_each.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">The encrypted string.</param>
+    /// <param name="{unsigned char}">The secret value offset.</param>
+    /// <returns>{std::vector<char>} Decrypted string, if things were right.</returns>
+    std::vector<char> decrypt_one_sum_each(std::vector<char>, const unsigned char);
+
+    /// <summary>
+    /// <para>Very simple algorithm (better than nothing, slower than one_sum_each, but more complex) that moves the bits around each byte.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">The original string.</param>
+    /// <param name="{unsigned char}">Special sauce (how many bits to move and sum every byte).</param>
+    /// <returns>{std::vector<char>} Encrypted string.</returns>
+    std::vector<char> encrypt_move_bytes(std::vector<char>, const unsigned);
+
+    /// <summary>
+    /// <para>Decrypt a encrypted string using move_bytes.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">Encrypted string.</param>
+    /// <param name="{unsigned char}">The sauce used to encrypt.</param>
+    /// <returns>{std::vector<char>} Hopefully the string you have ever wanted.</returns>
+    std::vector<char> decrypt_move_bytes(std::vector<char>, const unsigned);
+
+    /// <summary>
+    /// <para>Move characters around in number times that argument, really funky mess algorithm, of course not secure, but maybe good if combined with others.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">The original string.</param>
+    /// <param name="{unsigned char}">The secret value offset (it moves stuff using this number).</param>
+    /// <returns>{std::vector<char>} Encrypted string (more like randomized with seed string).</returns>
+    std::vector<char> encrypt_mess_string_order(std::vector<char>, const size_t);
+
+    /// <summary>
+    /// <para>Decrypts a messy string.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">The encrypted string.</param>
+    /// <param name="{unsigned char}">The seed (used to mess around).</param>
+    /// <returns>{std::vector<char>} This should be your final string.</returns>
+    std::vector<char> decrypt_mess_string_order(std::vector<char>, const size_t);
+
+    /// <summary>
+    /// <para>This does the combo one_sum_each, move_bytes and mess_string_order in a random way, but keeping the key somewhere into it (randomly positioned).</para>
+    /// <para>Maybe this is good enough for *some* security. Probably not worth it, but different enough.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">The original string.</param>
+    /// <returns>{std::vector<char>} Messy string.</returns>
+    std::vector<char> encrypt_supermess_auto(std::vector<char>);
+
+    /// <summary>
+    /// <para>Decrypts a supermessy string.</para>
+    /// </summary>
+    /// <param name="{std::vector<char>}">A supermessy string.</param>
+    /// <returns>{std::vector<char>} Hopefully your string.</returns>
+    std::vector<char> decrypt_supermess_auto(std::vector<char>);
 }

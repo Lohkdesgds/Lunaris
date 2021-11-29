@@ -98,10 +98,10 @@ namespace Lunaris {
 		textures.push_back(oth);
 	}
 
-	LUNARIS_DECL const hybrid_memory<texture>& block::texture_index(const size_t index) const
+	LUNARIS_DECL hybrid_memory<texture> block::texture_index(const size_t index) const
 	{
 		auto lock = mu_shared_read_control();
-		if (index >= textures.size()) throw std::out_of_range("index out of range");
+		if (index >= textures.size()) return {};
 		return textures[index];
 	}
 

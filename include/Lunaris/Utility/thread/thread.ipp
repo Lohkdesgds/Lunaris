@@ -170,6 +170,16 @@ namespace Lunaris {
 		if (!skip_any_exception && data->_exception) std::rethrow_exception(data->_exception);
 	}
 
+	inline bool thread::valid() const
+	{
+		return data && !data->should_quit;
+	}
+
+	inline bool thread::empty() const
+	{
+		return !valid();
+	}
+
 	inline bool async_thread_info::has_ended() const
 	{
 		return ended.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
@@ -185,6 +195,16 @@ namespace Lunaris {
 	inline bool async_thread_info::exists() const
 	{
 		return id != std::thread::native_handle_type{};
+	}
+
+	inline bool async_thread_info::valid() const
+	{
+		return exists();
+	}
+
+	inline bool async_thread_info::empty() const
+	{
+		return !exists();
 	}
 
 	inline async_thread_info throw_thread(const std::function<void(void)> f)

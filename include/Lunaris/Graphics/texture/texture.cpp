@@ -103,7 +103,7 @@ namespace Lunaris {
 		if (conf.format > 0) 
 			al_set_new_bitmap_format(conf.format);
 		if (conf.flags > 0) 
-			al_set_new_bitmap_flags(conf.flags);
+			al_set_new_bitmap_flags(conf.flags | ALLEGRO_CONVERT_BITMAP);
 
 		if (!conf.path.empty()) {
 			bitmap = al_load_bitmap(conf.path.c_str());
@@ -226,6 +226,11 @@ namespace Lunaris {
 		return get_raw_bitmap();
 	}
 
+	LUNARIS_DECL bool texture::valid() const
+	{
+		return bitmap != nullptr;
+	}
+
 	LUNARIS_DECL bool texture::empty() const
 	{
 		return bitmap == nullptr;
@@ -236,10 +241,11 @@ namespace Lunaris {
 		if (bitmap) {
 #ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Del bitmap %p", bitmap);
-#endif
+#endif			
 			al_destroy_bitmap(bitmap);
 			bitmap = nullptr;
 		}
+		fileref.reset_this();
 	}
 
 	LUNARIS_DECL void texture::draw_at(const float x, const float y, const int flags) const
@@ -305,6 +311,62 @@ namespace Lunaris {
 	LUNARIS_DECL void texture::set_as_target() const
 	{
 		if (bitmap) al_set_target_bitmap(bitmap);
+	}
+
+	LUNARIS_DECL texture_functional::~texture_functional()
+	{
+		destroy();
+	}
+
+	LUNARIS_DECL bool texture_functional::check_ready() const
+	{
+		if (al_get_target_bitmap() == bitmap) return true; // within a loop
+		if (!this->texture::check_ready()) return false;
+
+		for (size_t err = 0; !fastmu.run(); ++err) {
+			if (err > 25) throw std::runtime_error("Timedout function texture safe mutex (took too long to unlock)"); // 250 ms
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+
+		ALLEGRO_BITMAP* oldtg = al_get_target_bitmap();
+		ALLEGRO_BITMAP* curr = bitmap;
+		al_set_target_bitmap(curr);
+		func(*const_cast<texture_functional*>(this)); // be sure you do the exception testing. You may draw into the bitmap.
+		al_set_target_bitmap(oldtg); // good to go.
+		return true;
+	}
+
+	LUNARIS_DECL texture_functional::texture_functional(texture_functional&& oth) noexcept
+		: texture(std::move(oth)), func(std::move(oth.func))
+	{
+	}
+
+	LUNARIS_DECL void texture_functional::operator=(texture_functional&& oth) noexcept
+	{
+		this->texture::operator=(std::move(oth));
+		func = std::move(oth.func);
+	}
+
+	LUNARIS_DECL void texture_functional::hook_function(std::function<void(texture&)> f)
+	{
+		func = f;
+	}
+
+	LUNARIS_DECL void texture_functional::unhook_function()
+	{
+		func = {};
+	}
+
+	LUNARIS_DECL ALLEGRO_BITMAP* texture_functional::get_raw_bitmap() const
+	{
+		if (check_ready()) // run the thing!
+			return bitmap;
+		return nullptr;
+	}
+
+	LUNARIS_DECL texture_functional::operator ALLEGRO_BITMAP* () const
+	{
+		return get_raw_bitmap();
 	}
 
 	LUNARIS_DECL bool texture_gif::check_ready() const
@@ -398,9 +460,19 @@ namespace Lunaris {
 		return animation ? algif_get_bitmap(animation, al_get_time() - start_time) : nullptr;
 	}
 
-	LUNARIS_DECL bool texture_gif::empty()
+	LUNARIS_DECL texture_gif::operator ALLEGRO_BITMAP* () const
+	{
+		return get_raw_bitmap();
+	}
+
+	LUNARIS_DECL bool texture_gif::valid() const
 	{
 		return animation != nullptr && bitmap != nullptr;
+	}
+
+	LUNARIS_DECL bool texture_gif::empty() const
+	{
+		return !valid();
 	}
 
 	LUNARIS_DECL void texture_gif::destroy()
@@ -410,12 +482,13 @@ namespace Lunaris {
 			bitmap = nullptr;
 			animation = nullptr;
 		}
+		fileref.reset_this();
 	}
 
 	LUNARIS_DECL double texture_gif::get_interval_average() const
 	{
-		if (!animation) return 0.0;
-		if (animation->frames_count == 0) return 0.0;
+		if (!animation) return -1.0;
+		if (animation->frames_count == 0) return -1.0;
 
 		double total = 0.0;
 
@@ -429,8 +502,8 @@ namespace Lunaris {
 
 	LUNARIS_DECL double texture_gif::get_interval_longest() const
 	{
-		if (!animation) return 0.0;
-		if (animation->frames_count == 0) return 0.0;
+		if (!animation) return -1.0;
+		if (animation->frames_count == 0) return -1.0;
 
 		double total = 0.0;
 
@@ -444,8 +517,8 @@ namespace Lunaris {
 
 	LUNARIS_DECL double texture_gif::get_interval_shortest() const
 	{
-		if (!animation) return 0.0;
-		if (animation->frames_count == 0) return 0.0;
+		if (!animation) return -1.0;
+		if (animation->frames_count == 0) return -1.0;
 
 		double total = algif_get_frame_duration(animation, 0);
 
@@ -455,6 +528,25 @@ namespace Lunaris {
 		}
 
 		return total;
+	}
+
+	LUNARIS_DECL size_t texture_gif::get_amount_of_frames() const
+	{
+		return animation ? static_cast<size_t>(animation->frames_count > 0 ? animation->frames_count : 0) : 0;
+	}
+
+	LUNARIS_DECL ALLEGRO_BITMAP* texture_gif::index(const size_t p) const
+	{
+		if (p >= get_amount_of_frames()) return nullptr;
+		return algif_get_frame_bitmap(animation, static_cast<int>(p));
+	}
+
+	LUNARIS_DECL double texture_gif::get_interval_of_index(const size_t p) const
+	{
+		if (!animation) return -1.0;
+		if (get_amount_of_frames() <= p) return -1.0;
+
+		return algif_get_frame_duration(animation, static_cast<int>(p));
 	}
 
 }

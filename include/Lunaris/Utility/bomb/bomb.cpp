@@ -54,6 +54,16 @@ namespace Lunaris {
 		return !boom.operator bool();
 	}
 
+	LUNARIS_DECL bool bomb::valid() const
+	{
+		return !is_defused();
+	}
+
+	LUNARIS_DECL bool bomb::empty() const
+	{
+		return is_defused();
+	}
+
 	LUNARIS_DECL timed_bomb::_bomb::_bomb(std::function<void()> f)
 		: _bmb(f)
 	{
@@ -108,6 +118,16 @@ namespace Lunaris {
 	LUNARIS_DECL bool timed_bomb::is_defused() const
 	{
 		return movable_bomb ? movable_bomb->_bmb.is_defused() : true;
+	}
+
+	LUNARIS_DECL bool timed_bomb::valid() const
+	{
+		return !is_defused();
+	}
+
+	LUNARIS_DECL bool timed_bomb::empty() const
+	{
+		return is_defused();
 	}
 
 }

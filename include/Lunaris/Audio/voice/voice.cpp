@@ -79,4 +79,14 @@ namespace Lunaris {
 		return device != nullptr;
 	}
 
+	LUNARIS_DECL bool voice::empty() const
+	{
+		return device == nullptr;
+	}
+
+	LUNARIS_DECL bool voice::valid() const
+	{
+		return device != nullptr;
+	}
+
 }

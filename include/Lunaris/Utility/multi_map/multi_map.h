@@ -17,6 +17,9 @@ namespace Lunaris {
     template<class R, class... Ts>
     using are_all_convertible = all_true<std::is_convertible<Ts, R>::value...>;
 
+    /// <summary>
+    /// <para>A recursive template class that creates your variables in sequence internally.</para>
+    /// </summary>
     template<typename... T>
     class multiple_data {
     public:
@@ -39,6 +42,9 @@ namespace Lunaris {
         operator V() const;
     };
 
+    /// <summary>
+    /// <para>A recursive template class that creates your variables in sequence internally.</para>
+    /// </summary>
     template<typename T, typename... Rest>
     class multiple_data<T, Rest...> {
         T first{};
@@ -66,6 +72,9 @@ namespace Lunaris {
         operator V() const;
     };
 
+    /// <summary>
+    /// <para>multi_pair is like a std::pair, but with recursive class template of keys.</para>
+    /// </summary>
     template<typename Store, typename... Keys>
     struct multi_pair {
         Store store{};
@@ -75,7 +84,10 @@ namespace Lunaris {
         multi_pair(const Store&, const Keys&...);
     };
     
-
+    /// <summary>
+    /// <para>fixed_multi_map is like std::map, but fixed in size (guaranteed by raw array) and uses multi_pair as each pair (so it has fixed multiple keys per value stored)</para>
+    /// <para>Because of the nature of a fixed size data, this should be very useful in multithreaded applications. The values might not be atomic, but segfault or out of range are basically impossible.</para>
+    /// </summary>
     template<typename Store, size_t amount, typename... Keys>
     class fixed_multi_map {
         multi_pair<Store, Keys...> objects[amount];
@@ -112,7 +124,9 @@ namespace Lunaris {
         auto find_if(find_func) const;
     };
 
-
+    /// <summary>
+    /// <para>multi_map is like std::map, but uses multi_pair as each pair (so it has fixed multiple keys per value stored)</para>
+    /// </summary>
     template<typename Store, typename... Keys>
     class multi_map {
     public:
@@ -228,15 +242,27 @@ namespace Lunaris {
         typename MultiMap& self();
     };
 
+    /// <summary>
+    /// <para>A generic (in pair class) fixed in size mapping tool with get/set/index/size/self ready for inheritance.</para>
+    /// </summary>
     template<template <class, size_t, class...> class Class, size_t Size, typename Hint, typename... Keys>
     using generic_fixed_multi_map_work = __fixed_multi_map_work<Class<Hint, Size, Keys...>, Size, Hint, Keys...>;
 
+    /// <summary>
+    /// <para>A generic (in pair class) mapping tool with get/set/index/size/self ready for inheritance.</para>
+    /// </summary>
     template<template <class, class...> class Class, typename Hint, typename... Keys>
     using generic_multi_map_work = __multi_map_work<Class<Hint, Keys...>, Hint, Keys...>;
 
+    /// <summary>
+    /// <para>A ready to go fixed_multi_map with get/set/index/size/self ready for inheritance.</para>
+    /// </summary>
     template<size_t Size, typename Hint, typename... Keys>
     using fixed_multi_map_work = __fixed_multi_map_work<fixed_multi_map<Hint, Size, Keys...>, Size, Hint, Keys...>;
 
+    /// <summary>
+    /// <para>A ready to go multi_map with get/set/index/size/self ready for inheritance.</para>
+    /// </summary>
     template<typename Hint, typename... Keys>
     using multi_map_work = __multi_map_work<multi_map<Hint, Keys...>, Hint, Keys...>;
 

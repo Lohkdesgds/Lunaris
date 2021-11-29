@@ -91,4 +91,14 @@ namespace Lunaris {
 		return mixing != nullptr;
 	}
 
+	LUNARIS_DECL bool mixer::empty() const
+	{
+		return mixing == nullptr;
+	}
+
+	LUNARIS_DECL bool mixer::valid() const
+	{
+		return mixing != nullptr;
+	}
+
 }

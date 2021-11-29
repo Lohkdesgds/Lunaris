@@ -71,4 +71,14 @@ namespace Lunaris {
 		return file_sample != nullptr;
 	}
 
+	LUNARIS_DECL bool sample::empty() const
+	{
+		return file_sample == nullptr;
+	}
+
+	LUNARIS_DECL bool sample::valid() const
+	{
+		return file_sample != nullptr;
+	}
+
 }

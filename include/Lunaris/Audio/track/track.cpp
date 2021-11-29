@@ -85,6 +85,16 @@ namespace Lunaris {
 		return playing != nullptr;
 	}
 
+	LUNARIS_DECL bool track::empty() const
+	{
+		return playing == nullptr;
+	}
+
+	LUNARIS_DECL bool track::valid() const
+	{
+		return playing != nullptr;
+	}
+
 	LUNARIS_DECL void track::play()
 	{
 		if (!exists()) return;

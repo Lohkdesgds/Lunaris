@@ -57,6 +57,10 @@ namespace Lunaris {
 		{0,		enum_text_integer_e::DRAW_ALIGNMENT}
 	};
 
+	/// <summary>
+	/// <para>text_shadow is a way to redraw the same text with the same size, text and flags, but with an offset and different color.</para>
+	/// <para>This is useful as a shadow literally, but you can do whatever you want with it.</para>
+	/// </summary>
 	struct text_shadow {
 		float offset_x = 0.0;
 		float offset_y = 0.0;
@@ -70,7 +74,10 @@ namespace Lunaris {
 		text_shadow& set_color(const color&);
 	};
 
-
+	/// <summary>
+	/// <para>text is the way to draw text around your screen.</para>
+	/// <para>There are multiple modes and customization, like text shadow and buffering into a texture for speed.</para>
+	/// </summary>
 	class text :
 		public sprite,
 		public fixed_multi_map_work<static_cast<size_t>(enum_text_float_e::_SIZE), float, enum_text_float_e>,
@@ -85,8 +92,8 @@ namespace Lunaris {
 		// variables
 		mutable std::shared_mutex font_mtx; // used for font_used and shadows
 		hybrid_memory<font> font_used;
-		std::vector<text_shadow> shadows;
-		std::unique_ptr<_texture_mode> if_texture;
+		std::vector<text_shadow> shadows; // using shared_mutex right there already
+		std::unique_ptr<_texture_mode> if_texture; // if using texture technique to boost fps while using more ram.
 
 		// funcs
 		std::shared_lock<std::shared_mutex> mu_shared_read_control() const; // easier
@@ -100,15 +107,42 @@ namespace Lunaris {
 
 		text();
 
+		/// <summary>
+		/// <para>Set the font to be used.</para>
+		/// </summary>
+		/// <param name="{hybrid_memory&lt;font&gt;}">Font.</param>
 		void font_set(const hybrid_memory<font>&);
 
+		/// <summary>
+		/// <para>Add a shadow to the shadow list.</para>
+		/// </summary>
+		/// <param name="{text_shadow}">A shadow to copy and add.</param>
 		void shadow_insert(text_shadow);
+
+		/// <summary>
+		/// <para>Get information of a specific shadow.</para>
+		/// </summary>
+		/// <param name="{size_t}">Index.</param>
+		/// <returns>{text_shadow} Internal const reference to a shadow.</returns>
 		const text_shadow& shadow_index(const size_t) const;
+
+		/// <summary>
+		/// <para>Get how many shadows are set.</para>
+		/// </summary>
+		/// <returns>{size_t} Amount of shadows added.</returns>
 		size_t shadow_size() const;
+
+		/// <summary>
+		/// <para>Remove a shadow element from the shadow list.</para>
+		/// </summary>
+		/// <param name="{size_t}">Index.</param>
 		void shadow_remove(const size_t);
+
+		/// <summary>
+		/// <para>Remove all shadows.</para>
+		/// </summary>
 		void shadow_remove_all();
 
-		// inheritance
 		using sprite::set;
 		using sprite::get;
 		using sprite::index;

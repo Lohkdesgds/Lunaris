@@ -50,6 +50,17 @@ namespace Lunaris {
 		/// <returns>{bool} True if loaded.</returns>
 		bool exists() const;
 
+		/// <summary>
+		/// <para>Is this ready and/or loaded?</para>
+		/// </summary>
+		/// <returns>{bool} True means not ready/set.</returns>
+		bool empty() const;
+
+		/// <summary>
+		/// <para>Is this ready and/or loaded?</para>
+		/// </summary>
+		/// <returns>{bool} True if loaded.</returns>
+		bool valid() const;
 	};
 	
 }

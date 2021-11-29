@@ -60,7 +60,9 @@ namespace Lunaris {
 		{0.0,		enum_block_double_e::DRAW_FRAMES_PER_SECOND }
 	};
 
-
+	/// <summary>
+	/// <para>block is a sprite with texture and extra animation features.</para>
+	/// </summary>
 	class block :
 		public sprite,
 		public fixed_multi_map_work<static_cast<size_t>(enum_block_sizet_e::_SIZE),					size_t,							enum_block_sizet_e>,
@@ -85,10 +87,34 @@ namespace Lunaris {
 	public:
 		block();
 
+		/// <summary>
+		/// <para>Add a new texture to the list (you can animate or select via set).</para>
+		/// </summary>
+		/// <param name="{hybrid_memory&lt;texture&gt;}">A texture.</param>
 		void texture_insert(const hybrid_memory<texture>&);
-		const hybrid_memory<texture>& texture_index(const size_t) const;
+
+		/// <summary>
+		/// <para>Get one of the internal textures </para>
+		/// </summary>
+		/// <param name="{size_t}">Index value.</param>
+		/// <returns>{hybrid_memory&lt;texture&gt;} The texture, or empty if out of range.</returns>
+		hybrid_memory<texture> texture_index(const size_t) const;
+
+		/// <summary>
+		/// <para>How many textures are in this object?</para>
+		/// </summary>
+		/// <returns>{size_t} The amount of textures added in this object.</returns>
 		size_t texture_size() const;
+
+		/// <summary>
+		/// <para>Remove one of the textures from this object.</para>
+		/// </summary>
+		/// <param name="{size_t}">Index value.</param>
 		void texture_remove(const size_t);
+
+		/// <summary>
+		/// <para>Remove all textures from this object.</para>
+		/// </summary>
 		void texture_remove_all();
 
 		// inheritance

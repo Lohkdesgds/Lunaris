@@ -142,6 +142,237 @@ namespace Lunaris {
         for (char ubuf; fread_s(&ubuf, 1, sizeof(char), 1, fp);) myself += ubuf;
         fclose(fp);
         return sha256(myself);
+    }
 
+    LUNARIS_DECL std::string encrypt_one_sum_each(std::string orig, const unsigned char plus)
+    {
+        unsigned char off = 0;
+        for (auto& it : orig) it += static_cast<char>(static_cast<char>((off = (unsigned char)(((unsigned char)off) + ((unsigned char)plus)))));
+        return orig;
+    }
+
+    LUNARIS_DECL std::string decrypt_one_sum_each(std::string orig, const unsigned char plus)
+    {
+        unsigned char off = 0;
+        for (auto& it : orig) it -= static_cast<char>(static_cast<char>((off = (unsigned char)(((unsigned char)off) + ((unsigned char)plus)))));
+        return orig;
+    }
+
+    LUNARIS_DECL std::string encrypt_move_bytes(std::string orig, const unsigned mov)
+    {
+        const unsigned charlen = static_cast<unsigned>(sizeof(char) * 8);
+        const unsigned realdeal = mov % charlen;
+        unsigned off = 0;
+        for (auto& it : orig) {
+            off = (off + realdeal) % charlen; // never bigger or equal to charlen
+            it = ((unsigned char)(((unsigned char)it) << off) | (unsigned char)(((unsigned char)it) >> (charlen - off)));
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::string decrypt_move_bytes(std::string orig, const unsigned mov)
+    {
+        const unsigned charlen = static_cast<unsigned>(sizeof(char) * 8);
+        const unsigned realdeal = mov % charlen;
+        unsigned off = 0;
+        for (auto& it : orig) {
+            off = (off + realdeal) % charlen; // never bigger or equal to charlen
+            it = ((unsigned char)(((unsigned char)it) >> off) | (unsigned char)(((unsigned char)it) << (charlen - off)));
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::string encrypt_mess_string_order(std::string orig, const size_t flipping)
+    {
+        size_t currp = 0;
+        for (size_t remaining = 0; remaining < orig.size(); remaining++)
+        {
+            currp = (currp + flipping) % orig.size();
+
+            const char cpy = orig[remaining];
+            orig[remaining] = orig[currp];
+            orig[currp] = cpy;
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::string decrypt_mess_string_order(std::string orig, const size_t flipping)
+    {
+        if (orig.size() == 0) return {};
+        size_t currp = 0;
+
+        for (const auto& i : orig) currp = (currp + flipping) % orig.size(); // get final val, cheap coding way.
+
+        for (size_t remaining = orig.size() - 1; true; remaining--)
+        {
+            const char cpy = orig[remaining];
+            orig[remaining] = orig[currp];
+            orig[currp] = cpy;
+
+            while (currp < flipping) currp += orig.size();
+            currp = (currp - flipping) % orig.size();
+
+            if (remaining == 0)
+                break;
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::string encrypt_supermess_auto(std::string orig)
+    {
+        if (orig.empty()) return {};
+        unsigned char rnd1 = random() % 0xFF;
+        unsigned char rnd2 = random() % 0xFF;
+        unsigned char rnd3 = random() % 0xFF;
+
+        orig = encrypt_one_sum_each(orig, rnd1);
+
+        orig.insert(orig.begin(), (char)rnd1);
+        orig = encrypt_move_bytes(orig, rnd2);
+
+        orig.push_back((char)rnd2);
+        orig = encrypt_mess_string_order(orig, rnd3);
+
+        orig.insert(orig.begin() + (orig[0] % orig.size()), (char)rnd3);
+
+        return orig;
+    }
+
+    LUNARIS_DECL std::string decrypt_supermess_auto(std::string orig)
+    {
+        if (orig.empty()) return {};
+        unsigned char rnd1 = 0;
+        unsigned char rnd2 = 0;
+        unsigned char rnd3 = orig[(orig[0] % (orig.size() - 1))];
+
+        orig.erase(orig.begin() + (orig[0] % (orig.size() - 1)));
+
+        orig = decrypt_mess_string_order(orig, rnd3);
+        rnd2 = (unsigned char)orig.back();
+        orig.erase(orig.end() - 1);
+
+        orig = decrypt_move_bytes(orig, rnd2);
+        rnd1 = (unsigned char)orig.front();
+        orig.erase(orig.begin());
+
+        orig = decrypt_one_sum_each(orig, rnd1);
+
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> encrypt_one_sum_each(std::vector<char> orig, const unsigned char plus)
+    {
+        unsigned char off = 0;
+        for (auto& it : orig) it += static_cast<char>(static_cast<char>((off = (unsigned char)(((unsigned char)off) + ((unsigned char)plus)))));
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> decrypt_one_sum_each(std::vector<char> orig, const unsigned char plus)
+    {
+        unsigned char off = 0;
+        for (auto& it : orig) it -= static_cast<char>(static_cast<char>((off = (unsigned char)(((unsigned char)off) + ((unsigned char)plus)))));
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> encrypt_move_bytes(std::vector<char> orig, const unsigned mov)
+    {
+        const unsigned charlen = static_cast<unsigned>(sizeof(char) * 8);
+        const unsigned realdeal = mov % charlen;
+        unsigned off = 0;
+        for (auto& it : orig) {
+            off = (off + realdeal) % charlen; // never bigger or equal to charlen
+            it = ((unsigned char)(((unsigned char)it) << off) | (unsigned char)(((unsigned char)it) >> (charlen - off)));
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> decrypt_move_bytes(std::vector<char> orig, const unsigned mov)
+    {
+        const unsigned charlen = static_cast<unsigned>(sizeof(char) * 8);
+        const unsigned realdeal = mov % charlen;
+        unsigned off = 0;
+        for (auto& it : orig) {
+            off = (off + realdeal) % charlen; // never bigger or equal to charlen
+            it = ((unsigned char)(((unsigned char)it) >> off) | (unsigned char)(((unsigned char)it) << (charlen - off)));
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> encrypt_mess_string_order(std::vector<char> orig, const size_t flipping)
+    {
+        size_t currp = 0;
+        for (size_t remaining = 0; remaining < orig.size(); remaining++)
+        {
+            currp = (currp + flipping) % orig.size();
+
+            const char cpy = orig[remaining];
+            orig[remaining] = orig[currp];
+            orig[currp] = cpy;
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> decrypt_mess_string_order(std::vector<char> orig, const size_t flipping)
+    {
+        if (orig.size() == 0) return {};
+        size_t currp = 0;
+
+        for (const auto& i : orig) currp = (currp + flipping) % orig.size(); // get final val, cheap coding way.
+
+        for (size_t remaining = orig.size() - 1; true; remaining--)
+        {
+            const char cpy = orig[remaining];
+            orig[remaining] = orig[currp];
+            orig[currp] = cpy;
+
+            while (currp < flipping) currp += orig.size();
+            currp = (currp - flipping) % orig.size();
+
+            if (remaining == 0)
+                break;
+        }
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> encrypt_supermess_auto(std::vector<char> orig)
+    {
+        if (orig.empty()) return {};
+        unsigned char rnd1 = random() % 0xFF;
+        unsigned char rnd2 = random() % 0xFF;
+        unsigned char rnd3 = random() % 0xFF;
+
+        orig = encrypt_one_sum_each(orig, rnd1);
+
+        orig.insert(orig.begin(), (char)rnd1);
+        orig = encrypt_move_bytes(orig, rnd2);
+
+        orig.push_back((char)rnd2);
+        orig = encrypt_mess_string_order(orig, rnd3);
+
+        orig.insert(orig.begin() + (orig[0] % orig.size()), (char)rnd3);
+
+        return orig;
+    }
+
+    LUNARIS_DECL std::vector<char> decrypt_supermess_auto(std::vector<char> orig)
+    {
+        if (orig.empty()) return {};
+        unsigned char rnd1 = 0;
+        unsigned char rnd2 = 0;
+        unsigned char rnd3 = orig[(orig[0] % (orig.size() - 1))];
+
+        orig.erase(orig.begin() + (orig[0] % (orig.size() - 1)));
+
+        orig = decrypt_mess_string_order(orig, rnd3);
+        rnd2 = (unsigned char)orig.back();
+        orig.erase(orig.end() - 1);
+
+        orig = decrypt_move_bytes(orig, rnd2);
+        rnd1 = (unsigned char)orig.front();
+        orig.erase(orig.begin());
+
+        orig = decrypt_one_sum_each(orig, rnd1);
+
+        return orig;
     }
 }
