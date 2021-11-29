@@ -250,7 +250,8 @@ namespace Lunaris {
 		destroy().wait();
 		__display_allegro_start();
 		
-		al_set_new_display_flags(conf.flags_combine());
+		const auto flags_combo = conf.flags_combine();
+		al_set_new_display_flags(flags_combo);
 		al_set_new_bitmap_flags(ALLEGRO_CONVERT_BITMAP);
 		al_set_new_display_option(ALLEGRO_VSYNC, conf.vsync ? 1 : 2, ALLEGRO_SUGGEST);
 		al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, conf.samples ? 1 : 0, ALLEGRO_SUGGEST);
@@ -262,7 +263,6 @@ namespace Lunaris {
 			latest_window_title = conf.window_title;
 			al_set_new_window_title(conf.window_title.c_str());
 		}
-
 
 		if (!(ev_qu = al_create_event_queue())) {
 			return false;
@@ -276,7 +276,10 @@ namespace Lunaris {
 			if (ev_qu) al_destroy_event_queue(ev_qu);
 			ev_qu = nullptr;
 			return false;
-		}			
+		}
+
+		if (!(flags_combo & ALLEGRO_FULLSCREEN))
+			al_set_display_flag(window, ALLEGRO_FULLSCREEN_WINDOW, conf.fullscreen);
 
 		if (conf.use_basic_internal_event_system) {
 			al_register_event_source(ev_qu, al_get_display_event_source(window));
@@ -392,7 +395,8 @@ namespace Lunaris {
 	{
 		return post_task([this, flg] {
 			if (window) {
-				if (!al_set_display_flag(window, flg, !(al_get_display_flags(window) & flg))) return false;
+				const bool is_fs_now = !(al_get_display_flags(window) & flg);
+				if (!al_set_display_flag(window, flg, is_fs_now)) return false;
 				if (flg & ALLEGRO_FULLSCREEN_WINDOW) al_acknowledge_resize(window);
 
 				ALLEGRO_EVENT bev;
@@ -400,6 +404,7 @@ namespace Lunaris {
 				bev.user.data1 = static_cast<intptr_t>(al_get_display_width(window));
 				bev.user.data2 = static_cast<intptr_t>(al_get_display_height(window));
 				bev.user.data3 = (intptr_t)window;
+				bev.user.data4 = (intptr_t)is_fs_now;
 
 				return al_emit_user_event(&evsrc, &bev, nullptr);
 			}

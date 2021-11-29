@@ -1204,6 +1204,7 @@ int graphics_test()
 		.set_framerate_limit(300)
 		.set_economy_framerate_limit(20)
 		.set_wait_for_display_draw(true)
+		//.set_fullscreen(true)
 	), "Failed to create the display");
 
 	{
