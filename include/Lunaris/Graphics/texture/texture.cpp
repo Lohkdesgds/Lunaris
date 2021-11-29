@@ -103,7 +103,7 @@ namespace Lunaris {
 		if (conf.format > 0) 
 			al_set_new_bitmap_format(conf.format);
 		if (conf.flags > 0) 
-			al_set_new_bitmap_flags(conf.flags);
+			al_set_new_bitmap_flags(conf.flags | ALLEGRO_CONVERT_BITMAP);
 
 		if (!conf.path.empty()) {
 			bitmap = al_load_bitmap(conf.path.c_str());
@@ -241,7 +241,7 @@ namespace Lunaris {
 		if (bitmap) {
 #ifdef LUNARIS_VERBOSE_BUILD
 			PRINT_DEBUG("Del bitmap %p", bitmap);
-#endif
+#endif			
 			al_destroy_bitmap(bitmap);
 			bitmap = nullptr;
 		}
@@ -539,6 +539,14 @@ namespace Lunaris {
 	{
 		if (p >= get_amount_of_frames()) return nullptr;
 		return algif_get_frame_bitmap(animation, static_cast<int>(p));
+	}
+
+	LUNARIS_DECL double texture_gif::get_interval_of_index(const size_t p) const
+	{
+		if (!animation) return -1.0;
+		if (get_amount_of_frames() <= p) return -1.0;
+
+		return algif_get_frame_duration(animation, static_cast<int>(p));
 	}
 
 }

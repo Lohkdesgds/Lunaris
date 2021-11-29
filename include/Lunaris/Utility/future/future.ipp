@@ -113,7 +113,7 @@ namespace Lunaris {
 
 	template<typename T>
 	template<typename Q, std::enable_if_t<!std::is_void_v<Q>, int>>
-	inline const T* future<T>::get()
+	inline const Q* future<T>::get()
 	{
 		if (m_data->redirect)
 			throw std::runtime_error("Fatal error: you should not get() a future set to then()!");
@@ -210,7 +210,8 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	inline future<T> promise<T>::get_future()
+	template<typename Q, std::enable_if_t<!std::is_void_v<Q>, int>>
+	inline future<Q> promise<T>::get_future()
 	{
 		if (_next) throw std::runtime_error("You must not create two future of same promise.");
 		future<T> next;
@@ -222,8 +223,21 @@ namespace Lunaris {
 	}
 
 	template<typename T>
+	template<typename Q, std::enable_if_t<std::is_void_v<Q>, int>>
+	inline future<Q> promise<T>::get_future()
+	{
+		if (_next) throw std::runtime_error("You must not create two future of same promise.");
+		future<T> next;
+		_next = [_next_obj = next.m_data]()
+		{
+			_next_obj->post();
+		};
+		return next;
+	}
+
+	template<typename T>
 	template<typename Q, std::enable_if_t<!std::is_void_v<Q>, int>>
-	inline void promise<T>::set_value(const T& val)
+	inline void promise<T>::set_value(const Q& val)
 	{
 		if (_next) _next(val);
 	}

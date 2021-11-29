@@ -11,7 +11,11 @@ namespace Lunaris {
 	constexpr float default_collision_oversize = 1e-3;
 	constexpr float default_collision_oversize_prop = 1.005f;
 
-	// simple fixed (non rotation) reliable collision calculator.
+	/// <summary>
+	/// <para>collisionable_legacy is the old collision system that only works with position and scale.</para>
+	/// <para>This is still here because on a scenario with no rotation this works perfectly.</para>
+	/// <para>It's legacy because I'm working on a way better collision system that works with rotation and any other transformation.</para>
+	/// </summary>
 	class collisionable_legacy {
 	public:
 		enum class direction_op { DIR_NONE = 0, DIR_NORTH = 1 << 0, DIR_SOUTH = 1 << 1, DIR_EAST = 1 << 2, DIR_WEST = 1 << 3 };
@@ -32,20 +36,48 @@ namespace Lunaris {
 	public:
 		collisionable_legacy(sprite&);
 
-		// calculate overlap with X
+		/// <summary>
+		/// <para>Check and combine collision information with another object.</para>
+		/// </summary>
+		/// <param name="{collisionable_legacy}">Another collision_legacy object.</param>
+		/// <returns></returns>
 		bool overlap(const collisionable_legacy&);
-		// get resulting combo of overlap (direction_op combo)
+
+		/// <summary>
+		/// <para>Combine overlap information and give a direction_op result combo.</para>
+		/// </summary>
+		/// <returns>{int} direction_op combo of flags.</returns>
 		int result() const;
-		// reset for new overlapping calculation
+		
+		/// <summary>
+		/// <para>Reset for new collision overlap combo.</para>
+		/// </summary>
 		void reset();
-		// automatic work (if you want to set a default response, do set_work(...)
+
+		/// <summary>
+		/// <para>Automatically work as set on set_work.</para>
+		/// </summary>
 		void work();
-		// set a work function (useful for work() call only on collision thread). Receive result and sprite linked to this
+
+		/// <summary>
+		/// <para>Set a function to easily work() with the information in the end.</para>
+		/// <para>The function arguments are the referenced sprite and result().</para>
+		/// </summary>
+		/// <param name="{function}">A function to handle collision information after the overlap() easily.</param>
 		void set_work(const std::function<void(int, sprite&)>);
 
+		/// <summary>
+		/// <para>After all overlap(), this can tell you how many cases of each direction happened.</para>
+		/// </summary>
+		/// <param name="{direction_op}">The direction to check.</param>
+		/// <returns>{unsigned} Number of cases.</returns>
 		unsigned read_cases(const direction_op) const;
 	};
 
+	/// <summary>
+	/// <para>collisionable is the way to check collision between sprites.</para>
+	/// <para>This is not perfect yet, but the detection is very sharp.</para>
+	/// </summary>
 	class collisionable {
 	public:
 		enum class direction_index { NONE = -1, NORTH, SOUTH, EAST, WEST, _MAX };
@@ -54,6 +86,11 @@ namespace Lunaris {
 			float moment_dir = 0.0f;
 			int dir_to = 0;
 
+			/// <summary>
+			/// <para>Test if dir_to has a direction_combo set.</para>
+			/// </summary>
+			/// <param name="{direction_combo}">A direction.</param>
+			/// <returns>{bool} True if flag is set.</returns>
 			bool is_dir(const direction_combo&);
 		};
 		struct each_result {
@@ -81,22 +118,55 @@ namespace Lunaris {
 	public:
 		collisionable(sprite&);
 
+		/// <summary>
+		/// <para>Test collision with another collision and push case into the list for further work().</para>
+		/// </summary>
+		/// <param name="{collisionable}">Another collisionable.</param>
 		void overlap(collisionable&);
+
+		/// <summary>
+		/// <para>Reset list of collided objects.</para>
+		/// </summary>
 		void reset();
+
+		/// <summary>
+		/// <para>Run the work function with latest information.</para>
+		/// </summary>
 		void work();
+
+		/// <summary>
+		/// <para>Set the working function to handle the collision information.</para>
+		/// </summary>
+		/// <param name="{function}">The function that does things with collision information.</param>
 		void set_work(const std::function<void(result, sprite&)>);
 
-		// simple true/false point collision check
+		/// <summary>
+		/// <para>This can be used for a quick point collision check.</para>
+		/// </summary>
+		/// <param name="{float}">Position X.</param>
+		/// <param name="{float}">Position Y.</param>
+		/// <returns></returns>
 		each_result quick_one_point_overlap(const float, const float);
-		// simple true/false sprite collision check
+		
+		/// <summary>
+		/// <para>This can be used for a quick collision check.</para>
+		/// </summary>
+		/// <param name="{collisionable}">Another collisionable object.</param>
+		/// <returns>{result} The result of this collision.</returns>
 		result quick_one_sprite_overlap(const collisionable&);
 
-		// if true, if there are more than 1 collision cases, work() will be called multiple times, else only once with a random option
+		/// <summary>
+		/// <para>Should it work all cases or only one max (if more than one collision case, get random one).</para>
+		/// </summary>
+		/// <param name="{bool}">Process every collision?</param>
 		void set_work_works_all_cases(const bool);
 	};
 
-	// begin, end
+	/// <summary>
+	/// <para>Work on many collisionable at once.</para>
+	/// </summary>
+	/// <param name="{collisionable*}">Begin.</param>
+	/// <param name="{collisionable*}">End.</param>
 	void work_all_auto(collisionable*, const collisionable*);
-
 
 }

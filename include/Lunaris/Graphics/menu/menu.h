@@ -471,6 +471,18 @@ namespace Lunaris {
 		size_t size() const;
 
 		/// <summary>
+		/// <para>If there's no items, empty it is.</para>
+		/// </summary>
+		/// <returns>{bool} Does this have NO items?</returns>
+		bool empty() const;
+
+		/// <summary>
+		/// <para>If there's an item in the menu (at least one), it's valid.</para>
+		/// </summary>
+		/// <returns>{bool} Does this have any item to show?</returns>
+		bool valid() const;
+
+		/// <summary>
 		/// <para>Get the items in this menu and recreate as another menu of any type.</para>
 		/// </summary>
 		/// <param name="{emnu_type}">A menu type.</param>
@@ -551,10 +563,28 @@ namespace Lunaris {
 		menu_event(menu&, const ALLEGRO_EVENT&);
 
 		/// <summary>
+		/// <para>Directly interface with the menu that triggered this.</para>
+		/// </summary>
+		/// <returns>{menu*} The menu from where the event came from.</returns>
+		menu* operator->();
+
+		/// <summary>
+		/// <para>Directly interface with the menu that triggered this.</para>
+		/// </summary>
+		/// <returns>{menu*} The menu from where the event came from.</returns>
+		menu* operator->() const;
+
+		/// <summary>
 		/// <para>Is this a valid event? Does it have the information you need?</para>
 		/// </summary>
 		/// <returns>{bool} True if good to go.</returns>
 		bool valid() const;
+
+		/// <summary>
+		/// <para>Is this NOT valid?</para>
+		/// </summary>
+		/// <returns>{bool} Empty means invalid.</returns>
+		bool empty() const;
 
 		/// <summary>
 		/// <para>Get the name/caption of the triggered item.</para>

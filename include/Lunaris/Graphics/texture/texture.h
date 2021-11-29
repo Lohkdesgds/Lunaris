@@ -38,6 +38,10 @@ namespace Lunaris {
 		texture_config& set_file(const hybrid_memory<file>&);
 	};
 
+	/// <summary>
+	/// <para>texture is the bitmap handler you'll use everywhere.</para>
+	/// <para>This easily create, destroy, duplicate and draw the bitmap in a very easy way.</para>
+	/// </summary>
 	class texture : public NonCopyable {
 	protected:
 		ALLEGRO_BITMAP* bitmap = nullptr;
@@ -320,6 +324,9 @@ namespace Lunaris {
 		void set_as_target() const;
 	};
 
+	/// <summary>
+	/// <para>This is still a texture, but the catch is that it runs a function every time it's drawn or got.</para>
+	/// </summary>
 	class texture_functional : public texture {
 		std::function<void(texture&)> func; // tied to check_ready()
 		mutable fast_one_way_mutex fastmu;
@@ -389,6 +396,11 @@ namespace Lunaris {
 		using texture::draw_tinted_scaled_region_at;
 	};
 
+	/// <summary>
+	/// <para>texture_gif is a texture that loads a GIF format and behaves like a simple texture.</para>
+	/// <para>This is like that because many places use texture already, so this is the way to "import" GIF support.</para>
+	/// <para>You can still get each frame or frame times easily.</para>
+	/// </summary>
 	class texture_gif : public texture {
 		ALGIF_ANIMATION* animation = nullptr;
 		double start_time = 0.0;
@@ -469,19 +481,19 @@ namespace Lunaris {
 		/// <summary>
 		/// <para>Get the average time of this GIF animation.</para>
 		/// </summary>
-		/// <returns>{double} Time, in seconds, or zero if empty or static.</returns>
+		/// <returns>{double} Time, in seconds, or -1 if empty.</returns>
 		double get_interval_average() const;
 
 		/// <summary>
 		/// <para>Get the longest interval between two frames of this GIF animation.</para>
 		/// </summary>
-		/// <returns>{double} Time, in seconds, or zero if empty or static.</returns>
+		/// <returns>{double} Time, in seconds, or -1 if empty.</returns>
 		double get_interval_longest() const;
 
 		/// <summary>
 		/// <para>Get the shortest interval between two frames of this GIF animation.</para>
 		/// </summary>
-		/// <returns>{double} Time, in seconds, or zero if empty or static.</returns>
+		/// <returns>{double} Time, in seconds, or -1 if empty.</returns>
 		double get_interval_shortest() const;
 
 		/// <summary>
@@ -497,6 +509,12 @@ namespace Lunaris {
 		/// <param name="{size_t}">Frame number.</param>
 		/// <returns>{ALLEGRO_BITMAP*} Raw bitmap (null if out of range or empty).</returns>
 		ALLEGRO_BITMAP* index(const size_t) const;
+
+		/// <summary>
+		/// <para>Get the screen time of this specific frame.</para>
+		/// </summary>
+		/// <returns>{double} Time, in seconds, or -1 if empty.</returns>
+		double get_interval_of_index(const size_t) const;
 
 		using texture::duplicate;
 		using texture::draw_at;

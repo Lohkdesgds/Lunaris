@@ -72,7 +72,7 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{T*} The value pointer (do not delete this).</returns>
 		template<typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0>
-		const T* get();
+		const Q* get();
 
 		/// <summary>
 		/// <para>Get if signal was set. Returns if yes, else wait (like wait()).</para>
@@ -135,14 +135,22 @@ namespace Lunaris {
 		/// <para>Get future so next value is saved somewhere.</para>
 		/// </summary>
 		/// <returns>{future&lt;T&gt;} Future ready linked to this promise.</returns>
-		future<T> get_future();
+		template<typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0>
+		future<Q> get_future();
+
+		/// <summary>
+		/// <para>Get future so next value is saved somewhere.</para>
+		/// </summary>
+		/// <returns>{future&lt;T&gt;} Future ready linked to this promise.</returns>
+		template<typename Q = T, std::enable_if_t<std::is_void_v<Q>, int> = 0>
+		future<Q> get_future();
 
 		/// <summary>
 		/// <para>Set value and send to future (if any).</para>
 		/// </summary>
 		/// <param name="{T}">Value to be set.</param>
 		template<typename Q = T, std::enable_if_t<!std::is_void_v<Q>, int> = 0>
-		void set_value(const T&);
+		void set_value(const Q&);
 
 		/// <summary>
 		/// <para>Set value and send to future (if any).</para>

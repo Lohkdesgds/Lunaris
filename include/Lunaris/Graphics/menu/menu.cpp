@@ -679,6 +679,16 @@ namespace Lunaris {
         return _menu.sub_menus.size();
     }
 
+    LUNARIS_DECL bool menu::empty() const
+    {
+        return _menu.sub_menus.size() == 0;
+    }
+
+    LUNARIS_DECL bool menu::valid() const
+    {
+        return _menu.sub_menus.size() > 0 && _menu.menu;
+    }
+
     LUNARIS_DECL menu menu::duplicate_as(const menu_type mt) const
     {
         menu nmen(last_applied_display, mt);
@@ -785,9 +795,24 @@ namespace Lunaris {
         }
     }
      
+    LUNARIS_DECL menu* menu_event::operator->() 
+    {
+        return &_ref;
+    }
+     
+    LUNARIS_DECL menu* menu_event::operator->() const
+    {
+        return &_ref;
+    }
+     
     LUNARIS_DECL bool menu_event::valid() const
     {
         return source && handl;
+    }
+     
+    LUNARIS_DECL bool menu_event::empty() const
+    {
+        return !valid();
     }
     
     LUNARIS_DECL std::string menu_event::get_name() const

@@ -1164,9 +1164,9 @@ int graphics_test()
 	const float fixprop = 1.0f; // global camera proportion
 
 	std::atomic<bool> keep_running_things = true;
+	display_async my_display;
 	block blk_fixed, blk_mouse, topleft_dc;
 	text txt_main;
-	display_async my_display;
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
@@ -1186,9 +1186,15 @@ int graphics_test()
 	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
 	tempfile* fp2 = (tempfile*)tempfp2.get();
 	vertexes polygony;
-	
 
 	cout << "Creating display...";
+
+	my_display.post_task_on_destroy([&] {
+			font_u.reset_shared();
+			ffbmp.reset_shared();
+			bmppp.reset_shared();
+			giffye.reset_shared();
+		});
 
 	TESTLU(my_display.create(display_config()
 		.set_fullscreen(false)
@@ -1283,7 +1289,7 @@ int graphics_test()
 
 	{
 		texture_functional* ftt = (texture_functional*)ffbmp.get();
-		TESTLU(ftt->create(512, 512), "Couldn't create texture/font for test!");
+		TESTLU(my_display.post_task([&] {return ftt->create(512, 512); }).get(), "Couldn't create texture/font for test!");
 		ftt->hook_function([](texture& self) {
 			const float dtim = static_cast<float>(al_get_time());
 			al_draw_filled_rectangle(0, 0, self.get_width(), self.get_height(), color(0.6f + 0.8f * cosf(dtim * 1.3f), 0.6f + 0.8f * cosf(dtim * 0.57f + 0.8754f), 0.6f + 0.8f * cosf(dtim * 2.25f + 1.8896f)));
@@ -1413,13 +1419,8 @@ int graphics_test()
 
 		switch(ev.key_id) {
 		case ALLEGRO_KEY_F11:
-			//my_display.add_run_once_in_drawing_thread([&] {
-				my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
-			//	transform transf;
-			//	transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
-			//	transf.apply();
-			//	return true;
-			//});
+			my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
 		case ALLEGRO_KEY_R:
@@ -1569,8 +1570,10 @@ int graphics_test()
 	}).wait();
 
 
-	my_display.destroy();
+	//my_display.destroy();
 	// the rest should be fine.
+
+	my_display.destroy().wait();
 
 	cout << console::color::DARK_GRAY << "Everything should be good now.";
 	
