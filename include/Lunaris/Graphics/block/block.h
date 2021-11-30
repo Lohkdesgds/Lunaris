@@ -107,6 +107,18 @@ namespace Lunaris {
 		size_t texture_size() const;
 
 		/// <summary>
+		/// <para>Read the vector of texture like a safe_vector.</para>
+		/// </summary>
+		/// <param name="{function}">A function that does something with a vector of texture.</param>
+		void texture_safe(std::function<void(std::vector<hybrid_memory<texture>>&)>);
+
+		/// <summary>
+		/// <para>Read the vector of texture like a safe_vector.</para>
+		/// </summary>
+		/// <param name="{function}">A function that reads a vector of texture.</param>
+		void texture_csafe(std::function<void(const std::vector<hybrid_memory<texture>>&)>) const;
+
+		/// <summary>
 		/// <para>Remove one of the textures from this object.</para>
 		/// </summary>
 		/// <param name="{size_t}">Index value.</param>

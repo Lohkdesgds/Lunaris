@@ -109,6 +109,25 @@ namespace Lunaris {
 		size_t size() const;
 
 		/// <summary>
+		/// <para>Get a copy of a specific vertex</para>
+		/// </summary>
+		/// <param name="{size_t}">The index value.</param>
+		/// <returns>{vertex_point} The vertex there, or exception if out of range.</returns>
+		vertex_point index(const size_t) const;
+
+		/// <summary>
+		/// <para>Read the vector points like a safe_vector.</para>
+		/// </summary>
+		/// <param name="{function}">A function that does something with a vector.</param>
+		void safe(std::function<void(std::vector<vertex_point>&)>);
+
+		/// <summary>
+		/// <para>Read the vector points like a safe_vector.</para>
+		/// </summary>
+		/// <param name="{function}">A function that reads a vector of vertex_point.</param>
+		void csafe(std::function<void(const std::vector<vertex_point>&)>) const;
+
+		/// <summary>
 		/// <para>Whether there's a texture set or not</para>
 		/// </summary>
 		/// <returns>{bool} True if has texture set.</returns>

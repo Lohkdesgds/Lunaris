@@ -110,6 +110,20 @@ namespace Lunaris {
 		return textures.size();
 	}
 
+	LUNARIS_DECL void block::texture_safe(std::function<void(std::vector<hybrid_memory<texture>>&)> f)
+	{
+		if (!f) return;
+		auto lock = mu_shared_write_control();
+		f(textures);
+	}
+
+	LUNARIS_DECL void block::texture_csafe(std::function<void(const std::vector<hybrid_memory<texture>>&)> f) const
+	{
+		if (!f) return;
+		auto lock = mu_shared_read_control();
+		f(textures);
+	}
+
 	LUNARIS_DECL void block::texture_remove(const size_t index)
 	{
 		auto lock = mu_shared_write_control();

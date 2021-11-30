@@ -78,7 +78,28 @@ namespace Lunaris {
 	LUNARIS_DECL size_t vertexes::size() const
 	{
 		std::shared_lock<std::shared_mutex>(safe_mtx);
-		return size_t();
+		return points.size();
+	}
+
+	LUNARIS_DECL vertex_point vertexes::index(const size_t i) const
+	{
+		std::shared_lock<std::shared_mutex>(safe_mtx);
+		if (i >= points.size()) throw std::out_of_range("index was too high on vertexes.");
+		return points[i];
+	}
+
+	LUNARIS_DECL void vertexes::safe(std::function<void(std::vector<vertex_point>&)> f)
+	{
+		if (!f) return;
+		std::unique_lock<std::shared_mutex>(safe_mtx);
+		f(points);
+	}
+
+	LUNARIS_DECL void vertexes::csafe(std::function<void(const std::vector<vertex_point>&)> f) const
+	{
+		if (!f) return;
+		std::shared_lock<std::shared_mutex>(safe_mtx);
+		f(points);
 	}
 
 	LUNARIS_DECL bool vertexes::has_texture() const
