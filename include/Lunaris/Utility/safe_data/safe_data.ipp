@@ -245,7 +245,7 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	inline void safe_vector<T>::erase(const size_t& var)
+	inline void safe_vector<T>::erase(const size_t var)
 	{
 		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		if (var >= data.size()) return;
@@ -253,7 +253,7 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	inline void safe_vector<T>::erase(const size_t& var, const size_t& var2)
+	inline void safe_vector<T>::erase(const size_t var, const size_t var2)
 	{
 		std::unique_lock<shared_recursive_mutex> luck1(shrmtx);
 		if (var >= data.size()) return;

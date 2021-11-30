@@ -207,7 +207,7 @@ namespace Lunaris {
 		/// <para>Erase an exact index point in the vector.</para>
 		/// </summary>
 		/// <param name="{size_t}">Offset.</param>
-		void erase(const size_t&);
+		void erase(const size_t);
 		
 		/// <summary>
 		/// <para>Erase from point A to point B.</para>
@@ -216,7 +216,7 @@ namespace Lunaris {
 		/// </summary>
 		/// <param name="{size_t}">Offset A.</param>
 		/// <param name="{size_t}">Offset B.</param>
-		void erase(const size_t&, const size_t& = static_cast<size_t>(-1));
+		void erase(const size_t, const size_t);
 
 		/// <summary>
 		/// <para>Clears the entire vector.</para>
