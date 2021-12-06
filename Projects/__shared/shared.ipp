@@ -1733,7 +1733,7 @@ int events_test()
 			clicked_right |= (mev.get_name() == "Click me");
 			cout << mev.get_id() << " -> '" << mev.get_name() << "'";
 			if (mev.get_id() == 911) std::terminate(); // fatal error thingy
-			if (!clicked_right && (mev.get_id() != 3696 && mev.get_id() != 3699)) {
+			if (!clicked_right && (mev.get_id() != 3696 && mev.get_id() != 3699 && mev.get_id() != 12345)) {
 				mev.patch_toggle_flag(menu_flags::DISABLED);
 				mev.patch_name("This was not it. Random number voila: " + std::to_string(random()));
 			}
@@ -1773,6 +1773,17 @@ int events_test()
 
 			menu_handler submen = mymenu2["List of times increasing..."];
 			if (submen.size() > 5) submen.pop_front();
+
+			try {
+				auto tgl = mymenu2.find_id(12345);
+				if (static_cast<int>(tgl.get_flags() & menu_flags::AS_CHECKBOX) == 0) {
+					tgl.set_caption("Funnyyyyyyy");
+					tgl.unset_flags(menu_flags::DISABLED);
+					tgl.set_flags(menu_flags::AS_CHECKBOX); // Keeps toggling lol
+				}
+			}
+			catch (...) {}
+			
 			submen.push(menu_each_default().set_name("Yolo Time: " + std::to_string(al_get_time())).set_flags(menu_flags::DISABLED));
 
 			disp.flip();

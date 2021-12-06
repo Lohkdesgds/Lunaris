@@ -34,6 +34,19 @@ namespace Lunaris {
 	constexpr menu_flags operator&(const menu_flags& a, const menu_flags& b) { return static_cast<menu_flags>(static_cast<std::underlying_type_t<menu_flags>>(a) & static_cast<std::underlying_type_t<menu_flags>>(b)); }
 
 	/// <summary>
+	/// <para>Easier way to just call insert or autoremove from list before inserting. It'll search for the pos value, then remove (if exists), then add.</para>
+	/// </summary>
+	/// <param name="{ALLEGRO_MENU*}">Parent.</param>
+	/// <param name="{int}">Position (negative) or ID.</param>
+	/// <param name="{char* const}">New name.</param>
+	/// <param name="{uint16_t}">New ID.</param>
+	/// <param name="{int}">New flags.</param>
+	/// <param name="{ALLEGRO_BITMAP*}">Icon.</param>
+	/// <param name="{ALLEGRO_MENU*}">Submenu.</param>
+	/// <returns></returns>
+	bool set_menu_item(ALLEGRO_MENU*, int, char const*, uint16_t, int, ALLEGRO_BITMAP*, ALLEGRO_MENU*);
+
+	/// <summary>
 	/// <para>This is the menu structure used by menu to handle stuff and keep things working.</para>
 	/// <para>You won't use this directly.</para>
 	/// </summary>
@@ -306,12 +319,20 @@ namespace Lunaris {
 		/// <para>Remove an item by index.</para>
 		/// </summary>
 		/// <param name="{int}">Index, [0, ...).</param>
+		/// <returns>{bool} True if removed something.</returns>
 		bool remove(const int);
+
+		/// <summary>
+		/// <para>Remove all at once.</para>
+		/// </summary>
+		/// <returns>{bool} True if removed something.</returns>
+		bool remove_all();
 
 		/// <summary>
 		/// <para>Remove an item by caption/name.</para>
 		/// </summary>
 		/// <param name="{std::string}">The object caption/name.</param>
+		/// <returns>{bool} True if removed something.</returns>
 		bool remove(const std::string&);
 
 		/// <summary>
@@ -444,12 +465,20 @@ namespace Lunaris {
 		/// <para>Remove an item by index.</para>
 		/// </summary>
 		/// <param name="{int}">Index, [0, ...).</param>
+		/// <returns>{bool} True if removed something.</returns>
 		bool remove(const int);
+
+		/// <summary>
+		/// <para>Remove all at once.</para>
+		/// </summary>
+		/// <returns>{bool} True if removed something.</returns>
+		bool remove_all();
 
 		/// <summary>
 		/// <para>Remove an item by caption/name.</para>
 		/// </summary>
 		/// <param name="{std::string}">The object caption/name.</param>
+		/// <returns>{bool} True if removed something.</returns>
 		bool remove(const std::string&);
 
 		/// <summary>

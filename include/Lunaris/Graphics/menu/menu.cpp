@@ -8,6 +8,13 @@ namespace Lunaris {
 		if (!al_is_native_dialog_addon_initialized() && !al_init_native_dialog_addon()) throw std::runtime_error("Can't start Native Dialog!");
 	}
 
+    LUNARIS_DECL bool set_menu_item(ALLEGRO_MENU* parent, int pos, char const* title, uint16_t id, int flags, ALLEGRO_BITMAP* icon, ALLEGRO_MENU* submenu)
+    {
+        if (!parent) return false;
+        al_remove_menu_item(parent, pos); // may fail because item may not exist
+        return al_insert_menu_item(parent, pos, title, id, flags, icon, submenu) >= 0;
+    }
+
     LUNARIS_DECL __menu_structure::__menu_structure(__menu_structure&& oth) noexcept
     {
         menu = oth.menu;
@@ -48,7 +55,7 @@ namespace Lunaris {
 
         if (id == static_cast<uint16_t>(-1)) {
             if (!al_remove_menu_item(parent, -idx)) throw std::runtime_error("Can't find itself!");
-            al_insert_menu_item(parent, -idx, nullptr, 0, 0, nullptr, nullptr);
+            if (!set_menu_item(parent, -idx, nullptr, 0, 0, nullptr, nullptr)) throw std::bad_alloc();
             sub_menus.clear(); // no sub menu anymore
             return;
         }
@@ -60,16 +67,14 @@ namespace Lunaris {
         if (_flags == 0) _flags = al_get_menu_item_flags(parent, -idx);
         if (_flags < 0) _flags = 0;
 
-        if (menu) {
-            if (!al_remove_menu_item(parent, -idx)) throw std::runtime_error("Can't find itself.");
-        }
+        //if (!al_remove_menu_item(parent, -idx)) throw std::runtime_error("Can't find itself.");
 
         if (!sub_menus.empty()) {
             menu = recursive_rebuild(sub_menus);
         }
         else menu = nullptr;
 
-        al_insert_menu_item(parent, -idx, _nam.c_str(), id, _flags, nullptr, menu);
+        if (!set_menu_item(parent, -idx, _nam.c_str(), id, _flags, nullptr, menu)) throw std::bad_alloc();
     }
 
     LUNARIS_DECL __menu_structure* __menu_structure::get_self() const
@@ -87,24 +92,24 @@ namespace Lunaris {
         for (const auto& it : vc) {
 
             if (it.second.idx < 0) { // empty space
-                al_insert_menu_item(
+                if (!set_menu_item(
                     bottom,
                     -it.first,
                     nullptr,
                     it.second.id,
                     0,
                     nullptr,
-                    nullptr);
+                    nullptr)) throw std::bad_alloc();
             }
             else {
-                al_insert_menu_item(
+                if (!set_menu_item(
                     bottom,
                     -it.first,
                     al_get_menu_item_caption(it.second.parent, -it.second.idx),
                     it.second.id,
                     al_get_menu_item_flags(it.second.parent, -it.second.idx),
                     nullptr,
-                    it.second.sub_menus.size() ? recursive_rebuild(it.second.sub_menus) : nullptr);
+                    it.second.sub_menus.size() ? recursive_rebuild(it.second.sub_menus) : nullptr)) throw std::bad_alloc();
             }
         }
 
@@ -239,22 +244,25 @@ namespace Lunaris {
 
     LUNARIS_DECL void menu_handler::set_flags(const menu_flags flg)
     {
+        const bool need_reload = (static_cast<int>(flg) & ALLEGRO_MENU_ITEM_CHECKBOX) && !(al_get_menu_item_flags(curr.parent, -curr.idx) & ALLEGRO_MENU_ITEM_CHECKBOX);
         al_set_menu_item_flags(curr.parent, -curr.idx, al_get_menu_item_flags(curr.parent, -curr.idx) | static_cast<int>(flg));
-        if (static_cast<int>(flg) & ALLEGRO_MENU_ITEM_CHECKBOX)
+        if (need_reload)
             curr.rebuild(al_get_menu_item_flags(curr.parent, -curr.idx) | static_cast<int>(flg));
     }
 
     LUNARIS_DECL void menu_handler::unset_flags(const menu_flags flg)
     {
+        const bool need_reload = (static_cast<int>(flg) & ALLEGRO_MENU_ITEM_CHECKBOX) && !(al_get_menu_item_flags(curr.parent, -curr.idx) & ALLEGRO_MENU_ITEM_CHECKBOX);
         al_set_menu_item_flags(curr.parent, -curr.idx, al_get_menu_item_flags(curr.parent, -curr.idx) & (~static_cast<int>(flg)));
-        if (static_cast<int>(flg) & ALLEGRO_MENU_ITEM_CHECKBOX)
+        if (need_reload)
             curr.rebuild(al_get_menu_item_flags(curr.parent, -curr.idx) & (~static_cast<int>(flg)));
     }
 
     LUNARIS_DECL void menu_handler::toggle_flags(const menu_flags flg)
     {
+        const bool need_reload = (static_cast<int>(flg) & ALLEGRO_MENU_ITEM_CHECKBOX) && !(al_get_menu_item_flags(curr.parent, -curr.idx) & ALLEGRO_MENU_ITEM_CHECKBOX);
         al_set_menu_item_flags(curr.parent, -curr.idx, al_get_menu_item_flags(curr.parent, -curr.idx) ^ static_cast<int>(flg));
-        if (static_cast<int>(flg) & ALLEGRO_MENU_ITEM_CHECKBOX)
+        if (need_reload)
             curr.rebuild(al_get_menu_item_flags(curr.parent, -curr.idx) ^ static_cast<int>(flg));
     }
 
@@ -307,7 +315,7 @@ namespace Lunaris {
         if (curr.id == static_cast<uint16_t>(-1)) throw std::runtime_error("An empty space cannot have any menus.");
         if (!curr.sub_menus.empty() && (curr.sub_menus.rbegin()->first < (ix - 1))) throw std::out_of_range("Please do not increase 2 steps at a time! One by one, always.");
         __menu_structure& c2 = curr.sub_menus[ix];
-        int rs = 0;
+     
         if (!c2.parent) {
             c2.id = ++_counter;
             c2.idx = ix;
@@ -323,15 +331,10 @@ namespace Lunaris {
 
                 al_remove_menu_item(curr.parent, -curr.idx);
 
-                rs = al_insert_menu_item(curr.parent, -curr.idx, _nam.c_str(), curr.id, _flags, nullptr, curr.menu);
-                if (rs == 0) {
-                    rs = al_append_menu_item(curr.parent, _nam.c_str(), curr.id, _flags, nullptr, curr.menu);
-                }
+                if (!set_menu_item(curr.parent, -curr.idx, _nam.c_str(), curr.id, _flags, nullptr, curr.menu)) throw std::bad_alloc();
             }
-            rs = al_insert_menu_item(curr.menu, -c2.idx, "<empty>", c2.id, 0, nullptr, nullptr);
-            if (rs < 0) {
-                rs = al_append_menu_item(curr.menu, "<empty>", c2.id, 0, nullptr, nullptr);
-            }
+
+            if (!set_menu_item(curr.menu, -c2.idx, "<empty>", c2.id, 0, nullptr, nullptr)) throw std::bad_alloc();
 
             c2.menu = nullptr;
             c2.parent = curr.menu;
@@ -389,6 +392,19 @@ namespace Lunaris {
         return true;
     }
 
+    LUNARIS_DECL bool menu_handler::remove_all()
+    {
+        if (curr.sub_menus.empty()) return false;
+
+        while (curr.sub_menus.size()) {
+            al_remove_menu_item(curr.menu, 0);
+            curr.sub_menus.erase(0);
+        }
+
+        curr.rebuild();
+        return true;
+    }
+
     LUNARIS_DECL bool menu_handler::remove(const std::string& key)
     {
         for (const auto& it : curr.sub_menus)
@@ -437,8 +453,7 @@ namespace Lunaris {
             int _flags = al_get_menu_item_flags(curr.parent, -curr.idx);
             if (_flags < 0) _flags = 0;
 
-            al_remove_menu_item(curr.parent, -curr.idx);
-            al_insert_menu_item(curr.parent, -curr.idx, _nam.c_str(), curr.id, _flags, nullptr, curr.menu);
+            if (!set_menu_item(curr.parent, -curr.idx, _nam.c_str(), curr.id, _flags, nullptr, curr.menu)) throw std::bad_alloc();
         }
 
 
@@ -447,7 +462,7 @@ namespace Lunaris {
         c2.idx = ix;
 
         if (c2.id == static_cast<uint16_t>(-1)) {
-            al_insert_menu_item(c2.parent, -c2.idx, nullptr, 0, 0, nullptr, nullptr);
+            if (!set_menu_item(c2.parent, -c2.idx, nullptr, 0, 0, nullptr, nullptr)) throw std::bad_alloc();
             return ix;
         }
         
@@ -456,7 +471,7 @@ namespace Lunaris {
         }
         else c2.menu = nullptr;
 
-        al_insert_menu_item(c2.parent, -c2.idx, mq.caption.c_str(), c2.id, static_cast<int>(mq.flags), nullptr, c2.menu);
+        if (!set_menu_item(c2.parent, -c2.idx, mq.caption.c_str(), c2.id, static_cast<int>(mq.flags), nullptr, c2.menu)) throw std::bad_alloc();
 
         menu_handler mh{ c2, _counter };
         if (mq.lst.size()) mh.push(mq.lst);
@@ -591,10 +606,8 @@ namespace Lunaris {
             c2.menu = nullptr;// al_create_menu();
 
             if (!c2.menu) throw std::bad_alloc();
-            rs = al_insert_menu_item(_menu.menu, -c2.idx, "<empty>", c2.id, 0, nullptr, c2.menu);
-            if (rs < 0) {
-                rs = al_append_menu_item(_menu.menu, "<empty>", c2.id, 0, nullptr, c2.menu);
-            }
+            
+            if (!set_menu_item(_menu.menu, -c2.idx, "<empty>", c2.id, 0, nullptr, c2.menu)) throw std::bad_alloc();
         }
 
         return menu_handler{ c2, _counter };
@@ -640,6 +653,19 @@ namespace Lunaris {
             _menu.sub_menus.erase(j);
         }
 
+        return true;
+    }
+
+    LUNARIS_DECL bool menu::remove_all()
+    {
+        if (_menu.sub_menus.empty()) return false;
+
+        while (_menu.sub_menus.size()) {
+            al_remove_menu_item(_menu.menu, 0);
+            _menu.sub_menus.erase(0);
+        }
+
+        _menu.rebuild();
         return true;
     }
 
@@ -744,7 +770,7 @@ namespace Lunaris {
         c2.idx = ix;
         c2.menu = mq.lst.empty() ? nullptr : al_create_menu(); // must be menu
 
-        al_insert_menu_item(c2.parent, -c2.idx, mq.caption.c_str(), c2.id, static_cast<int>(mq.flags), nullptr, c2.menu);
+        if (!set_menu_item(c2.parent, -c2.idx, mq.caption.c_str(), c2.id, static_cast<int>(mq.flags), nullptr, c2.menu)) throw std::bad_alloc();
 
         if (mq.lst.size()) {
             menu_handler mh{ c2, _counter };
