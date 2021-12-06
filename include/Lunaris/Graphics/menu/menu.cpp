@@ -396,10 +396,8 @@ namespace Lunaris {
     {
         if (curr.sub_menus.empty()) return false;
 
-        while (curr.sub_menus.size()) {
-            al_remove_menu_item(curr.menu, 0);
-            curr.sub_menus.erase(0);
-        }
+        curr.sub_menus.clear();
+        while (al_remove_menu_item(curr.menu, 0));
 
         curr.rebuild();
         return true;
@@ -660,10 +658,8 @@ namespace Lunaris {
     {
         if (_menu.sub_menus.empty()) return false;
 
-        while (_menu.sub_menus.size()) {
-            al_remove_menu_item(_menu.menu, 0);
-            _menu.sub_menus.erase(0);
-        }
+        _menu.sub_menus.clear();
+        while (al_remove_menu_item(_menu.menu, 0));
 
         _menu.rebuild();
         return true;
