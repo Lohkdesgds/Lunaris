@@ -7,7 +7,7 @@ This is a tool for every include thing in the Lunaris lib.
 #define WIN32_LEAN_AND_MEAN
 
 // This is set by BUILDCOUNTER
-#define LUNARIS_BUILD_NUMBER 1436
+#define LUNARIS_BUILD_NUMBER 1443
 
 // https://stackoverflow.com/questions/240353/convert-a-preprocessor-token-to-a-string
 #define __LUNARIS_STRINGIFY(x) #x

@@ -20,8 +20,8 @@ namespace Lunaris {
 		struct mouse_event {
 			float real_posx = -1.0f, real_posy = 1.0f; // may change if proportion is not 1:1, but lower goes [-1.0f, 1.0f]
 			float relative_posx = -1.0f, relative_posy = -1.0f; // [-1.0f, 1.0f]
-			int buttons_pressed = 0;
-			int buttons_unpressed = 0;
+			unsigned buttons_pressed = 0;
+			unsigned buttons_unpressed = 0;
 			uint8_t scroll_event = 0; // updated each event.
 			ALLEGRO_MOUSE_EVENT raw_mouse_event;
 			mouse& mouse_itself;
