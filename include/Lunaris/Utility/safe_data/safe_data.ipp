@@ -229,7 +229,7 @@ namespace Lunaris {
 	}
 
 	template<typename T>
-	inline void safe_vector<T>::csafe(const std::function<void(const std::vector<T>&)> f)
+	inline void safe_vector<T>::csafe(const std::function<void(const std::vector<T>&)> f) const
 	{
 		if (!f) return;
 		std::shared_lock<shared_recursive_mutex> luck1(shrmtx);

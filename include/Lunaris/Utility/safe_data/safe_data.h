@@ -195,7 +195,7 @@ namespace Lunaris {
 		/// <para>Read the vector in constant mode (shared reading mode).</para>
 		/// </summary>
 		/// <param name="{function}">A function that reads the vector.</param>
-		void csafe(const std::function<void(const std::vector<T>&)>);
+		void csafe(const std::function<void(const std::vector<T>&)>) const;
 
 		/// <summary>
 		/// <para>Read the value in read/write mode (exclusive mode).</para>
