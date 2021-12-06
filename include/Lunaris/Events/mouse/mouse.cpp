@@ -67,7 +67,11 @@ namespace Lunaris {
             mouse_rn.relative_posx = mouse_rn.real_posx * 1.0 / fabsf(max_x);
             mouse_rn.relative_posy = mouse_rn.real_posy * 1.0 / fabsf(max_y);
 
-            if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_AXES, mouse_rn);
+            mouse_event sliced = mouse_rn;
+            sliced.buttons_pressed = 0; // no pressed event
+            sliced.buttons_unpressed = 0; // no unpressed event
+
+            if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_AXES, sliced);
             mouse_rn.scroll_event = 0; // always reset
         }
             break;
