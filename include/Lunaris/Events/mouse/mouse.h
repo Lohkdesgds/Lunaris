@@ -21,12 +21,47 @@ namespace Lunaris {
 			float real_posx = -1.0f, real_posy = 1.0f; // may change if proportion is not 1:1, but lower goes [-1.0f, 1.0f]
 			float relative_posx = -1.0f, relative_posy = -1.0f; // [-1.0f, 1.0f]
 			int buttons_pressed = 0;
+			int buttons_unpressed = 0;
 			uint8_t scroll_event = 0; // updated each event.
 			ALLEGRO_MOUSE_EVENT raw_mouse_event;
+			mouse& mouse_itself;
 
+			mouse_event(mouse&);
+
+			/// <summary>
+			/// <para>On event this has only the event flag, else it's the real mouse buttons pressed information.</para>
+			/// <para>"0" is the first mouse button.</para>
+			/// </summary>
+			/// <param name="{int}">Mouse button to check.</param>
+			/// <returns>{bool} True if pressed.</returns>
 			bool is_button_pressed(const int) const;
+
+			/// <summary>
+			/// <para>On event this has only the event flag, else it's the real mouse buttons not pressed information.</para>
+			/// <para>"0" is the first mouse button.</para>
+			/// </summary>
+			/// <param name="{int}">Mouse button to check.</param>
+			/// <returns>{bool} True if unpressed.</returns>
+			bool is_button_unpressed(const int) const;
+
+			/// <summary>
+			/// <para>Had any scroll event?</para>
+			/// </summary>
+			/// <returns>{bool} True if yes.</returns>
 			bool got_scroll_event() const;
+
+			/// <summary>
+			/// <para>Get scroll translated to -1, 0 or 1 per ID. The known ones are W (ID 0) and Z (ID 1).</para>
+			/// </summary>
+			/// <param name="{int}">Scroll ID.</param>
+			/// <returns>{int} 1, 0 or -1 depending on the direction.</returns>
 			int scroll_event_id(const int) const; // positive = one way, negative = other way. [W, Z]
+
+			/// <summary>
+			/// <para>The mouse source.</para>
+			/// </summary>
+			/// <returns>{mouse&amp;} The mouse source.</returns>
+			mouse& get_source();
 		};
 	private:
 		mouse_event mouse_rn;

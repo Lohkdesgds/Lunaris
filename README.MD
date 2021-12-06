@@ -8,7 +8,7 @@
 #### Useful information about this version (automatically built)
 Key | Value
 --- | ---
-LUNARIS_BUILD_NUMBER | 1412
+LUNARIS_BUILD_NUMBER | 1436
 
 <br>
 

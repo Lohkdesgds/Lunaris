@@ -2,10 +2,20 @@
 
 namespace Lunaris {
 
+    LUNARIS_DECL mouse::mouse_event::mouse_event(mouse& m)
+        : mouse_itself(m)
+    {
+    }
+
     LUNARIS_DECL bool mouse::mouse_event::is_button_pressed(const int id) const
     {
         if (id > 32) return false;
         return buttons_pressed & (1 << id);
+    }
+    LUNARIS_DECL bool mouse::mouse_event::is_button_unpressed(const int id) const
+    {
+        if (id > 32) return false;
+        return buttons_unpressed & (1 << id);
     }
 
     LUNARIS_DECL bool mouse::mouse_event::got_scroll_event() const
@@ -19,6 +29,11 @@ namespace Lunaris {
         if (scroll_event & (1 << (id * 2))) return 1;
         else if (scroll_event & (1 << ((id * 2) + 1))) return -1;
         return 0;
+    }
+
+    LUNARIS_DECL mouse& mouse::mouse_event::get_source()
+    {
+        return mouse_itself;
     }
 
 	LUNARIS_DECL void mouse::set_mouse_axis_plus(const int axis, const int val)
@@ -60,7 +75,15 @@ namespace Lunaris {
             mouse_rn.raw_mouse_event = ev.mouse;
             if (ev.mouse.button <= 32) {
                 mouse_rn.buttons_pressed |= 1 << (ev.mouse.button - 1); // starts at #1
-                if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_BUTTON_DOWN, mouse_rn);
+                mouse_rn.buttons_unpressed = ~mouse_rn.buttons_pressed;
+
+                mouse_event sliced = mouse_rn;
+
+                sliced.buttons_pressed = 1 << (ev.mouse.button - 1);
+                sliced.buttons_unpressed = 0; // no unpressed event
+
+                if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_BUTTON_DOWN, sliced);
+
                 mouse_rn.scroll_event = 0; // always reset
             }
             break;
@@ -68,14 +91,23 @@ namespace Lunaris {
             mouse_rn.raw_mouse_event = ev.mouse;
             if (ev.mouse.button <= 32) {
                 mouse_rn.buttons_pressed &= ~(1 << (ev.mouse.button - 1)); // starts at #1
-                if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_BUTTON_UP, mouse_rn);
+                mouse_rn.buttons_unpressed = ~mouse_rn.buttons_pressed;
+
+                mouse_event sliced = mouse_rn;
+
+                sliced.buttons_pressed = 0; // no pressed event
+                sliced.buttons_unpressed = 1 << (ev.mouse.button - 1);
+
+                if (event_handler) event_handler(ALLEGRO_EVENT_MOUSE_BUTTON_UP, sliced);
+
                 mouse_rn.scroll_event = 0; // always reset
             }
             break;
         }
     }
 
-    LUNARIS_DECL mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) : generic_event_handler()
+    LUNARIS_DECL mouse::mouse(std::function<ALLEGRO_TRANSFORM(void)> f) 
+        : generic_event_handler(), mouse_rn(*this)
     {
         if (!f) throw std::invalid_argument("Mouse needs a valid ALLEGRO_TRANSFORM source. This is normally given by a display (it should be castable directly).");
 
