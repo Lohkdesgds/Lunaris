@@ -21,7 +21,6 @@ namespace Lunaris {
 			float real_posx = -1.0f, real_posy = 1.0f; // may change if proportion is not 1:1, but lower goes [-1.0f, 1.0f]
 			float relative_posx = -1.0f, relative_posy = -1.0f; // [-1.0f, 1.0f]
 			unsigned buttons_pressed = 0;
-			unsigned buttons_unpressed = 0;
 			uint8_t scroll_event = 0; // updated each event.
 			ALLEGRO_MOUSE_EVENT raw_mouse_event;
 			mouse& mouse_itself;
@@ -35,14 +34,6 @@ namespace Lunaris {
 			/// <param name="{int}">Mouse button to check.</param>
 			/// <returns>{bool} True if pressed.</returns>
 			bool is_button_pressed(const int) const;
-
-			/// <summary>
-			/// <para>On event this has only the event flag, else it's the real mouse buttons not pressed information.</para>
-			/// <para>"0" is the first mouse button.</para>
-			/// </summary>
-			/// <param name="{int}">Mouse button to check.</param>
-			/// <returns>{bool} True if unpressed.</returns>
-			bool is_button_unpressed(const int) const;
 
 			/// <summary>
 			/// <para>Had any scroll event?</para>
