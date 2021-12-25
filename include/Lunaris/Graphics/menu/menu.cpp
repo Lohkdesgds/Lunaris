@@ -508,13 +508,13 @@ namespace Lunaris {
 
     LUNARIS_DECL bool menu::make_self_as()
     {
-        if (_menu.menu) {
-            ev_source = al_enable_menu_event_source(_menu.menu);
+        if (curr.menu) {
+            ev_source = al_enable_menu_event_source(curr.menu);
             return true;
         }
-        if ((_menu.menu = (mmt == menu_type::BAR ? al_create_menu() : al_create_popup_menu())) != nullptr)
+        if ((curr.menu = (mmt == menu_type::BAR ? al_create_menu() : al_create_popup_menu())) != nullptr)
         {
-            ev_source = al_enable_menu_event_source(_menu.menu);
+            ev_source = al_enable_menu_event_source(curr.menu);
             return true;
         }
         return false;
@@ -539,10 +539,10 @@ namespace Lunaris {
         : mmt(oth.mmt)
     {
         __display_menu_allegro_start();
-        _menu = std::move(oth._menu);
+        curr = std::move(oth.curr);
         last_applied_display = oth.last_applied_display;
         make_self_as();
-        oth._menu.menu = nullptr; // really really sure
+        oth.curr.menu = nullptr; // really really sure
         oth.ev_source = nullptr;
         oth.last_applied_display = nullptr;
     }
@@ -583,29 +583,29 @@ namespace Lunaris {
      
     LUNARIS_DECL menu::~menu()
     {
-        if (!_menu.menu) return;
-        al_disable_menu_event_source(_menu.menu);
+        if (!curr.menu) return;
+        al_disable_menu_event_source(curr.menu);
         ev_source = nullptr;
-        al_destroy_menu(_menu.menu);
-        _menu.menu = nullptr;
+        al_destroy_menu(curr.menu);
+        curr.menu = nullptr;
     }
      
     LUNARIS_DECL menu_handler menu::operator[](const int ix)
     {
         if (ix < 0) throw std::out_of_range("Index pos can't be lower than 0");
-        if (!_menu.sub_menus.empty() && (_menu.sub_menus.rbegin()->first < (ix - 1))) throw std::out_of_range("Please do not increase 2 steps directly! One by one, always.");
-        __menu_structure& c2 = _menu.sub_menus[ix];
+        if (!curr.sub_menus.empty() && (curr.sub_menus.rbegin()->first < (ix - 1))) throw std::out_of_range("Please do not increase 2 steps directly! One by one, always.");
+        __menu_structure& c2 = curr.sub_menus[ix];
         int rs = 0;
         if (!c2.parent) {
 
             c2.id = ++_counter;
-            c2.parent = _menu.menu;
+            c2.parent = curr.menu;
             c2.idx = ix;
             c2.menu = nullptr;// al_create_menu();
 
             if (!c2.menu) throw std::bad_alloc();
             
-            if (!set_menu_item(_menu.menu, -c2.idx, "<empty>", c2.id, 0, nullptr, c2.menu)) throw std::bad_alloc();
+            if (!set_menu_item(curr.menu, -c2.idx, "<empty>", c2.id, 0, nullptr, c2.menu)) throw std::bad_alloc();
         }
 
         return menu_handler{ c2, _counter };
@@ -613,7 +613,7 @@ namespace Lunaris {
 
     LUNARIS_DECL menu_handler menu::operator[](const std::string& key)
     {
-        for (const auto& it : _menu.sub_menus)
+        for (const auto& it : curr.sub_menus)
         {
             if (it.second.parent) {
                 if (const char* uknow = al_get_menu_item_caption(it.second.parent, -it.second.idx); uknow && key == uknow) {
@@ -621,13 +621,13 @@ namespace Lunaris {
                 }
             }
         }
-        if (_menu.sub_menus.empty()) {
+        if (curr.sub_menus.empty()) {
             menu_handler nh = this->operator[](0);
             nh.set_caption(key);
             return nh;
         }
         else {
-            menu_handler nh = this->operator[](_menu.sub_menus.rbegin()->first + 1);
+            menu_handler nh = this->operator[](curr.sub_menus.rbegin()->first + 1);
             nh.set_caption(key);
             return nh;
         }
@@ -636,19 +636,19 @@ namespace Lunaris {
     LUNARIS_DECL bool menu::remove(const int ix)
     {
         if (ix < 0) return false;
-        if (_menu.sub_menus.empty() || ix > _menu.sub_menus.rbegin()->first) return false;
-        al_remove_menu_item(_menu.menu, -ix);
-        _menu.sub_menus.erase(ix);
+        if (curr.sub_menus.empty() || ix > curr.sub_menus.rbegin()->first) return false;
+        al_remove_menu_item(curr.menu, -ix);
+        curr.sub_menus.erase(ix);
 
         std::vector<int> mov;
-        for (const auto& i : _menu.sub_menus) {
+        for (const auto& i : curr.sub_menus) {
             if (i.first > ix) mov.push_back(i.first);
         }
 
         for (const auto& j : mov) {
-            _menu.sub_menus[j - 1] = std::move(_menu.sub_menus[j]);
-            _menu.sub_menus[j - 1].idx = j - 1;
-            _menu.sub_menus.erase(j);
+            curr.sub_menus[j - 1] = std::move(curr.sub_menus[j]);
+            curr.sub_menus[j - 1].idx = j - 1;
+            curr.sub_menus.erase(j);
         }
 
         return true;
@@ -656,18 +656,18 @@ namespace Lunaris {
 
     LUNARIS_DECL bool menu::remove_all()
     {
-        if (_menu.sub_menus.empty()) return false;
+        if (curr.sub_menus.empty()) return false;
 
-        _menu.sub_menus.clear();
-        while (al_remove_menu_item(_menu.menu, 0));
+        curr.sub_menus.clear();
+        while (al_remove_menu_item(curr.menu, 0));
 
-        _menu.rebuild();
+        curr.rebuild();
         return true;
     }
 
     LUNARIS_DECL bool menu::remove(const std::string& key)
     {
-        for (const auto& it : _menu.sub_menus)
+        for (const auto& it : curr.sub_menus)
         {
             if (it.second.parent) {
                 if (const char* uknow = al_get_menu_item_caption(it.second.parent, -it.second.idx); uknow && key == uknow) {
@@ -698,30 +698,30 @@ namespace Lunaris {
 
     LUNARIS_DECL size_t menu::size() const
     {
-        return _menu.sub_menus.size();
+        return curr.sub_menus.size();
     }
 
     LUNARIS_DECL bool menu::empty() const
     {
-        return _menu.sub_menus.size() == 0;
+        return curr.sub_menus.size() == 0;
     }
 
     LUNARIS_DECL bool menu::valid() const
     {
-        return _menu.sub_menus.size() > 0 && _menu.menu;
+        return curr.sub_menus.size() > 0 && curr.menu;
     }
 
     LUNARIS_DECL menu menu::duplicate_as(const menu_type mt) const
     {
         menu nmen(last_applied_display, mt);
-        menu_quick mq(_menu);
+        menu_quick mq(curr);
         for (const auto& m : mq.lst) nmen.push(m);
         return nmen;
     }
 
     LUNARIS_DECL menu_handler menu::find_id(const uint16_t ix)
     {
-        __menu_structure* fnd = find_anywhere(_menu.sub_menus, [&](const std::pair<const int, __menu_structure>& r) { return r.second.id == ix; });
+        __menu_structure* fnd = find_anywhere(curr.sub_menus, [&](const std::pair<const int, __menu_structure>& r) { return r.second.id == ix; });
         if (fnd) return menu_handler{ *fnd, _counter };
         throw std::out_of_range("not found");
         return menu_handler{ *fnd, _counter }; // never goes here
@@ -729,7 +729,7 @@ namespace Lunaris {
 
     LUNARIS_DECL menu_handler menu::find(const std::string& ix)
     {
-        __menu_structure* fnd = find_anywhere(_menu.sub_menus, [&](const std::pair<const int, __menu_structure>& r) { if (const char* uknow = al_get_menu_item_caption(r.second.parent, -r.second.idx); uknow && ix == uknow) { return true; } return false; });
+        __menu_structure* fnd = find_anywhere(curr.sub_menus, [&](const std::pair<const int, __menu_structure>& r) { if (const char* uknow = al_get_menu_item_caption(r.second.parent, -r.second.idx); uknow && ix == uknow) { return true; } return false; });
         if (fnd) return menu_handler{ *fnd, _counter };
         throw std::out_of_range("not found");
         return menu_handler{ *fnd, _counter }; // never goes here
@@ -739,13 +739,13 @@ namespace Lunaris {
     {
         if (!d) d = last_applied_display;
 
-        if (d && _menu.menu) {
+        if (d && curr.menu) {
             if (last_applied_display != d && last_applied_display) al_remove_display_menu(last_applied_display);
 
             last_applied_display = d;
 
-            if (mmt == menu_type::POPUP) al_popup_menu(_menu.menu, d);
-            else al_set_display_menu(d, _menu.menu);
+            if (mmt == menu_type::POPUP) al_popup_menu(curr.menu, d);
+            else al_set_display_menu(d, curr.menu);
         }
     }
 
@@ -758,11 +758,11 @@ namespace Lunaris {
 
     LUNARIS_DECL int menu::push(const menu_quick& mq)
     {
-        const int ix = (_menu.sub_menus.size() > 0) ? (_menu.sub_menus.rbegin()->first + 1) : 0;
-        __menu_structure& c2 = _menu.sub_menus[ix];
+        const int ix = (curr.sub_menus.size() > 0) ? (curr.sub_menus.rbegin()->first + 1) : 0;
+        __menu_structure& c2 = curr.sub_menus[ix];
 
         c2.id = mq.id;
-        c2.parent = _menu.menu;
+        c2.parent = curr.menu;
         c2.idx = ix;
         c2.menu = mq.lst.empty() ? nullptr : al_create_menu(); // must be menu
 

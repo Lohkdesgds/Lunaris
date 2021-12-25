@@ -223,8 +223,6 @@ namespace Lunaris {
 	class menu_handler : public NonCopyable {
 		__menu_structure& curr;
 		std::atomic<uint16_t>& _counter;
-
-		menu_handler append_auto(const std::string&, const uint16_t, const menu_flags);
 	public:
 		menu_handler(__menu_structure&, std::atomic<uint16_t>&);
 
@@ -378,7 +376,7 @@ namespace Lunaris {
 			POPUP	// Pop up right next to the mouse
 		};
 	private:
-		__menu_structure _menu;
+		__menu_structure curr;
 		std::atomic<uint16_t> _counter = 0;
 		ALLEGRO_EVENT_SOURCE* ev_source = nullptr;
 		const menu_type mmt = menu_type::BAR;
