@@ -121,6 +121,8 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\thread.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\thread\thread.ipp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\tie.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.h" />
     <ClInclude Include="..\..\include\Lunaris\__macro\macros.h" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +158,7 @@
     <ClCompile Include="..\..\include\Lunaris\Utility\mutex\mutex.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\path\path.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.ipp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\include\Lunaris\_readme.txt" />

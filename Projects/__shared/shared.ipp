@@ -170,6 +170,51 @@ int utility_test(const std::string& self_path)
 
 	cout << console::color::GREEN << "Console is probably working (you can see me, right?)";
 
+	cout << console::color::LIGHT_PURPLE << "Testing 'tie'...";
+	{
+		cout << "Creating a tie (default)...";
+
+		tie<int> tint;
+		TESTLU(tint.valid(), "Tie wasn't valid on start?");
+
+		cout << "Changing its data...";
+
+		*tint = 20;
+		TESTLU(tint == 20, "Can't apply value to tie");
+
+		cout << "Creating new referenced tie...";
+
+		tie<int> tint2 = tint;
+
+		TESTLU(tint2 == 20, "Can't copy reference of tie");
+		TESTLU(tint == tint2, "It seems that they don't share the same pointer...");
+		
+		tint2 = 40;
+
+		TESTLU(tint2 == 40, "Can't change tie value directly");
+		TESTLU(tint == tint2, "It seems that they don't share the same pointer anymore...");
+		TESTLU(tint == 40, "Reference got broken.");
+
+		cout << "Referencing existing common variable...";
+
+		int raw = 50;
+		tint.ref(raw);
+
+		TESTLU(tint != tint2, "Comparison operator is clearly broken.");
+
+		tint2 = tint;
+
+		TESTLU(tint == tint2, "Copy reference is broken.");
+
+		cout << "Checking reference...";
+
+		raw = 10;
+
+		TESTLU(tint == 10, "Didn't reference properly.");
+		TESTLU(tint2 == 10, "Didn't reference properly.");
+
+		cout << console::color::GREEN << "PASSED!";
+	}
 	cout << console::color::LIGHT_PURPLE << "Testing 'bomb'...";
 	{
 		cout << "Creating a bomb...";

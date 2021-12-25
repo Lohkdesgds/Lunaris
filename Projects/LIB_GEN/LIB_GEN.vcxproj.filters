@@ -175,6 +175,9 @@
     <Filter Include="include\Lunaris\Graphics\__impl\vertex">
       <UniqueIdentifier>{593dad6a-86cb-426f-87b2-a9a702309a65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Lunaris\Utility\__impl\tie">
+      <UniqueIdentifier>{35bed003-0c4c-4389-89fb-2eec5fd73221}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Lunaris\Utility\console.h">
@@ -461,6 +464,15 @@
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Graphics\vertex.h">
       <Filter>include\Lunaris\Graphics\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.h">
+      <Filter>include\Lunaris\Utility\__impl\tie</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\tie.h">
+      <Filter>include\Lunaris\Utility\__include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.ipp">
+      <Filter>include\Lunaris\Utility\__impl\tie</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
