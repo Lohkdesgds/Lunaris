@@ -1,0 +1,6 @@
+[submodule "include/Lunaris/Utility/console"]
+	path = include/Lunaris/Utility/console
+	url = https://github.com/Lohkdesgds/Lunaris-Console
+[submodule "include/Lunaris/Utility/socket"]
+	path = include/Lunaris/Utility/socket
+	url = https://github.com/Lohkdesgds/Lunaris-Socket
