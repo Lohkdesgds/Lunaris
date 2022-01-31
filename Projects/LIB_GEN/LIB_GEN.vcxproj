@@ -56,6 +56,7 @@
     <ClInclude Include="..\..\include\Lunaris\Graphics\block\block.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.h" />
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\color.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\color\color.h" />
     <ClInclude Include="..\..\include\Lunaris\Graphics\display.h" />

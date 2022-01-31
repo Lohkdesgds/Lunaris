@@ -474,6 +474,9 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.ipp">
       <Filter>include\Lunaris\Utility\__impl\tie</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Graphics\collisionable\collisionable.ipp">
+      <Filter>include\Lunaris\Graphics\__impl\collisionable</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp">

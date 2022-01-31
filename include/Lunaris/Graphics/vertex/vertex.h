@@ -56,13 +56,13 @@ namespace Lunaris {
 	class vertexes {
 	public:
 		enum class types {
-			POINT_LIST,			// Each vertex is a point, literally.
-			LINE_LIST,			// Pairs of points defining lines. Expects pair of vertex points. Each pair is a line.
-			LINE_STRIP,			// Combo of points drawing a complex line. Every two points create a line.
-			LINE_LOOP,			// Combo of points like LINE_STRIP but the last point also connects to the first one
-			TRIANGLE_LIST,		// Triangle list (each three vertex points make a triangle). Expects multiple of 3.
-			TRIANGLE_STRIP,		// Triangle strip is a "keep going" triangle list. 3 points make one triangle one by one ([0,1,2], [1,2,3], [2,3,4], ...)
-			TRIANGLE_FAN		// A "center" point and triangles around. All triangles share the first vertex point.
+			POINT_LIST		= ALLEGRO_PRIM_POINT_LIST,			// Each vertex is a point, literally.
+			LINE_LIST		= ALLEGRO_PRIM_LINE_LIST,			// Pairs of points defining lines. Expects pair of vertex points. Each pair is a line.
+			LINE_STRIP		= ALLEGRO_PRIM_LINE_STRIP,			// Combo of points drawing a complex line. Every two points create a line.
+			LINE_LOOP		= ALLEGRO_PRIM_LINE_LOOP,			// Combo of points like LINE_STRIP but the last point also connects to the first one
+			TRIANGLE_LIST	= ALLEGRO_PRIM_TRIANGLE_LIST,		// Triangle list (each three vertex points make a triangle). Expects multiple of 3.
+			TRIANGLE_STRIP	= ALLEGRO_PRIM_TRIANGLE_STRIP,		// Triangle strip is a "keep going" triangle list. 3 points make one triangle one by one ([0,1,2], [1,2,3], [2,3,4], ...)
+			TRIANGLE_FAN	= ALLEGRO_PRIM_TRIANGLE_FAN			// A "center" point and triangles around. All triangles share the first vertex point.
 			// if changed later, update valid()
 		};
 	private:

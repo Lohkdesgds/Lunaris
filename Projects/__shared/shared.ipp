@@ -140,10 +140,17 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
+	cout << "Send 'skip' to skip tests or anything else to test every test.";
 
-	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
-	if (AUTOEXCEPT(audio_test()) != 0) return 1;
-	if (AUTOEXCEPT(events_test()) != 0) return 1;
+	std::string str;
+	std::getline(std::cin, str);
+
+	if (str != "skip")
+	{
+		if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+		if (AUTOEXCEPT(audio_test()) != 0) return 1;
+		if (AUTOEXCEPT(events_test()) != 0) return 1;
+	}
 	if (AUTOEXCEPT(graphics_test()) != 0) return 1;
 }
 
@@ -1216,7 +1223,8 @@ int graphics_test()
 	mouse mousing(my_display);
 	keys kb;
 	float off_x = 0.0f, off_y = 0.0f, zuum = 1.0f;
-	collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
+	//collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
+	collisionable cols_v2[2] = { {blk_mouse}, {blk_fixed} };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
 	const color mouse_no_collision = color(127, 255, 255);
@@ -1235,10 +1243,10 @@ int graphics_test()
 	cout << "Creating display...";
 
 	my_display.post_task_on_destroy([&] {
-			font_u.reset_shared();
-			ffbmp.reset_shared();
-			bmppp.reset_shared();
-			giffye.reset_shared();
+		font_u.reset_shared();
+		ffbmp.reset_shared();
+		bmppp.reset_shared();
+		giffye.reset_shared();
 		});
 
 	TESTLU(my_display.create(display_config()
@@ -1323,14 +1331,17 @@ int graphics_test()
 	}
 
 	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.25f);
+	blk_mouse.set<float>(enum_sprite_float_e::SCALE_X, 1.25f);
 	blk_mouse.set<float>(enum_sprite_float_e::POS_X, -0.3f);
 	blk_mouse.set<float>(enum_sprite_float_e::POS_Y, -0.3f);
+	blk_mouse.set<float>(enum_sprite_float_e::THINK_ELASTIC_SPEED_PROP, 0.5f);
 	blk_mouse.set<float>(enum_sprite_float_e::OUT_OF_SIGHT_POS, 0.8f);
 	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX, true);
 
-	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255,255,255));
+	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255, 255, 255));
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
-	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.5f);
+	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.35f);
+	blk_fixed.set<float>(enum_sprite_float_e::SCALE_Y, 1.35f);
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 
 	{
@@ -1339,31 +1350,31 @@ int graphics_test()
 		ftt->hook_function([](texture& self) {
 			const float dtim = static_cast<float>(al_get_time());
 			al_draw_filled_rectangle(0, 0, self.get_width(), self.get_height(), color(0.6f + 0.8f * cosf(dtim * 1.3f), 0.6f + 0.8f * cosf(dtim * 0.57f + 0.8754f), 0.6f + 0.8f * cosf(dtim * 2.25f + 1.8896f)));
-		});
+			});
 	}
 
 	polygony.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
 	polygony.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
 	polygony.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
 	polygony.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
-	polygony.set_mode(vertexes::types::TRIANGLE_STRIP);
+	polygony.set_mode(vertexes::types::TRIANGLE_FAN);
 	polygony.set_texture(ffbmp);
 
 	cout << "Applying default transformation to display...";
 
-	my_display.add_run_once_in_drawing_thread([&my_display,&fixprop] {
+	my_display.add_run_once_in_drawing_thread([&my_display, &fixprop] {
 		transform transf;
 		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 		transf.apply();
 		return true;
-	});
+		});
 
 	cout << "Loading texture in video memory and default font...";
 
 	{
 		auto dod = my_display.add_run_once_in_drawing_thread([&] {
 			return /*random_texture->load(fp.get_current_path()) && */font_u->create_builtin_font();
-		});
+			});
 
 		dod.wait();
 		TESTLU(dod.get(), "Couldn't load texture/font for test!");
@@ -1377,12 +1388,12 @@ int graphics_test()
 			blk_mouse.set<float>(enum_sprite_float_e::POS_Y, ev.real_posy);
 		}
 		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && ev.is_button_pressed(0)) {
-			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.06f);
+			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.03f);
 		}
 		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_UP && !ev.is_button_pressed(0)) {
 			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.0f);
 		}
-	});
+		});
 
 	cout << "Setting up drawing call...";
 
@@ -1429,7 +1440,7 @@ int graphics_test()
 
 			savv.apply();
 		}
-	});
+		});
 
 	cout << "Setting up display events function...";
 
@@ -1444,26 +1455,26 @@ int graphics_test()
 		}
 		else if (ev.is_resize()) {
 			cout << console::color::GREEN << "Screen size is now: " << ev.as_display().width << "x" << ev.as_display().height << ". Posted task.";
-			ev.post_task([wd = ev.as_display().width, ht = ev.as_display().height, fixprop, zuum, off_x, off_y] {
+			ev.post_task([wd = ev.as_display().width, ht = ev.as_display().height, fixprop, zuum, off_x, off_y]{
 				transform transf;
 				transf.build_classic_fixed_proportion(wd, ht, fixprop, zuum);
 				transf.translate_inverse(off_x, off_y);
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
 				return true;
-			});
+				});
 		}
-	});
+		});
 
 	dispevh.hook_exception_handler([](const std::exception& e) {
 		cout << console::color::RED << "DISPLAY EVENT EXCEPTION: " << e.what();
-	});
+		});
 
 
 	kb.hook_event([&](const keys::key_event& ev) {
 		if (!ev.down) return;
 
-		switch(ev.key_id) {
+		switch (ev.key_id) {
 		case ALLEGRO_KEY_F11:
 			my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
 
@@ -1480,7 +1491,7 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
 				return true;
-			});
+				});
 			break;
 		case ALLEGRO_KEY_F:
 			cout << console::color::GREEN << "Randomizing zoom...";
@@ -1492,14 +1503,14 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
 				return true;
-			});
+				});
 			break;
 		case ALLEGRO_KEY_0:
 			cout << console::color::GREEN << "Zeroing camera...";
 			off_x = 0.0f;
 			off_y = 0.0f;
 			zuum = 1.0f;
-			my_display.add_run_once_in_drawing_thread([off_x, off_y,zuum, fixprop] {
+			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
 				transform transf;
 				transf.build_classic_fixed_proportion_auto(fixprop, 1.0f);
 				transf.translate_inverse(off_x, off_y);
@@ -1509,36 +1520,76 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Converted inverse coords " << fabsf(ax) << " x " << fabsf(ay);
 				transf.apply();
 				return true;
-			});
+				});
 			break;
 		}
-	});
+		});
 
 	cout << "Setting up collision & extra tasks thread...";
-	
-	for (auto& i : cols) i.set_work([&](collisionable::result res, sprite& one) {
-		one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
-		//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
-		if (res.dir_to != 0) {
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
-			one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
-		}
-		//if (res.dir_to != 0) {
-		//	if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << " COL NORTH #" << (size_t)((void*)&i);
-		//	if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << " COL SOUTH #" << (size_t)((void*)&i);
-		//	if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << " COL EAST  #" << (size_t)((void*)&i);
-		//	if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << " COL WEST  #" << (size_t)((void*)&i);
-		//}
-		one.think(); 
-	});
 
+	//for (auto& i : cols) i.set_work([&](collisionable::result res, sprite& one) {
+	//	one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
+	//	//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
+	//	if (res.dir_to != 0) {
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_EAST)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_WEST)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
+	//		one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
+	//	}
+	//	//if (res.dir_to != 0) {
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << " COL NORTH #" << (size_t)((void*)&i);
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << " COL SOUTH #" << (size_t)((void*)&i);
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << " COL EAST  #" << (size_t)((void*)&i);
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << " COL WEST  #" << (size_t)((void*)&i);
+	//	//}
+	//	one.think();
+	//	});
+
+	{
+		size_t c = 0;
+		for (auto& i : cols_v2)
+		{
+			i.set_work([cc = ++c, &my_display](collisionable::final_result& fr, collisionable::optional_sprite_ref& sp) {
+				//printf_s("[%zu] %.2f, %.2f\n", cc, fr.fx, fr.fy);
+
+				if (sp.has_value()) {
+					sp->get().set<float>(enum_sprite_float_e::POS_X, sp->get().get<float>(enum_sprite_float_e::POS_X) + 0.99f * fr.fx);
+					sp->get().set<float>(enum_sprite_float_e::POS_Y, sp->get().get<float>(enum_sprite_float_e::POS_Y) + 0.99f * fr.fy);
+
+					//if (fabsf(fr.fx) > fabsf(fr.fy))
+					//{
+					//	sp->get().set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, 0.2f);
+					//}
+					//else {
+					//	sp->get().set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, -0.2f);
+					//}
+				}
+			});
+		}
+	}
 
 	col_and_tools.task_async([&] {
 
-		work_all_auto(std::begin(cols), std::end(cols));
+		work_all_auto(std::begin(cols_v2), std::end(cols_v2));
+
+		//for (auto& it : cols_v2) it.reset();
+		//
+		//cols_v2[0].collide(cols_v2[1]);
+		//cols_v2[1].collide(cols_v2[0]);
+		//
+		//for (auto& it : cols_v2) it.work();
+
+
+		//const auto res = cols_v2[0].result();
+
+		//if (res.move_towards != 0)
+		//{
+		//	printf_s("MOVE=%i,CLOCKWISE=%.2f;D=%.2f\n", res.move_towards, res.clockwise_rot, res.distance);
+		//}
+
+		blk_mouse.think();
+		blk_fixed.think();
 
 		// just clipboard.
 		//if (my_display.check_has_clipboard()) {
@@ -1546,13 +1597,11 @@ int graphics_test()
 		//
 		//	cout << console::color::GREEN << "CLIPBOARD!: " << cpy;
 		//}
-
-		///cols[0].reset();
-		///cols[1].reset();
-		///cols[1].overlap(cols[0]);
-		///cols[0].work();
-		///cols[1].work();
-		
+		//cols[0].reset();
+		//cols[1].reset();
+		//cols[1].overlap(cols[0]);
+		//cols[0].work();
+		//cols[1].work();		
 		//for (auto& i : cols) i.reset();
 		//for (size_t p = 0; p < std::size(cols); p++)
 		//{
@@ -1561,7 +1610,6 @@ int graphics_test()
 		//	}
 		//}
 		//for (auto& i : cols) i.work();
-
 		// extra mine
 		//blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.15f);
 		//blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.05f);
@@ -1582,7 +1630,7 @@ int graphics_test()
 
 			txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, dat);
 		}
-	}, thread::speed::INTERVAL, 1.0/20);
+	}, thread::speed::INTERVAL, 1.0/30);
 
 	cout << "Enabling things on screen...";
 
