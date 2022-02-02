@@ -140,12 +140,12 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
-	cout << "Send 'skip' to skip tests or anything else to test every test.";
+	cout << "Send 'skip' or 's' to skip tests or anything else to test every test.";
 
 	std::string str;
 	std::getline(std::cin, str);
 
-	if (str != "skip")
+	if (str != "skip" && str != "s")
 	{
 		if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
 		if (AUTOEXCEPT(audio_test()) != 0) return 1;
@@ -1218,13 +1218,14 @@ int graphics_test()
 	std::atomic<bool> keep_running_things = true;
 	display_async my_display;
 	block blk_fixed, blk_mouse, topleft_dc;
+	vertexes polygony;
 	text txt_main;
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
 	float off_x = 0.0f, off_y = 0.0f, zuum = 1.0f;
 	//collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
-	collisionable cols_v2[2] = { {blk_mouse}, {blk_fixed} };
+	//collisionable cols_v2[3] = { {blk_mouse}, {blk_fixed}, {polygony} };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
 	const color mouse_no_collision = color(127, 255, 255);
@@ -1238,7 +1239,6 @@ int graphics_test()
 	tempfile* fp = (tempfile*)tempfp.get();
 	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
 	tempfile* fp2 = (tempfile*)tempfp2.get();
-	vertexes polygony;
 
 	cout << "Creating display...";
 
@@ -1254,7 +1254,7 @@ int graphics_test()
 		.set_display_mode(display_options().set_width(1800).set_height(900))
 		.set_window_title("GRAPHICS TEST")
 		.set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)
-		.set_framerate_limit(300)
+		//.set_framerate_limit(300)
 		.set_economy_framerate_limit(20)
 		.set_wait_for_display_draw(true)
 		//.set_fullscreen(true)
@@ -1350,15 +1350,18 @@ int graphics_test()
 		ftt->hook_function([](texture& self) {
 			const float dtim = static_cast<float>(al_get_time());
 			al_draw_filled_rectangle(0, 0, self.get_width(), self.get_height(), color(0.6f + 0.8f * cosf(dtim * 1.3f), 0.6f + 0.8f * cosf(dtim * 0.57f + 0.8754f), 0.6f + 0.8f * cosf(dtim * 2.25f + 1.8896f)));
-			});
+		});
 	}
 
 	polygony.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
 	polygony.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
 	polygony.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
+	polygony.push_back(vertex_point{ -0.8f, -0.6f, 0.0f, 512.0f, 256.0f, color(150,150,255) });
 	polygony.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
 	polygony.set_mode(vertexes::types::TRIANGLE_FAN);
 	polygony.set_texture(ffbmp);
+
+	//cols_v2[2].update_points();
 
 	cout << "Applying default transformation to display...";
 
@@ -1393,7 +1396,7 @@ int graphics_test()
 		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_UP && !ev.is_button_pressed(0)) {
 			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.0f);
 		}
-		});
+	});
 
 	cout << "Setting up drawing call...";
 
@@ -1423,20 +1426,28 @@ int graphics_test()
 
 		{
 			transform savv, raww;
-			savv.get_current_transform();
-
+			savv.get_current_transform();			
 			raww.identity();
 			raww.apply();
 
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), 30, al_map_rgb(150, 0, 0), 5);
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), 30, al_map_rgb(0, 150, 0), 5);
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 30, al_map_rgb(0, 0, 150), 5);
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 30, al_map_rgb(150, 150, 0), 5);
+			const float ra = 15.0f;
+			const float px = 4.0f;
 
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), 10, al_map_rgb(150, 0, 0), 3);
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), 10, al_map_rgb(0, 150, 0), 3);
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 10, al_map_rgb(0, 0, 150), 3);
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 10, al_map_rgb(150, 150, 0), 3);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), ra, al_map_rgb(150, 0, 0),   px);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), ra, al_map_rgb(0, 150, 0),   px);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), ra, al_map_rgb(0, 0, 150),   px);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), ra, al_map_rgb(150, 150, 0), px);
+
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), ra, al_map_rgb(150, 0, 0),   px);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), ra, al_map_rgb(0, 150, 0),   px);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), ra, al_map_rgb(0, 0, 150),   px);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), ra, al_map_rgb(150, 150, 0), px);
+
+			polygony.csafe_transformed([&](const std::vector<vertex_point>& vec) {
+
+				for(const auto& it : vec)
+					al_draw_circle(it.x, it.y, ra, al_map_rgb(120, 120, 120), px);
+			});
 
 			savv.apply();
 		}
@@ -1462,7 +1473,7 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
 				return true;
-				});
+			});
 		}
 		});
 
@@ -1472,15 +1483,28 @@ int graphics_test()
 
 
 	kb.hook_event([&](const keys::key_event& ev) {
-		if (!ev.down) return;
 
 		switch (ev.key_id) {
+		case ALLEGRO_KEY_W:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, -0.01f * ev.down);
+			break;
+		case ALLEGRO_KEY_A:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, -0.01f * ev.down);
+			break;
+		case ALLEGRO_KEY_S:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, 0.01f * ev.down);
+			break;
+		case ALLEGRO_KEY_D:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, 0.01f * ev.down);
+			break;
 		case ALLEGRO_KEY_F11:
+			if (!ev.down) return;
 			my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
 		case ALLEGRO_KEY_R:
+			if (!ev.down) return;
 			cout << console::color::GREEN << "Randomizing camera...";
 			off_x = (random() % 1000) * 0.001f - 0.5f;
 			off_y = (random() % 1000) * 0.001f - 0.5f;
@@ -1494,6 +1518,7 @@ int graphics_test()
 				});
 			break;
 		case ALLEGRO_KEY_F:
+			if (!ev.down) return;
 			cout << console::color::GREEN << "Randomizing zoom...";
 			zuum = 1.0f + (random() % 1000) * 0.002f - 0.5f;
 			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
@@ -1506,10 +1531,23 @@ int graphics_test()
 				});
 			break;
 		case ALLEGRO_KEY_0:
+			if (!ev.down) return;
 			cout << console::color::GREEN << "Zeroing camera...";
 			off_x = 0.0f;
 			off_y = 0.0f;
 			zuum = 1.0f;
+			blk_fixed.set<float>(enum_sprite_float_e::POS_X, 0.0f);
+			blk_fixed.set<float>(enum_sprite_float_e::POS_Y, 0.0f);
+
+			polygony.safe([](std::vector<vertex_point>& vec) {
+				vec.clear();
+				vec.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
+				vec.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
+				vec.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
+				vec.push_back(vertex_point{ -0.8f, -0.6f, 0.0f, 512.0f, 256.0f, color(150,150,255) });
+				vec.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
+			});
+
 			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
 				transform transf;
 				transf.build_classic_fixed_proportion_auto(fixprop, 1.0f);
@@ -1548,30 +1586,36 @@ int graphics_test()
 
 	{
 		size_t c = 0;
-		for (auto& i : cols_v2)
-		{
-			i.set_work([cc = ++c, &my_display](collisionable::final_result& fr, collisionable::optional_sprite_ref& sp) {
-				//printf_s("[%zu] %.2f, %.2f\n", cc, fr.fx, fr.fy);
-
-				if (sp.has_value()) {
-					sp->get().set<float>(enum_sprite_float_e::POS_X, sp->get().get<float>(enum_sprite_float_e::POS_X) + 0.99f * fr.fx);
-					sp->get().set<float>(enum_sprite_float_e::POS_Y, sp->get().get<float>(enum_sprite_float_e::POS_Y) + 0.99f * fr.fy);
-
-					//if (fabsf(fr.fx) > fabsf(fr.fy))
-					//{
-					//	sp->get().set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, 0.2f);
-					//}
-					//else {
-					//	sp->get().set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, -0.2f);
-					//}
-				}
-			});
-		}
+		//for (auto& i : cols_v2)
+		//{
+		//	i.set_work([cc = ++c, &my_display](collisionable::final_result& fr) {
+		//		//printf_s("[%zu] %.2f, %.2f\n", cc, fr.fx, fr.fy);
+		//
+		//		if (fr.is_sprite()) {
+		//			fr.get_sprite().set<float>(enum_sprite_float_e::POS_X, fr.get_sprite().get<float>(enum_sprite_float_e::POS_X) + 0.99f * fr.fx);
+		//			fr.get_sprite().set<float>(enum_sprite_float_e::POS_Y, fr.get_sprite().get<float>(enum_sprite_float_e::POS_Y) + 0.99f * fr.fy);
+		//		}
+		//		else {
+		//			fr.get_vertexes().translate(0.99f * fr.fx, 0.99f * fr.fy);
+		//		}
+		//		//if (fr.is_vertexes()) {
+		//		//	fr.get_sprite().set<float>(enum_sprite_float_e::POS_X, sp->get().get<float>(enum_sprite_float_e::POS_X) + 0.99f * fr.fx);
+		//		//	fr.get_sprite().set<float>(enum_sprite_float_e::POS_Y, sp->get().get<float>(enum_sprite_float_e::POS_Y) + 0.99f * fr.fy);
+		//		//}
+		//	});
+		//}
 	}
+
+	fast_collisionable_manager colmng;
+	colmng.push_back(blk_mouse);
+	colmng.push_back(blk_fixed);
+	colmng.push_back(polygony);
 
 	col_and_tools.task_async([&] {
 
-		work_all_auto(std::begin(cols_v2), std::end(cols_v2));
+		colmng.think_all();
+
+		//work_all_auto(std::begin(cols_v2), std::end(cols_v2));
 
 		//for (auto& it : cols_v2) it.reset();
 		//
@@ -1588,8 +1632,8 @@ int graphics_test()
 		//	printf_s("MOVE=%i,CLOCKWISE=%.2f;D=%.2f\n", res.move_towards, res.clockwise_rot, res.distance);
 		//}
 
-		blk_mouse.think();
-		blk_fixed.think();
+		//blk_mouse.think();
+		//blk_fixed.think();
 
 		// just clipboard.
 		//if (my_display.check_has_clipboard()) {
@@ -1630,7 +1674,7 @@ int graphics_test()
 
 			txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, dat);
 		}
-	}, thread::speed::INTERVAL, 1.0/30);
+	}, thread::speed::INTERVAL, 1.0/20);
 
 	cout << "Enabling things on screen...";
 

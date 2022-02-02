@@ -2,13 +2,29 @@
 
 namespace Lunaris {
 
-	LUNARIS_DECL void transform::get_current_transform()
+	LUNARIS_DECL transform::transform(const transform& oth)
 	{
-		t = *al_get_current_transform();
+		copy(oth);
+	}
+
+	LUNARIS_DECL transform& transform::operator=(const transform& oth)
+	{
+		copy(oth);
+		return *this;
+	}
+
+	LUNARIS_DECL bool transform::get_current_transform()
+	{
+		if (auto* e = al_get_current_transform(); e) {
+			t = *e;
+			return true;
+		}
+		return false;
 	}
 
 	LUNARIS_DECL void transform::invert()
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_invert_transform(&t);
 	}
 
@@ -19,6 +35,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL void transform::identity()
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_identity_transform(&t);
 	}
 
@@ -28,12 +45,14 @@ namespace Lunaris {
 			const float f_x = wh * 0.5f * scal_def;
 			const float f_y = wh * 0.5f;
 
+			std::lock_guard<std::recursive_mutex> luck(safe);
 			build_transform(ww * 0.5f, wh * 0.5f, f_x * zoom, f_y * zoom, 0.0f);
 		}
 		else { // ww <<<< wh, use horizontal
 			const float f_x = ww * 0.5f;
 			const float f_y = ww * 0.5f / scal_def;
 
+			std::lock_guard<std::recursive_mutex> luck(safe);
 			build_transform(ww * 0.5f, wh * 0.5f, f_x * zoom, f_y * zoom, 0.0f);
 		}
 	}
@@ -62,11 +81,13 @@ namespace Lunaris {
 
 	LUNARIS_DECL void transform::build_transform(const float x, const float y, const float sx, const float sy, const float th)
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_build_transform(&t, x, y, sx, sy, th);
 	}
 
 	LUNARIS_DECL void transform::rotate(const float r)
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_rotate_transform(&t, r);
 	}
 
@@ -79,6 +100,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL void transform::scale(const float sx, const float sy)
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_scale_transform(&t, sx, sy);
 	}
 
@@ -91,6 +113,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL void transform::transform_coords(float& x, float& y) const
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_transform_coordinates(&t, &x, &y);
 	}
 
@@ -103,11 +126,14 @@ namespace Lunaris {
 
 	LUNARIS_DECL void transform::compose(const transform& c)
 	{
+		std::lock_guard<std::recursive_mutex> luck1(safe);
+		std::lock_guard<std::recursive_mutex> luck2(c.safe);
 		al_compose_transform(&t, &c.t);
 	}
 
 	LUNARIS_DECL void transform::translate(const float x, const float y)
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_translate_transform(&t, x, y);
 	}
 
@@ -120,6 +146,7 @@ namespace Lunaris {
 
 	LUNARIS_DECL void transform::apply() const
 	{
+		std::lock_guard<std::recursive_mutex> luck(safe);
 		al_use_transform(&t);
 	}
 
@@ -185,6 +212,25 @@ namespace Lunaris {
 		else sy = 0.0f;
 
 		return false;
+	}
+
+	LUNARIS_DECL void transform::copy(const transform& oth)
+	{
+		std::lock_guard<std::recursive_mutex> luck1(safe);
+		std::lock_guard<std::recursive_mutex> luck2(oth.safe);
+		al_copy_transform(&t, &oth.t);
+	}
+
+	LUNARIS_DECL std::recursive_mutex& transform::get_internal_mutex()
+	{
+		return safe;
+	}
+
+	LUNARIS_DECL bool transform::is_transform_coordinates_usable() const
+	{
+		float test[2]{ 0.0f,0.0f };
+		transform_coords(test[0], test[1]);
+		return !isnan(test[0]) && !isnan(test[1]);
 	}
 
 }

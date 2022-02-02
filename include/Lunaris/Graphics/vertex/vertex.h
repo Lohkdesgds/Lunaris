@@ -3,6 +3,7 @@
 #include <Lunaris/__macro/macros.h>
 #include <Lunaris/Graphics/color.h>
 #include <Lunaris/Graphics/texture.h>
+#include <Lunaris/Graphics/transform.h>
 #include <Lunaris/Utility/mutex.h>
 
 #include <allegro5/allegro.h>
@@ -67,9 +68,11 @@ namespace Lunaris {
 		};
 	private:
 		std::vector<vertex_point> points;
+		std::vector<vertex_point> npts; // transformed. Valid  
 		hybrid_memory<texture> textur;
 		types type = types::TRIANGLE_LIST;
 		mutable std::shared_mutex safe_mtx;
+		transform latest_transform;
 	public:
 		vertexes();
 
@@ -128,6 +131,24 @@ namespace Lunaris {
 		void csafe(std::function<void(const std::vector<vertex_point>&)>) const;
 
 		/// <summary>
+		/// <para>Generate the vector points like a safe_vector, but translated using latest transform.</para>
+		/// <para>This creates new buffer inside (doubles it) and does refresh when called. Clear buffer with free_transformed() (only if not in use anymore!).</para>
+		/// </summary>
+		void generate_transformed();
+
+		/// <summary>
+		/// <para>Read the vector points like a safe_vector, but translated using latest transform.</para>
+		/// <para>WARN: Be sure you had generate_transformed() once to generate the transformed data BEFORE READING IT (or it'll be empty or old data).</para>
+		/// </summary>
+		/// <param name="{function}">A function that reads a vector of vertex_point.</param>
+		void csafe_transformed(std::function<void(const std::vector<vertex_point>&)>) const;
+
+		/// <summary>
+		/// <para>Did you generate a transformed array via safe_transformed and you want to free that up? This is it.</para>
+		/// </summary>
+		void free_transformed();
+
+		/// <summary>
 		/// <para>Whether there's a texture set or not</para>
 		/// </summary>
 		/// <returns>{bool} True if has texture set.</returns>
@@ -161,6 +182,19 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} True if no vertex is set.</returns>
 		bool empty() const;
+
+		/// <summary>
+		/// <para>Get the latest transform used in draw()</para>
+		/// </summary>
+		/// <returns>{transform} The transform.</returns>
+		transform copy_transform_in_use() const;
+
+		/// <summary>
+		/// <para>Translates all points using this. This is like += everyone.</para>
+		/// </summary>
+		/// <param name="{float}">Move in X.</param>
+		/// <param name="{float}">Move in Y.</param>
+		void translate(const float, const float);
 	};
 
 }

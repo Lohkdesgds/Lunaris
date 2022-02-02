@@ -182,7 +182,7 @@ namespace Lunaris {
 		/// <para>Get latest transformation used by draw() function</para>
 		/// </summary>
 		/// <returns>{transform} Latest transform matrix.</returns>
-		transform copy_transform_inuse() const;
+		transform copy_transform_in_use() const;
 
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::set;
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::get;
