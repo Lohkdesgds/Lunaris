@@ -1486,16 +1486,16 @@ int graphics_test()
 
 		switch (ev.key_id) {
 		case ALLEGRO_KEY_W:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, -0.01f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, -0.001f * ev.down);
 			break;
 		case ALLEGRO_KEY_A:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, -0.01f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, -0.001f * ev.down);
 			break;
 		case ALLEGRO_KEY_S:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, 0.01f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, 0.001f * ev.down);
 			break;
 		case ALLEGRO_KEY_D:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, 0.01f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, 0.001f * ev.down);
 			break;
 		case ALLEGRO_KEY_F11:
 			if (!ev.down) return;
@@ -1611,9 +1611,18 @@ int graphics_test()
 	colmng.push_back(blk_fixed);
 	colmng.push_back(polygony);
 
+	printf_s("blk_mouse: %p\n", (void*)colmng.get()[0].get());
+	printf_s("blk_fixed: %p\n", (void*)colmng.get()[1].get());
+	printf_s("polygony:  %p\n", (void*)colmng.get()[2].get());
+
+	size_t tps = 0, tps_c = 0;
+	double tim_at = 0;
+
 	col_and_tools.task_async([&] {
 
 		colmng.think_all();
+
+		++tps_c;
 
 		//work_all_auto(std::begin(cols_v2), std::end(cols_v2));
 
@@ -1660,7 +1669,13 @@ int graphics_test()
 
 		txt_main.set<float>(enum_sprite_float_e::ROTATION, cos(al_get_time() * 2.5) * 0.3f);
 
-		{
+		if (al_get_time() > tim_at) {
+			tim_at = al_get_time() + 1.0;
+			tps = tps_c;
+			tps_c = 0;
+		}
+
+		if (tps_c % 50 == 1) {
 			std::string dat;
 
 			dat += "POINTS MOUSE RAW:\n";
@@ -1670,11 +1685,13 @@ int graphics_test()
 			dat += "DOWNRIGHT: [yellow] [" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X)) + ";" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y)) + "]\n";
 			dat += "ROTATION ANGLE (DEGREES): " +
 				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::ROTATION) * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360) + " or " + 
-				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION) * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360) + " (proj/smooth)";
+				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION) * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360) + " (proj/smooth)\n\n";
+			dat += "TPS: " + std::to_string(tps);
 
 			txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, dat);
 		}
-	}, thread::speed::INTERVAL, 1.0/20);
+	//}, thread::speed::HIGH_PERFORMANCE);//, 1.0/150);
+	}, thread::speed::INTERVAL, 1.0/500);
 
 	cout << "Enabling things on screen...";
 

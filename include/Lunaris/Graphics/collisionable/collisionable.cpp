@@ -2,19 +2,19 @@
 
 namespace Lunaris {
 
-	LUNARIS_DECL bool line_on_segment(const supported_fast_point_2d& p, const supported_fast_point_2d& q, const supported_fast_point_2d& r)
+	LUNARIS_DECL bool supported_fast_collisionable::line_on_segment(const supported_fast_point_2d& p, const supported_fast_point_2d& q, const supported_fast_point_2d& r)
 	{
 		return ((q.px <= std::max(p.px, r.px)) && (q.px >= std::min(p.px, r.px)) &&
 			(q.py <= std::max(p.py, r.py)) && (q.py >= std::min(p.py, r.py)));
 	}
 
-	LUNARIS_DECL int line_orientation(const supported_fast_point_2d& p, const supported_fast_point_2d& q, const supported_fast_point_2d& r)
+	LUNARIS_DECL int supported_fast_collisionable::line_orientation(const supported_fast_point_2d& p, const supported_fast_point_2d& q, const supported_fast_point_2d& r)
 	{
 		const int val = (q.py - p.py) * (r.px - q.px) - (q.px - p.px) * (r.py - q.py);
 		return (val == 0) ? 0 : (val > 0 ? 1 : 2);
 	}
 
-	LUNARIS_DECL bool line_do_intersect(const supported_fast_point_2d& p1, const supported_fast_point_2d& q1, const supported_fast_point_2d& p2, const supported_fast_point_2d& q2)
+	LUNARIS_DECL bool supported_fast_collisionable::line_do_intersect(const supported_fast_point_2d& p1, const supported_fast_point_2d& q1, const supported_fast_point_2d& p2, const supported_fast_point_2d& q2)
 	{
 		const int o1 = line_orientation(p1, q1, p2);
 		const int o2 = line_orientation(p1, q1, q2);
@@ -41,7 +41,7 @@ namespace Lunaris {
 		return false; // Doesn't fall in any of the above cases
 	}
 
-	LUNARIS_DECL bool polygon_is_point_inside(const supported_fast_point_2d& p, const std::vector<supported_fast_point_2d>& polygon)
+	LUNARIS_DECL bool supported_fast_collisionable::polygon_is_point_inside(const supported_fast_point_2d& p, const std::vector<supported_fast_point_2d>& polygon)
 	{
 		const size_t n = polygon.size();
 
@@ -104,7 +104,7 @@ namespace Lunaris {
 	{
 		return direction_x_revert;
 	}
-
+	
 	LUNARIS_DECL float supported_fast_collisionable::get_dy() const
 	{
 		return direction_y_revert;
@@ -112,54 +112,125 @@ namespace Lunaris {
 
 	LUNARIS_DECL void supported_fast_collisionable::collide_auto(supported_fast_collisionable& oth)
 	{
-		const auto me_pts = read_points();
-		const auto oth_pts = oth.read_points();
+		if (last_was_collision && oth.last_was_collision) return; // already col
+
+		const auto& me_pts = read_points();
+		const auto& oth_pts = oth.read_points();
+
+		if (me_pts.size() < 2 || oth_pts.size() < 2) return;
+
 		bool col_once = false;
 
 		for (const auto& it : me_pts)
 		{
-			if (col_once = polygon_is_point_inside(it, oth_pts))
+			if (col_once |= polygon_is_point_inside(it, oth_pts))
 				break;
 		}
 
 		if (!col_once) return;
 
-		float widn = 0.0f; // sum X
-		float hein = 0.0f; // sum Y
-
-		for (const auto& it : me_pts) {
-			widn += it.px * 1.0f / me_pts.size();
-			hein += it.py * 1.0f / me_pts.size();
-		}
-		for (const auto& it : oth_pts) {
-			widn -= it.px * 1.0f / oth_pts.size();
-			hein -= it.py * 1.0f / oth_pts.size();
-		}
-
-		// if widn > 0, OTH - - - - THIS
-		// if hein > 0, THIS is below OTH
-
-		const float coefx = fabsf(get_dx() - oth.get_dx());
-		const float coefy = fabsf(get_dy() - oth.get_dy());
-		const float divf = (coefx + coefy == 0.0f) ? 1.0f : (coefx + coefy);
-
-		if (!locked) {
-			direction_x_revert += 0.12f * (coefx) * (widn > 0.0f ? 1.0f : -1.0f) * (coefx * 1.0f / divf) + (widn > 0.0f ? 0.000001f : -0.000001f);
-			direction_y_revert += 0.12f * (coefy) * (hein > 0.0f ? 1.0f : -1.0f) * (coefy * 1.0f / divf) + (hein > 0.0f ? 0.000001f : -0.000001f);
-		}
-		if (!oth.locked) {
-			oth.direction_x_revert += -0.12f * (coefx) * (widn > 0.0f ? 1.0f : -1.0f) * (coefx * 1.0f / divf) - (widn > 0.0f ? 0.000001f : -0.000001f);
-			oth.direction_y_revert += -0.12f * (coefy) * (hein > 0.0f ? 1.0f : -1.0f) * (coefy * 1.0f / divf) - (hein > 0.0f ? 0.000001f : -0.000001f);
-		}
-
 		last_was_collision = true;
 		oth.last_was_collision = true;
 
-		revert_once();
-		oth.revert_once();
+		float center_me[2] = { 0.0f,0.0f };
+		float center_me_limit_min[2] = { me_pts[0].px, me_pts[0].py };
+		float center_me_limit_max[2] = { me_pts[0].px, me_pts[0].py };
+		float center_ot[2] = { 0.0f,0.0f };
+		float center_ot_limit_min[2] = { oth_pts[0].px, oth_pts[0].py };
+		float center_ot_limit_max[2] = { oth_pts[0].px, oth_pts[0].py };
+
+		for (const auto& it : me_pts) {
+			center_me[0] += it.px * 1.0f / me_pts.size();
+			center_me[1] += it.py * 1.0f / me_pts.size();
+
+			if (center_me_limit_min[0] > it.px) center_me_limit_min[0] = it.px;
+			if (center_me_limit_min[1] > it.py) center_me_limit_min[1] = it.py;
+
+			if (center_me_limit_max[0] < it.px) center_me_limit_max[0] = it.px;
+			if (center_me_limit_max[1] < it.py) center_me_limit_max[1] = it.py;
+		}
+		for (const auto& it : oth_pts) {
+			center_ot[0] += it.px * 1.0f / oth_pts.size();
+			center_ot[1] += it.py * 1.0f / oth_pts.size();
+
+			if (center_ot_limit_min[0] > it.px) center_ot_limit_min[0] = it.px;
+			if (center_ot_limit_min[1] > it.py) center_ot_limit_min[1] = it.py;
+
+			if (center_ot_limit_max[0] < it.px) center_ot_limit_max[0] = it.px;
+			if (center_ot_limit_max[1] < it.py) center_ot_limit_max[1] = it.py;
+		}
+
+
+		const float ddx = center_me[0] - center_ot[0];
+		const float ddy = center_me[1] - center_ot[1];
+
+		//direction_x_final += 0.5f * direction_x_revert;
+		//direction_y_final += 0.5f * direction_y_revert;
+		//oth.direction_x_final -= 0.5f * direction_x_revert;
+		//oth.direction_y_final -= 0.5f * direction_y_revert;
+
+		const float directx = ddx * 1.0f / (0.000000000001f + (fabsf(center_me_limit_max[0] - center_me_limit_min[0]) + fabsf(center_ot_limit_max[0] - center_ot_limit_min[0])));
+		const float directy = ddy * 1.0f / (0.000000000001f + (fabsf(center_me_limit_max[1] - center_me_limit_min[1]) + fabsf(center_ot_limit_max[1] - center_ot_limit_min[1])));
+
+		const float somemovex = (fabsf(directx) < fabsf(directy) ? 0.1f : 1.0f) * (fabsf(0.0000001f * ddx) < 0.0003f ? ((ddx >= 0.0f ? 1.0f : -1.0f) * 0.0003f) : (0.0000001f * ddx)); // ALT_DIRECTION_PROP, MINIMUM_FIX_DELTA, FIX_DELTA_CENTER_PROP
+		const float somemovey = (fabsf(directx) > fabsf(directy) ? 0.1f : 1.0f) * (fabsf(0.0000001f * ddy) < 0.0003f ? ((ddy >= 0.0f ? 1.0f : -1.0f) * 0.0003f) : (0.0000001f * ddy)); // ALT_DIRECTION_PROP, MINIMUM_FIX_DELTA, FIX_DELTA_CENTER_PROP
+		
+
+		direction_x_final += (somemovex + 0.49f * direction_x_revert); // PROPORTION_MOVE_ON_COLLISION
+		direction_y_final += (somemovey + 0.49f * direction_y_revert); // PROPORTION_MOVE_ON_COLLISION
+		oth.direction_x_final -= (somemovex + 0.49f * direction_x_revert); // PROPORTION_MOVE_ON_COLLISION
+		oth.direction_y_final -= (somemovey + 0.49f * direction_y_revert); // PROPORTION_MOVE_ON_COLLISION
+
+
+
+
+
+		//bool col_once = false;
+		//
+		//for (const auto& it : me_pts)
+		//{
+		//	if (col_once |= polygon_is_point_inside(it, oth_pts))
+		//		break;
+		//}
+		//
+		//if (!col_once) return;
+		//
+		//float widn = 0.0f; // sum X
+		//float hein = 0.0f; // sum Y
+		//
+		//for (const auto& it : me_pts) {
+		//	widn += it.px * 1.0f / me_pts.size();
+		//	hein += it.py * 1.0f / me_pts.size();
+		//}
+		//for (const auto& it : oth_pts) {
+		//	widn -= it.px * 1.0f / oth_pts.size();
+		//	hein -= it.py * 1.0f / oth_pts.size();
+		//}
+		//
+		//// if widn > 0, OTH - - - - THIS
+		//// if hein > 0, THIS is below OTH
+		//
+		//const float coefx = fabsf(get_dx() - oth.get_dx());
+		//const float coefy = fabsf(get_dy() - oth.get_dy());
+		//const float divf = (coefx + coefy == 0.0f) ? 1.0f : (coefx + coefy);
+		//
+		//if (!locked) {
+		//	direction_x_revert += 0.2f * (coefx) * (widn > 0.0f ? 1.0f : -1.0f);// * (coefx * 1.0f / divf) + (widn > 0.0f ? 0.000002f : -0.000002f);
+		//	direction_y_revert += 0.2f * (coefy) * (hein > 0.0f ? 1.0f : -1.0f);// * (coefy * 1.0f / divf) + (hein > 0.0f ? 0.000002f : -0.000002f);
+		//}
+		//if (!oth.locked) {
+		//	oth.direction_x_revert += -0.2f * (coefx) * (widn > 0.0f ? 1.0f : -1.0f);// * (coefx * 1.0f / divf) - (widn > 0.0f ? 0.000002f : -0.000002f);
+		//	oth.direction_y_revert += -0.2f * (coefy) * (hein > 0.0f ? 1.0f : -1.0f);// * (coefy * 1.0f / divf) - (hein > 0.0f ? 0.000002f : -0.000002f);
+		//}
+		//
+		//last_was_collision = true;
+		//oth.last_was_collision = true;
+		//
+		//revert_once();
+		//oth.revert_once();
 	}
 
-	LUNARIS_DECL bool supported_fast_collisionable::collide(const supported_fast_collisionable& oth) const
+	LUNARIS_DECL bool supported_fast_collisionable::collide_test(const supported_fast_collisionable& oth) const
 	{
 		const auto me_pts = read_points();
 		const auto oth_pts = oth.read_points();
@@ -173,15 +244,21 @@ namespace Lunaris {
 		return col_once;
 	}
 
+	LUNARIS_DECL bool supported_fast_collisionable::collide_test(const float& x, const float& y) const
+	{
+		const auto me_pts = read_points();
+		return polygon_is_point_inside({ x, y }, me_pts);
+	}
+
 	LUNARIS_DECL void supported_fast_collisionable::lock(const bool b)
 	{
 		locked = b;
+		last_was_collision = false;
 	}
 
 	LUNARIS_DECL void supported_fast_collisionable::apply()
 	{
-		if (last_was_collision)
-			revert_once();
+		revert_once();
 	}
 
 	LUNARIS_DECL fast_collisionable_sprite::fast_collisionable_sprite(sprite& s)
@@ -192,20 +269,31 @@ namespace Lunaris {
 
 	LUNARIS_DECL void fast_collisionable_sprite::revert_once()
 	{
-		if (fabsf(direction_x_revert) > 2.0f) direction_x_revert /= 0.5f * fabsf(direction_x_revert);
-		if (fabsf(direction_y_revert) > 2.0f) direction_y_revert /= 0.5f * fabsf(direction_y_revert);
-		//const float& speed_deg_ref = ref.get<float>(enum_sprite_float_e::THINK_ELASTIC_SPEED_PROP);
+		if (last_was_collision) {
+			ref.set<float>(enum_sprite_float_e::POS_X, ref.get<float>(enum_sprite_float_e::POS_X) + direction_x_final * 1.000001f);
+			ref.set<float>(enum_sprite_float_e::POS_Y, ref.get<float>(enum_sprite_float_e::POS_Y) + direction_y_final * 1.000001f);
 
-		ref.set<float>(enum_sprite_float_e::POS_X, ref.get<float>(enum_sprite_float_e::POS_X) + direction_x_revert);
-		ref.set<float>(enum_sprite_float_e::POS_Y, ref.get<float>(enum_sprite_float_e::POS_Y) + direction_y_revert);
-		ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_X) * 0.25f);
-		ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y) * 0.25f);
+			ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, (direction_x_final >= 1.0f ? 1.0f : -1.0f) * fabsf(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_X) * 0.3f));
+			ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, (direction_y_final >= 1.0f ? 1.0f : -1.0f) * fabsf(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y) * 0.3f));
+		}
 	}
 
 	LUNARIS_DECL void fast_collisionable_sprite::think_once()
 	{
 		ref.think();
 		const float entcenter[2] = { ref.get<float>(enum_sprite_float_e::POS_X), ref.get<float>(enum_sprite_float_e::POS_Y) };
+
+		if (!last_was_collision) {
+			direction_x_revert = last_px - entcenter[0];
+			direction_y_revert = last_py - entcenter[1];
+		}
+		else last_was_collision = false;
+
+		direction_x_final = direction_y_final = 0.0f;
+		last_px = entcenter[0];
+		last_py = entcenter[1];
+		
+		//printf_s("UPD %p [%.4f,%.4f]\n", (void*)this, direction_x_revert, direction_y_revert);
 
 		vec_get_at(0).px = ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X);
 		vec_get_at(0).py = ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y);
@@ -216,19 +304,19 @@ namespace Lunaris {
 		vec_get_at(3).px = ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X);
 		vec_get_at(3).py = ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y);
 
-		if (last_was_collision) {
-			last_was_collision = false;
-			direction_x_revert += 0.1f * (last_px - entcenter[0]);
-			last_px = entcenter[0];
-			direction_y_revert += 0.1f * (last_py - entcenter[1]);
-			last_py = entcenter[1];
-		}
-		else {
-			direction_x_revert = last_px - entcenter[0];
-			last_px = entcenter[0];
-			direction_y_revert = last_py - entcenter[1];
-			last_py = entcenter[1];
-		}
+		//if (last_was_collision) {
+		//	last_was_collision = false;
+		//	direction_x_revert += 0.1f * (last_px - entcenter[0]);
+		//	last_px = entcenter[0];
+		//	direction_y_revert += 0.1f * (last_py - entcenter[1]);
+		//	last_py = entcenter[1];
+		//}
+		//else {
+		//	direction_x_revert = last_px - entcenter[0];
+		//	last_px = entcenter[0];
+		//	direction_y_revert = last_py - entcenter[1];
+		//	last_py = entcenter[1];
+		//}
 	}
 
 	LUNARIS_DECL float fast_collisionable_vertexes::get_center_x() const
@@ -258,11 +346,21 @@ namespace Lunaris {
 
 	LUNARIS_DECL void fast_collisionable_vertexes::revert_once()
 	{
-		if (fabsf(direction_x_revert) > 0.5f) direction_x_revert /= 2.0f * (fabsf(direction_x_revert) + 0.0001f);
-		if (fabsf(direction_y_revert) > 0.5f) direction_y_revert /= 2.0f * (fabsf(direction_y_revert) + 0.0001f);
+		//if (fabsf(direction_x_revert) > 0.5f) direction_x_revert /= 2.0f * (fabsf(direction_x_revert) + 0.0001f);
+		//if (fabsf(direction_y_revert) > 0.5f) direction_y_revert /= 2.0f * (fabsf(direction_y_revert) + 0.0001f);
 		//const float& speed_deg_ref = ref.get<float>(enum_sprite_float_e::THINK_ELASTIC_SPEED_PROP);
 
-		ref.translate(direction_x_revert, direction_y_revert);
+		if (last_was_collision) {
+			//last_was_collision = false;
+
+			//printf_s("COLLISION %p [%.4f,%.4f]\n", (void*)this, direction_x_revert, direction_y_revert);
+
+			ref.translate(direction_x_final * 1.000001f, direction_y_final * 1.000001f);
+
+			//last_px -= direction_x_revert * 1.000001f;
+			//last_py -= direction_y_revert * 1.000001f;
+		}
+
 		//ref.safe([&](std::vector<vertex_point>& vec) {
 		//	for (auto& it : vec) {
 		//		it.x += direction_x_revert;
@@ -279,19 +377,29 @@ namespace Lunaris {
 		vec_fit(ref.size());
 		ref.csafe_transformed([&](const std::vector<vertex_point>& vec) { for (size_t p = 0; p < vec.size(); ++p) { vec_get_at(p).px = vec[p].x; vec_get_at(p).py = vec[p].y; } });
 
-		if (last_was_collision) {
-			last_was_collision = false;
-			direction_x_revert += 0.1f * (last_px - entcenter[0]);
-			last_px = entcenter[0];
-			direction_y_revert += 0.1f * (last_py - entcenter[1]);
-			last_py = entcenter[1];
-		}
-		else {
+		if (!last_was_collision) {
 			direction_x_revert = last_px - entcenter[0];
-			last_px = entcenter[0];
 			direction_y_revert = last_py - entcenter[1];
-			last_py = entcenter[1];
 		}
+		else last_was_collision = false;
+
+		direction_x_final = direction_y_final = 0.0f;
+		last_px = entcenter[0];
+		last_py = entcenter[1];
+
+		//if (last_was_collision) {
+		//	last_was_collision = false;
+		//	direction_x_revert += 0.1f * (last_px - entcenter[0]);
+		//	last_px = entcenter[0];
+		//	direction_y_revert += 0.1f * (last_py - entcenter[1]);
+		//	last_py = entcenter[1];
+		//}
+		//else {
+		//	direction_x_revert = last_px - entcenter[0];
+		//	last_px = entcenter[0];
+		//	direction_y_revert = last_py - entcenter[1];
+		//	last_py = entcenter[1];
+		//}
 	}
 
 	LUNARIS_DECL void fast_collisionable_manager::push_back(sprite& s, const bool lckd)
@@ -306,6 +414,11 @@ namespace Lunaris {
 		auto ptr = std::unique_ptr<supported_fast_collisionable>(new fast_collisionable_vertexes(s));
 		ptr->lock(lckd);
 		objs.push_back(std::move(ptr));
+	}
+
+	LUNARIS_DECL std::vector<std::unique_ptr<supported_fast_collisionable>>& fast_collisionable_manager::get()
+	{
+		return objs;
 	}
 
 	LUNARIS_DECL void fast_collisionable_manager::think_all()
