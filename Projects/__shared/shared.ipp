@@ -140,10 +140,17 @@ int main(int argc, char* argv[]) {
 	hard_test();
 	return 0;
 #endif
+	cout << "Send 'skip' or 's' to skip tests or anything else to test every test.";
 
-	if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
-	if (AUTOEXCEPT(audio_test()) != 0) return 1;
-	if (AUTOEXCEPT(events_test()) != 0) return 1;
+	std::string str;
+	std::getline(std::cin, str);
+
+	if (str != "skip" && str != "s")
+	{
+		if (AUTOEXCEPT(utility_test(currpath)) != 0) return 1;
+		if (AUTOEXCEPT(audio_test()) != 0) return 1;
+		if (AUTOEXCEPT(events_test()) != 0) return 1;
+	}
 	if (AUTOEXCEPT(graphics_test()) != 0) return 1;
 }
 
@@ -1211,12 +1218,14 @@ int graphics_test()
 	std::atomic<bool> keep_running_things = true;
 	display_async my_display;
 	block blk_fixed, blk_mouse, topleft_dc;
+	vertexes polygony;
 	text txt_main;
 	thread col_and_tools;
 	mouse mousing(my_display);
 	keys kb;
 	float off_x = 0.0f, off_y = 0.0f, zuum = 1.0f;
-	collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
+	//collisionable cols[2] = { {blk_mouse}, {blk_fixed} };
+	//collisionable cols_v2[3] = { {blk_mouse}, {blk_fixed}, {polygony} };
 	const color no_collision = color(127, 255, 127);
 	const color has_collision = color(255, 127, 127);
 	const color mouse_no_collision = color(127, 255, 255);
@@ -1230,15 +1239,14 @@ int graphics_test()
 	tempfile* fp = (tempfile*)tempfp.get();
 	auto tempfp2 = make_hybrid_derived<file, tempfile>(); // random file 2
 	tempfile* fp2 = (tempfile*)tempfp2.get();
-	vertexes polygony;
 
 	cout << "Creating display...";
 
 	my_display.post_task_on_destroy([&] {
-			font_u.reset_shared();
-			ffbmp.reset_shared();
-			bmppp.reset_shared();
-			giffye.reset_shared();
+		font_u.reset_shared();
+		ffbmp.reset_shared();
+		bmppp.reset_shared();
+		giffye.reset_shared();
 		});
 
 	TESTLU(my_display.create(display_config()
@@ -1246,7 +1254,7 @@ int graphics_test()
 		.set_display_mode(display_options().set_width(1800).set_height(900))
 		.set_window_title("GRAPHICS TEST")
 		.set_extra_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE)
-		.set_framerate_limit(300)
+		//.set_framerate_limit(300)
 		.set_economy_framerate_limit(20)
 		.set_wait_for_display_draw(true)
 		//.set_fullscreen(true)
@@ -1323,14 +1331,17 @@ int graphics_test()
 	}
 
 	blk_mouse.set<float>(enum_sprite_float_e::SCALE_G, 0.25f);
+	blk_mouse.set<float>(enum_sprite_float_e::SCALE_X, 1.25f);
 	blk_mouse.set<float>(enum_sprite_float_e::POS_X, -0.3f);
 	blk_mouse.set<float>(enum_sprite_float_e::POS_Y, -0.3f);
+	blk_mouse.set<float>(enum_sprite_float_e::THINK_ELASTIC_SPEED_PROP, 0.5f);
 	blk_mouse.set<float>(enum_sprite_float_e::OUT_OF_SIGHT_POS, 0.8f);
 	blk_mouse.set<bool>(enum_sprite_boolean_e::DRAW_THINK_BOX, true);
 
-	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255,255,255));
+	blk_fixed.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, color(255, 255, 255));
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_DRAW_BOX, true);
-	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.5f);
+	blk_fixed.set<float>(enum_sprite_float_e::SCALE_G, 0.35f);
+	blk_fixed.set<float>(enum_sprite_float_e::SCALE_Y, 1.35f);
 	blk_fixed.set<bool>(enum_sprite_boolean_e::DRAW_TRANSFORM_COORDS_KEEP_SCALE, true); // deform pos
 
 	{
@@ -1345,25 +1356,28 @@ int graphics_test()
 	polygony.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
 	polygony.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
 	polygony.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
+	polygony.push_back(vertex_point{ -0.8f, -0.6f, 0.0f, 512.0f, 256.0f, color(150,150,255) });
 	polygony.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
-	polygony.set_mode(vertexes::types::TRIANGLE_STRIP);
+	polygony.set_mode(vertexes::types::TRIANGLE_FAN);
 	polygony.set_texture(ffbmp);
+
+	//cols_v2[2].update_points();
 
 	cout << "Applying default transformation to display...";
 
-	my_display.add_run_once_in_drawing_thread([&my_display,&fixprop] {
+	my_display.add_run_once_in_drawing_thread([&my_display, &fixprop] {
 		transform transf;
 		transf.build_classic_fixed_proportion(my_display.get_width(), my_display.get_height(), fixprop, 1.0f);
 		transf.apply();
 		return true;
-	});
+		});
 
 	cout << "Loading texture in video memory and default font...";
 
 	{
 		auto dod = my_display.add_run_once_in_drawing_thread([&] {
 			return /*random_texture->load(fp.get_current_path()) && */font_u->create_builtin_font();
-		});
+			});
 
 		dod.wait();
 		TESTLU(dod.get(), "Couldn't load texture/font for test!");
@@ -1377,7 +1391,7 @@ int graphics_test()
 			blk_mouse.set<float>(enum_sprite_float_e::POS_Y, ev.real_posy);
 		}
 		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && ev.is_button_pressed(0)) {
-			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.06f);
+			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.03f);
 		}
 		else if (type == ALLEGRO_EVENT_MOUSE_BUTTON_UP && !ev.is_button_pressed(0)) {
 			blk_mouse.set<float>(enum_sprite_float_e::ACCEL_ROTATION, 0.0f);
@@ -1412,24 +1426,32 @@ int graphics_test()
 
 		{
 			transform savv, raww;
-			savv.get_current_transform();
-
+			savv.get_current_transform();			
 			raww.identity();
 			raww.apply();
 
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), 30, al_map_rgb(150, 0, 0), 5);
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), 30, al_map_rgb(0, 150, 0), 5);
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 30, al_map_rgb(0, 0, 150), 5);
-			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 30, al_map_rgb(150, 150, 0), 5);
+			const float ra = 15.0f;
+			const float px = 4.0f;
 
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), 10, al_map_rgb(150, 0, 0), 3);
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), 10, al_map_rgb(0, 150, 0), 3);
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), 10, al_map_rgb(0, 0, 150), 3);
-			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), 10, al_map_rgb(150, 150, 0), 3);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), ra, al_map_rgb(150, 0, 0),   px);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), ra, al_map_rgb(0, 150, 0),   px);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), ra, al_map_rgb(0, 0, 150),   px);
+			al_draw_circle(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), ra, al_map_rgb(150, 150, 0), px);
+
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y), ra, al_map_rgb(150, 0, 0),   px);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHEAST_Y), ra, al_map_rgb(0, 150, 0),   px);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y), ra, al_map_rgb(0, 0, 150),   px);
+			al_draw_circle(blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X), blk_fixed.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y), ra, al_map_rgb(150, 150, 0), px);
+
+			polygony.csafe_transformed([&](const std::vector<vertex_point>& vec) {
+
+				for(const auto& it : vec)
+					al_draw_circle(it.x, it.y, ra, al_map_rgb(120, 120, 120), px);
+			});
 
 			savv.apply();
 		}
-	});
+		});
 
 	cout << "Setting up display events function...";
 
@@ -1444,7 +1466,7 @@ int graphics_test()
 		}
 		else if (ev.is_resize()) {
 			cout << console::color::GREEN << "Screen size is now: " << ev.as_display().width << "x" << ev.as_display().height << ". Posted task.";
-			ev.post_task([wd = ev.as_display().width, ht = ev.as_display().height, fixprop, zuum, off_x, off_y] {
+			ev.post_task([wd = ev.as_display().width, ht = ev.as_display().height, fixprop, zuum, off_x, off_y]{
 				transform transf;
 				transf.build_classic_fixed_proportion(wd, ht, fixprop, zuum);
 				transf.translate_inverse(off_x, off_y);
@@ -1453,23 +1475,36 @@ int graphics_test()
 				return true;
 			});
 		}
-	});
+		});
 
 	dispevh.hook_exception_handler([](const std::exception& e) {
 		cout << console::color::RED << "DISPLAY EVENT EXCEPTION: " << e.what();
-	});
+		});
 
 
 	kb.hook_event([&](const keys::key_event& ev) {
-		if (!ev.down) return;
 
-		switch(ev.key_id) {
+		switch (ev.key_id) {
+		case ALLEGRO_KEY_W:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, -0.001f * ev.down);
+			break;
+		case ALLEGRO_KEY_A:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, -0.001f * ev.down);
+			break;
+		case ALLEGRO_KEY_S:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, 0.001f * ev.down);
+			break;
+		case ALLEGRO_KEY_D:
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, 0.001f * ev.down);
+			break;
 		case ALLEGRO_KEY_F11:
+			if (!ev.down) return;
 			my_display.toggle_flag(ALLEGRO_FULLSCREEN_WINDOW);
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			break;
 		case ALLEGRO_KEY_R:
+			if (!ev.down) return;
 			cout << console::color::GREEN << "Randomizing camera...";
 			off_x = (random() % 1000) * 0.001f - 0.5f;
 			off_y = (random() % 1000) * 0.001f - 0.5f;
@@ -1480,9 +1515,10 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
 				return true;
-			});
+				});
 			break;
 		case ALLEGRO_KEY_F:
+			if (!ev.down) return;
 			cout << console::color::GREEN << "Randomizing zoom...";
 			zuum = 1.0f + (random() % 1000) * 0.002f - 0.5f;
 			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
@@ -1492,14 +1528,27 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Camera at " << off_x << " x " << off_y << " * " << zuum;
 				transf.apply();
 				return true;
-			});
+				});
 			break;
 		case ALLEGRO_KEY_0:
+			if (!ev.down) return;
 			cout << console::color::GREEN << "Zeroing camera...";
 			off_x = 0.0f;
 			off_y = 0.0f;
 			zuum = 1.0f;
-			my_display.add_run_once_in_drawing_thread([off_x, off_y,zuum, fixprop] {
+			blk_fixed.set<float>(enum_sprite_float_e::POS_X, 0.0f);
+			blk_fixed.set<float>(enum_sprite_float_e::POS_Y, 0.0f);
+
+			polygony.safe([](std::vector<vertex_point>& vec) {
+				vec.clear();
+				vec.push_back(vertex_point{ -0.9f, -0.9f, 0.0f, 0.0f, 0.0f, color(255,150,150) });
+				vec.push_back(vertex_point{ -0.7f, -0.9f, 0.0f, 512.0f, 0.0f, color(150,255,150) });
+				vec.push_back(vertex_point{ -0.7f, -0.7f, 0.0f, 512.0f, 512.0f, color(150,150,255) });
+				vec.push_back(vertex_point{ -0.8f, -0.6f, 0.0f, 512.0f, 256.0f, color(150,150,255) });
+				vec.push_back(vertex_point{ -0.9f, -0.7f, 0.0f, 0.0f, 512.0f, color(255,150,255) });
+			});
+
+			my_display.add_run_once_in_drawing_thread([off_x, off_y, zuum, fixprop] {
 				transform transf;
 				transf.build_classic_fixed_proportion_auto(fixprop, 1.0f);
 				transf.translate_inverse(off_x, off_y);
@@ -1509,36 +1558,87 @@ int graphics_test()
 				cout << console::color::DARK_GREEN << "Converted inverse coords " << fabsf(ax) << " x " << fabsf(ay);
 				transf.apply();
 				return true;
-			});
+				});
 			break;
 		}
-	});
+		});
 
 	cout << "Setting up collision & extra tasks thread...";
-	
-	for (auto& i : cols) i.set_work([&](collisionable::result res, sprite& one) {
-		one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
-		//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
-		if (res.dir_to != 0) {
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_EAST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
-			if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_WEST))  != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
-			one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
-		}
-		//if (res.dir_to != 0) {
-		//	if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << " COL NORTH #" << (size_t)((void*)&i);
-		//	if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << " COL SOUTH #" << (size_t)((void*)&i);
-		//	if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << " COL EAST  #" << (size_t)((void*)&i);
-		//	if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << " COL WEST  #" << (size_t)((void*)&i);
-		//}
-		one.think(); 
-	});
 
+	//for (auto& i : cols) i.set_work([&](collisionable::result res, sprite& one) {
+	//	one.set<color>(enum_sprite_color_e::DRAW_DRAW_BOX, res.dir_to != 0 ? has_collision : no_collision);
+	//	//if (data != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, was_clockwise ? 0.1f : -0.1f);
+	//	if (res.dir_to != 0) {
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_NORTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, 0.005f);
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_SOUTH)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, -0.005f);
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_EAST)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, -0.005f);
+	//		if ((res.dir_to & static_cast<int>(collisionable::direction_combo::DIR_WEST)) != 0) one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, 0.005f);
+	//		one.set<float>(enum_sprite_float_e::RO_THINK_SPEED_ROTATION, res.moment_dir);
+	//	}
+	//	//if (res.dir_to != 0) {
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_NORTH)) cout << " COL NORTH #" << (size_t)((void*)&i);
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_SOUTH)) cout << " COL SOUTH #" << (size_t)((void*)&i);
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_EAST))  cout << " COL EAST  #" << (size_t)((void*)&i);
+	//	//	if (res.is_dir(collisionable::direction_op::DIR_WEST))  cout << " COL WEST  #" << (size_t)((void*)&i);
+	//	//}
+	//	one.think();
+	//	});
+
+	{
+		size_t c = 0;
+		//for (auto& i : cols_v2)
+		//{
+		//	i.set_work([cc = ++c, &my_display](collisionable::final_result& fr) {
+		//		//printf_s("[%zu] %.2f, %.2f\n", cc, fr.fx, fr.fy);
+		//
+		//		if (fr.is_sprite()) {
+		//			fr.get_sprite().set<float>(enum_sprite_float_e::POS_X, fr.get_sprite().get<float>(enum_sprite_float_e::POS_X) + 0.99f * fr.fx);
+		//			fr.get_sprite().set<float>(enum_sprite_float_e::POS_Y, fr.get_sprite().get<float>(enum_sprite_float_e::POS_Y) + 0.99f * fr.fy);
+		//		}
+		//		else {
+		//			fr.get_vertexes().translate(0.99f * fr.fx, 0.99f * fr.fy);
+		//		}
+		//		//if (fr.is_vertexes()) {
+		//		//	fr.get_sprite().set<float>(enum_sprite_float_e::POS_X, sp->get().get<float>(enum_sprite_float_e::POS_X) + 0.99f * fr.fx);
+		//		//	fr.get_sprite().set<float>(enum_sprite_float_e::POS_Y, sp->get().get<float>(enum_sprite_float_e::POS_Y) + 0.99f * fr.fy);
+		//		//}
+		//	});
+		//}
+	}
+
+	collisionable_manager colmng;
+	colmng.push_back(blk_mouse);
+	colmng.push_back(blk_fixed);
+	colmng.push_back(polygony);
+
+	size_t tps = 0, tps_c = 0;
+	double tim_at = 0;
 
 	col_and_tools.task_async([&] {
 
-		work_all_auto(std::begin(cols), std::end(cols));
+		colmng.think_all();
+
+		++tps_c;
+
+		//work_all_auto(std::begin(cols_v2), std::end(cols_v2));
+
+		//for (auto& it : cols_v2) it.reset();
+		//
+		//cols_v2[0].collide(cols_v2[1]);
+		//cols_v2[1].collide(cols_v2[0]);
+		//
+		//for (auto& it : cols_v2) it.work();
+
+
+		//const auto res = cols_v2[0].result();
+
+		//if (res.move_towards != 0)
+		//{
+		//	printf_s("MOVE=%i,CLOCKWISE=%.2f;D=%.2f\n", res.move_towards, res.clockwise_rot, res.distance);
+		//}
+
+		//blk_mouse.think();
+		//blk_fixed.think();
 
 		// just clipboard.
 		//if (my_display.check_has_clipboard()) {
@@ -1546,13 +1646,11 @@ int graphics_test()
 		//
 		//	cout << console::color::GREEN << "CLIPBOARD!: " << cpy;
 		//}
-
-		///cols[0].reset();
-		///cols[1].reset();
-		///cols[1].overlap(cols[0]);
-		///cols[0].work();
-		///cols[1].work();
-		
+		//cols[0].reset();
+		//cols[1].reset();
+		//cols[1].overlap(cols[0]);
+		//cols[0].work();
+		//cols[1].work();		
 		//for (auto& i : cols) i.reset();
 		//for (size_t p = 0; p < std::size(cols); p++)
 		//{
@@ -1561,14 +1659,19 @@ int graphics_test()
 		//	}
 		//}
 		//for (auto& i : cols) i.work();
-
 		// extra mine
 		//blk_mouse.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.15f);
 		//blk_fixed.set<float>(enum_sprite_float_e::ROTATION, al_get_time() * 0.05f);
 
 		txt_main.set<float>(enum_sprite_float_e::ROTATION, cos(al_get_time() * 2.5) * 0.3f);
 
-		{
+		if (al_get_time() > tim_at) {
+			tim_at = al_get_time() + 1.0;
+			tps = tps_c;
+			tps_c = 0;
+		}
+
+		if (tps_c % 50 == 1) {
 			std::string dat;
 
 			dat += "POINTS MOUSE RAW:\n";
@@ -1578,11 +1681,13 @@ int graphics_test()
 			dat += "DOWNRIGHT: [yellow] [" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_X)) + ";" + std::to_string(blk_mouse.get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y)) + "]\n";
 			dat += "ROTATION ANGLE (DEGREES): " +
 				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::ROTATION) * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360) + " or " + 
-				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION) * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360) + " (proj/smooth)";
+				std::to_string(static_cast<unsigned long long>(blk_mouse.get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION) * 180.0f / static_cast<float>(ALLEGRO_PI)) % 360) + " (proj/smooth)\n\n";
+			dat += "TPS: " + std::to_string(tps);
 
 			txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, dat);
 		}
-	}, thread::speed::INTERVAL, 1.0/20);
+	//}, thread::speed::HIGH_PERFORMANCE);//, 1.0/150);
+	}, thread::speed::INTERVAL, 1.0/500);
 
 	cout << "Enabling things on screen...";
 

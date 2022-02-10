@@ -6,6 +6,7 @@
 #include <allegro5/allegro_primitives.h>
 
 #include <stdexcept>
+#include <mutex>
 
 namespace Lunaris {
 
@@ -13,13 +14,30 @@ namespace Lunaris {
 	/// <para>transform is widely used by many functions and classes around this library. It is the main transformation object.</para>
 	/// <para>Build, transform, translate, rotate, scale, whatever! Do whatever you want with this! You can translate coordinates and so on!</para>
 	/// </summary>
-	class transform {
+	class transform : public NonMovable {
+		mutable std::recursive_mutex safe; // for modifiers
 		ALLEGRO_TRANSFORM t;
 	public:
+		transform() = default;
+
+		/// <summary>
+		/// <para>Copy one to another (replace by).</para>
+		/// </summary>
+		/// <param name="{transform}">Another transform.</param>
+		transform(const transform&);
+
+		/// <summary>
+		/// <para>Copy one to another (replace by).</para>
+		/// </summary>
+		/// <param name="{transform}">Another transform.</param>
+		/// <returns>{transform&amp;} Itself.</returns>
+		transform& operator=(const transform&);
+
 		/// <summary>
 		/// <para>Reads current applied transform.</para>
 		/// </summary>
-		void get_current_transform();
+		/// <returns>{bool} True if found the current transform.</returns>
+		bool get_current_transform();
 
 		/// <summary>
 		/// <para>Invert the internal matrix.</para>
@@ -195,6 +213,24 @@ namespace Lunaris {
 		/// <param name="{float}">Tolerance (1.0f == 100%, 2.0f = 2x area).</param>
 		/// <returns>{bool} Is is in range?</returns>
 		bool in_range_store(const float, const float, float&, float&, const float = 1.0f);
+
+		/// <summary>
+		/// <para>Copy one to another (replace by).</para>
+		/// </summary>
+		/// <param name="{transform}">Another transform.</param>
+		void copy(const transform&);
+
+		/// <summary>
+		/// <para>Do you need some syncronization? This will help you.</para>
+		/// </summary>
+		/// <returns>{recursive_mutex&amp;} Internal mutex (lock while doing many stuff at once).</returns>
+		std::recursive_mutex& get_internal_mutex();
+
+		/// <summary>
+		/// <para>Test if coordinates transform is valid or if it'll result NaN</para>
+		/// </summary>
+		/// <returns>{bool} True if usable (valid), else false and it may return NaN on transformation.</returns>
+		bool is_transform_coordinates_usable() const;
 	};
 
 }

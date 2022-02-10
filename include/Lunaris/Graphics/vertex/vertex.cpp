@@ -102,6 +102,41 @@ namespace Lunaris {
 		f(points);
 	}
 
+	LUNARIS_DECL void vertexes::generate_transformed()
+	{
+		std::unique_lock<std::shared_mutex>(safe_mtx);
+		if (!latest_transform.is_transform_coordinates_usable()) throw std::runtime_error("Transformation got invalid state!");
+		
+		size_t counter = 0;
+		for (const auto& it : points)
+		{
+			vertex_point cpy = it;
+			latest_transform.transform_coords(cpy.x, cpy.y);
+			++counter;
+			if (npts.size() < counter) {
+				npts.push_back(cpy);
+			}
+			else {
+				npts[counter - 1] = cpy;
+			}
+		}
+		while (npts.size() > points.size()) npts.pop_back();
+	}
+
+	LUNARIS_DECL void vertexes::csafe_transformed(std::function<void(const std::vector<vertex_point>&)> f) const
+	{
+		if (!f || npts.size() == 0) return;
+		std::shared_lock<std::shared_mutex>(safe_mtx);
+		f(npts);
+	}
+
+	LUNARIS_DECL void vertexes::free_transformed()
+	{
+		if (npts.size() == 0) return;
+		std::unique_lock<std::shared_mutex>(safe_mtx);
+		npts.clear();
+	}
+
 	LUNARIS_DECL bool vertexes::has_texture() const
 	{
 		std::shared_lock<std::shared_mutex>(safe_mtx);
@@ -122,6 +157,7 @@ namespace Lunaris {
 	{
 		std::shared_lock<std::shared_mutex>(safe_mtx);
 		if (!points.size()) return;
+		latest_transform.get_current_transform();
 		al_draw_prim(points.data(), nullptr, textur.valid() ? textur->get_raw_bitmap() : nullptr, 0, static_cast<int>(points.size()), static_cast<int>(type));
 	}
 
@@ -149,6 +185,20 @@ namespace Lunaris {
 	LUNARIS_DECL bool vertexes::empty() const
 	{
 		return points.size() == 0;
+	}
+
+	LUNARIS_DECL transform vertexes::copy_transform_in_use() const
+	{
+		return latest_transform;
+	}
+
+	LUNARIS_DECL void vertexes::translate(const float x, const float y)
+	{
+		std::unique_lock<std::shared_mutex>(safe_mtx);
+		for (auto& it : points) {
+			it.x += x;
+			it.y += y;
+		}
 	}
 
 }

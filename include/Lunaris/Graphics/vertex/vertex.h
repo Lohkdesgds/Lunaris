@@ -3,6 +3,7 @@
 #include <Lunaris/__macro/macros.h>
 #include <Lunaris/Graphics/color.h>
 #include <Lunaris/Graphics/texture.h>
+#include <Lunaris/Graphics/transform.h>
 #include <Lunaris/Utility/mutex.h>
 
 #include <allegro5/allegro.h>
@@ -56,20 +57,22 @@ namespace Lunaris {
 	class vertexes {
 	public:
 		enum class types {
-			POINT_LIST,			// Each vertex is a point, literally.
-			LINE_LIST,			// Pairs of points defining lines. Expects pair of vertex points. Each pair is a line.
-			LINE_STRIP,			// Combo of points drawing a complex line. Every two points create a line.
-			LINE_LOOP,			// Combo of points like LINE_STRIP but the last point also connects to the first one
-			TRIANGLE_LIST,		// Triangle list (each three vertex points make a triangle). Expects multiple of 3.
-			TRIANGLE_STRIP,		// Triangle strip is a "keep going" triangle list. 3 points make one triangle one by one ([0,1,2], [1,2,3], [2,3,4], ...)
-			TRIANGLE_FAN		// A "center" point and triangles around. All triangles share the first vertex point.
+			POINT_LIST		= ALLEGRO_PRIM_POINT_LIST,			// Each vertex is a point, literally.
+			LINE_LIST		= ALLEGRO_PRIM_LINE_LIST,			// Pairs of points defining lines. Expects pair of vertex points. Each pair is a line.
+			LINE_STRIP		= ALLEGRO_PRIM_LINE_STRIP,			// Combo of points drawing a complex line. Every two points create a line.
+			LINE_LOOP		= ALLEGRO_PRIM_LINE_LOOP,			// Combo of points like LINE_STRIP but the last point also connects to the first one
+			TRIANGLE_LIST	= ALLEGRO_PRIM_TRIANGLE_LIST,		// Triangle list (each three vertex points make a triangle). Expects multiple of 3.
+			TRIANGLE_STRIP	= ALLEGRO_PRIM_TRIANGLE_STRIP,		// Triangle strip is a "keep going" triangle list. 3 points make one triangle one by one ([0,1,2], [1,2,3], [2,3,4], ...)
+			TRIANGLE_FAN	= ALLEGRO_PRIM_TRIANGLE_FAN			// A "center" point and triangles around. All triangles share the first vertex point.
 			// if changed later, update valid()
 		};
 	private:
 		std::vector<vertex_point> points;
+		std::vector<vertex_point> npts; // transformed. Valid  
 		hybrid_memory<texture> textur;
 		types type = types::TRIANGLE_LIST;
 		mutable std::shared_mutex safe_mtx;
+		transform latest_transform;
 	public:
 		vertexes();
 
@@ -128,6 +131,24 @@ namespace Lunaris {
 		void csafe(std::function<void(const std::vector<vertex_point>&)>) const;
 
 		/// <summary>
+		/// <para>Generate the vector points like a safe_vector, but translated using latest transform.</para>
+		/// <para>This creates new buffer inside (doubles it) and does refresh when called. Clear buffer with free_transformed() (only if not in use anymore!).</para>
+		/// </summary>
+		void generate_transformed();
+
+		/// <summary>
+		/// <para>Read the vector points like a safe_vector, but translated using latest transform.</para>
+		/// <para>WARN: Be sure you had generate_transformed() once to generate the transformed data BEFORE READING IT (or it'll be empty or old data).</para>
+		/// </summary>
+		/// <param name="{function}">A function that reads a vector of vertex_point.</param>
+		void csafe_transformed(std::function<void(const std::vector<vertex_point>&)>) const;
+
+		/// <summary>
+		/// <para>Did you generate a transformed array via safe_transformed and you want to free that up? This is it.</para>
+		/// </summary>
+		void free_transformed();
+
+		/// <summary>
 		/// <para>Whether there's a texture set or not</para>
 		/// </summary>
 		/// <returns>{bool} True if has texture set.</returns>
@@ -161,6 +182,19 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{bool} True if no vertex is set.</returns>
 		bool empty() const;
+
+		/// <summary>
+		/// <para>Get the latest transform used in draw()</para>
+		/// </summary>
+		/// <returns>{transform} The transform.</returns>
+		transform copy_transform_in_use() const;
+
+		/// <summary>
+		/// <para>Translates all points using this. This is like += everyone.</para>
+		/// </summary>
+		/// <param name="{float}">Move in X.</param>
+		/// <param name="{float}">Move in Y.</param>
+		void translate(const float, const float);
 	};
 
 }

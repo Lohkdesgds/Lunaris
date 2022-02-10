@@ -49,7 +49,7 @@ namespace Lunaris {
 		// refs to smoothing algorithms
 		const float& target_pos_x = get<float>(enum_sprite_float_e::POS_X); // target posx
 		const float& target_pos_y = get<float>(enum_sprite_float_e::POS_Y); // target posy
-		const float& target_rot = get<float>(enum_sprite_float_e::ROTATION); // target posy
+		const float& target_rot = get<float>(enum_sprite_float_e::ROTATION); // target rot
 
 		// this actual vals
 		float& draw_pos_x = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_POS_X);
@@ -57,6 +57,7 @@ namespace Lunaris {
 		float& draw_rot = get<float>(enum_sprite_float_e::RO_DRAW_PROJ_ROTATION);
 
 		const auto updcam = [&](const float& xx, const float& yy, const float& rr) {
+			std::lock_guard<std::recursive_mutex> supersafe(m_assist_inuse.get_internal_mutex());
 			if (draw_is_unaffected) {
 				float vx = 1.0f, vy = 1.0f;
 				m_assist_inuse.build_classic_fixed_proportion_stretched_auto();
@@ -83,24 +84,7 @@ namespace Lunaris {
 			}
 		};
 
-		const auto buildcamlim = [&] {
-			transform _tmp;
-			if (draw_is_unaffected) {
-				float vx = 1.0f, vy = 1.0f;
-				_tmp.build_classic_fixed_proportion_stretched_auto();
-				_tmp.compare_scale_of(m_assist_transform, vx, vy); // ex: 1.777777 / 1.0
-				_tmp.build_classic_fixed_proportion_auto(1.0f, 1.0f);
-				const float cam_off = vx < vy ? vx : vy;
-				_tmp.translate_inverse(-draw_pos_x * vx / cam_off, -draw_pos_y * vy / cam_off);
-				_tmp.rotate_inverse(draw_rot);
-				return _tmp;
-			}
-			return m_assist_transform;
-		};
-
 		updcam(draw_pos_x, draw_pos_y, draw_rot);
-
-		transform checker = buildcamlim();
 
 		// - - - - - - - - Working - - - - - - - - //
 		if (draw_should_draw && // basic rule
@@ -122,7 +106,7 @@ namespace Lunaris {
 
 			draw_pos_x = ((1.0 - perc_run) * draw_pos_x + perc_run * real_posx);
 			draw_pos_y = ((1.0 - perc_run) * draw_pos_y + perc_run * real_posy);
-			draw_rot   = (1.0 - perc_run) * draw_rot   + perc_run * target_rot;
+			draw_rot   =  (1.0 - perc_run) * draw_rot   + perc_run * target_rot;
 
 			if (draw_think_box) { // if think box, calculate think box raw pos
 				updcam(real_posx, real_posy, target_rot);
@@ -202,6 +186,9 @@ namespace Lunaris {
 
 		think_task();
 
+		std::lock_guard<std::recursive_mutex> supersafe(m_assist_inuse.get_internal_mutex());
+		if (!m_assist_inuse.is_transform_coordinates_usable()) throw std::runtime_error("Transformation got invalid state!");
+
 		const float& scale_g = get<float>(enum_sprite_float_e::SCALE_G);
 		const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
 		const float& scale_y = get<float>(enum_sprite_float_e::SCALE_Y);
@@ -215,9 +202,6 @@ namespace Lunaris {
 		float& swy = get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHWEST_Y);
 		float& sey = get<float>(enum_sprite_float_e::RO_THINK_POINT_SOUTHEAST_Y);
 
-		float __rot = get<float>(enum_sprite_float_e::ROTATION);
-
-		transform _temp = m_assist_inuse;
 
 		// top left
 		nwx = - (scale_g * scale_x) * 0.5;
@@ -230,13 +214,17 @@ namespace Lunaris {
 		swy =   (scale_g * scale_y) * 0.5;
 		// bottom right
 		sex =   (scale_g * scale_x) * 0.5;
-		sey =   (scale_g * scale_y) * 0.5;
-		
+		sey =   (scale_g * scale_y) * 0.5;		
 
-		_temp.transform_coords(nwx, nwy);
-		_temp.transform_coords(nex, ney);
-		_temp.transform_coords(swx, swy);
-		_temp.transform_coords(sex, sey);
+		m_assist_inuse.transform_coords(nwx, nwy);
+		m_assist_inuse.transform_coords(nex, ney);
+		m_assist_inuse.transform_coords(swx, swy);
+		m_assist_inuse.transform_coords(sex, sey);
+	}
+
+	LUNARIS_DECL transform sprite::copy_transform_in_use() const
+	{
+		return m_assist_inuse;
 	}
 
 }

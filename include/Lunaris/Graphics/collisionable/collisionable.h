@@ -2,171 +2,303 @@
 
 #include <Lunaris/__macro/macros.h>
 #include <Lunaris/Graphics/sprite.h>
+#include <Lunaris/Graphics/vertex.h>
 #include <Lunaris/Utility/random.h>
+#include <Lunaris/Utility/mutex.h>
 
 #include <functional>
+#include <algorithm>
+#include <optional>
+#include <memory>
+#include <shared_mutex>
+
+#undef max
+#undef min
+
+/*
+NOTES:
+- Factors. Add ENUM specifications
+- Rename Collisionable things to a smaller name lmao
+*/
 
 namespace Lunaris {
 
 	constexpr float default_collision_oversize = 1e-3;
 	constexpr float default_collision_oversize_prop = 1.005f;
 
+	struct supported_fast_point_2d {
+		float px, py;
+	};
+
+	// all, not used yet
+	enum class enum_fast_collisionable_float_e {
+		// READONLY DATA
+		RO_LAST_PX,
+		RO_LAST_PY,
+		RO_DIRECTION_X_REVERT,
+		RO_DIRECTION_Y_REVERT,
+		RO_DIRECTION_X_FINAL,
+		RO_DIRECTION_Y_FINAL,
+
+		// REFERENCE DATA (set by user)
+		CORRECTION_FACTOR,					// [0.0, inf) (default: 1.000001f) Proportion fix for movement. 1.0 means value calculated is applied 1:1. Less means less move fix.
+		MINIMUM_FIX_DELTA,					// [0.0, inf) (default: 0.0003f) Minimum movement value.
+		FIX_DELTA_CENTER_PROP,				// [0.0, 1.0] (default: 0.0000001f) Center delta multiplier
+		ALT_DIRECTION_PROP,					// [0.0, 1.0] (default: 0.1f) Percentage applied to the other axis, like, if code thinks thing should go up/down, 20% of the value will go like left/right
+		PROPORTION_MOVE_ON_COLLISION,		// [0.0, inf) (default: 0.49f) Amount sliced to objects on collision. 0.49f is near 0.5f that means 1/2 for each side.
+
+		_SIZE
+	};
+
+	enum class enum_fast_collisionable_boolean_e {
+		// READONLY DATA
+		RO_LAST_WAS_COLLISION,
+
+		// REFERENCE DATA (set by user)
+		LOCKED,
+
+		_SIZE
+	};
+
+	// sprite only, not used yet
+	enum class enum_fast_collisionable_sprite_float_e {
+		// REFERENCE DATA (set by user)
+		REFLECTIVENESS,						// [0.0, 1.0) 244 & 255 lines @ collisionable_sprite::revert_once() (SPEED MULTIPLIER)
+
+		_SIZE
+	};
+
+
+	const std::initializer_list<multi_pair<float, enum_fast_collisionable_float_e>>			default_fast_collisionable_float_il = {
+		// READONLY DATA
+		{0.0f,			enum_fast_collisionable_float_e::RO_LAST_PX},
+		{0.0f,			enum_fast_collisionable_float_e::RO_LAST_PY},
+		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_X_REVERT},
+		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_Y_REVERT},
+		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL},
+		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL},
+
+		// REFERENCE DATA (set by user)
+		{1.000001f,		enum_fast_collisionable_float_e::CORRECTION_FACTOR},
+		{0.0003f,		enum_fast_collisionable_float_e::MINIMUM_FIX_DELTA},
+		{0.0000001f,	enum_fast_collisionable_float_e::FIX_DELTA_CENTER_PROP},
+		{0.1f,			enum_fast_collisionable_float_e::ALT_DIRECTION_PROP},
+		{0.49f,			enum_fast_collisionable_float_e::PROPORTION_MOVE_ON_COLLISION}
+	};
+
+	const std::initializer_list<multi_pair<bool, enum_fast_collisionable_boolean_e>>		default_fast_collisionable_boolean_il = {
+		// REFERENCE DATA (set by user)
+		{false,			enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION},
+
+		// REFERENCE DATA (set by user)
+		{false,			enum_fast_collisionable_boolean_e::LOCKED}
+	};
+
+	const std::initializer_list<multi_pair<float, enum_fast_collisionable_sprite_float_e>>	default_fast_collisionable_sprite_float_il = {
+		// REFERENCE DATA (set by user)
+		{0.3f,			enum_fast_collisionable_sprite_float_e::REFLECTIVENESS}
+	};
+
+
+
 	/// <summary>
-	/// <para>collisionable_legacy is the old collision system that only works with position and scale.</para>
-	/// <para>This is still here because on a scenario with no rotation this works perfectly.</para>
-	/// <para>It's legacy because I'm working on a way better collision system that works with rotation and any other transformation.</para>
+	/// <para>Classes derived from this will work with the fast collision algorithm.</para>
+	/// <para>- The collision test is based on https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon </para>
+	/// <para>- The revert algorithm was created by me. If collision happens, you should revert_once(), so based on movement it knows where it should go.</para>
 	/// </summary>
-	class collisionable_legacy {
+	class collisionable_base :
+		public fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>,
+		public fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>
+	{
+	protected:
+		static bool line_on_segment(const supported_fast_point_2d&, const supported_fast_point_2d&, const supported_fast_point_2d&);
+		static int line_orientation(const supported_fast_point_2d&, const supported_fast_point_2d&, const supported_fast_point_2d&);
+		static bool line_do_intersect(const supported_fast_point_2d&, const supported_fast_point_2d&, const supported_fast_point_2d&, const supported_fast_point_2d&);
+		static bool polygon_is_point_inside(const supported_fast_point_2d&, const std::vector<supported_fast_point_2d>&);
+
+		std::vector<supported_fast_point_2d> generated_on_think; // commonly based on screen position (for easier "real" collision)
+
+		// Easy get index of vector (always valid, but vec_fit() first is recommended)
+		supported_fast_point_2d& vec_get_at(const size_t);
+		// Prepare generated_on_think to this size (internal resize if needed)
+		void vec_fit(const size_t);
 	public:
-		enum class direction_op { DIR_NONE = 0, DIR_NORTH = 1 << 0, DIR_SOUTH = 1 << 1, DIR_EAST = 1 << 2, DIR_WEST = 1 << 3 };
-	private:
-		enum class direction_internal { NORTH, SOUTH, EAST, WEST };
-
-		sprite& wrap;
-		std::function<void(int, sprite&)> workar;
-		
-		const float &posx, &posy;
-		float dx_max = 0.0;
-		float dy_max = 0.0;
-		unsigned directions_cases[4] = { 0,0,0,0 };
-		bool was_col = false;
-
-		float get_size_x() const;
-		float get_size_y() const;
-	public:
-		collisionable_legacy(sprite&);
+		collisionable_base();
 
 		/// <summary>
-		/// <para>Check and combine collision information with another object.</para>
+		/// <para>This tries to go back a step based on last movement.</para>
 		/// </summary>
-		/// <param name="{collisionable_legacy}">Another collision_legacy object.</param>
-		/// <returns></returns>
-		bool overlap(const collisionable_legacy&);
+		virtual void revert_once() = 0;
 
 		/// <summary>
-		/// <para>Combine overlap information and give a direction_op result combo.</para>
+		/// <para>This does think() (or equivalent) and check movement caused by that.</para>
 		/// </summary>
-		/// <returns>{int} direction_op combo of flags.</returns>
-		int result() const;
-		
-		/// <summary>
-		/// <para>Reset for new collision overlap combo.</para>
-		/// </summary>
-		void reset();
+		virtual void think_once() = 0;
 
 		/// <summary>
-		/// <para>Automatically work as set on set_work.</para>
+		/// <para>Quick way to get all points stored inside. THIS IS NOT THREAD SAFE!</para>
+		/// <para>This may change size and data while thinking/reverting/colliding</para>
 		/// </summary>
-		void work();
+		/// <returns>{vector} Reference to internal vector of current points (NOT THREAD SAFE).</returns>
+		const std::vector<supported_fast_point_2d>& read_points() const;
 
 		/// <summary>
-		/// <para>Set a function to easily work() with the information in the end.</para>
-		/// <para>The function arguments are the referenced sprite and result().</para>
+		/// <para>Automatically check collision, and if there's one, calculate expected behaviour and apply.</para>
 		/// </summary>
-		/// <param name="{function}">A function to handle collision information after the overlap() easily.</param>
-		void set_work(const std::function<void(int, sprite&)>);
+		/// <param name="{collisionable_base&amp;}">Reference to another fast collisionable one.</param>
+		void collide_auto(collisionable_base&);
 
 		/// <summary>
-		/// <para>After all overlap(), this can tell you how many cases of each direction happened.</para>
+		/// <para>Just check for collision with that. No smart stuff. Won't save in memory.</para>
 		/// </summary>
-		/// <param name="{direction_op}">The direction to check.</param>
-		/// <returns>{unsigned} Number of cases.</returns>
-		unsigned read_cases(const direction_op) const;
+		/// <param name="{collisionable_base&amp;}">Reference to another fast collisionable one.</param>
+		/// <returns>{bool} True if collided.</returns>
+		bool collide_test(const collisionable_base&) const;
+
+		/// <summary>
+		/// <para>Just check for collision with a point. Won't save in memory.</para>
+		/// </summary>
+		/// <param name="{float}">Point X.</param>
+		/// <param name="{float}">Point Y.</param>
+		/// <returns>{bool} True if collide.</returns>
+		bool collide_test(const float&, const float&) const;
+
+		/// <summary>
+		/// <para>Apply data acquired during collide_auto (if not locked).</para>
+		/// </summary>
+		void apply();
+
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::size;
 	};
 
 	/// <summary>
-	/// <para>collisionable is the way to check collision between sprites.</para>
-	/// <para>This is not perfect yet, but the detection is very sharp.</para>
+	/// <para>Implementation of collisionable_base for sprites.</para>
+	/// <para>This references a sprite and handle its collision.</para>
 	/// </summary>
-	class collisionable {
+	class collisionable_sprite : 
+		public collisionable_base,
+		public fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>
+	{
+		sprite& ref;
 	public:
-		enum class direction_index { NONE = -1, NORTH, SOUTH, EAST, WEST, _MAX };
-		enum class direction_combo { DIR_NONE = 0, DIR_NORTH = 1 << 0, DIR_SOUTH = 1 << 1, DIR_EAST = 1 << 2, DIR_WEST = 1 << 3 };
-		struct result {
-			float moment_dir = 0.0f;
-			int dir_to = 0;
-
-			/// <summary>
-			/// <para>Test if dir_to has a direction_combo set.</para>
-			/// </summary>
-			/// <param name="{direction_combo}">A direction.</param>
-			/// <returns>{bool} True if flag is set.</returns>
-			bool is_dir(const direction_combo&);
-		};
-		struct each_result {
-			float moment_dir = 0.0f;
-			direction_index one_direction = direction_index::NONE;
-		};
-	private:
-		std::vector<result> cases;
-
-		sprite& wrap;
-		std::function<void(result, sprite&)> workar;
-
-		float last_self_area = 0.0f;
-		bool work_all = true;
-		const float &nwx, &nwy, &nex, &ney, &swx, &swy, &sex, &sey, &cx, &cy, &speedx, &speedy, &rot;
-
-		each_result each_pt_col(const float&, const float&, const collisionable&) const;
-		result combine_to(const collisionable&);
-
-		direction_index fix_index_rot(const direction_index) const; // expects direction_index
-		direction_index fix_index_inverse(const direction_index) const;
-		int fix_op_rot_each(const direction_combo); // expects direction_combo unique
-		int fix_op_rot(const int); // expects direction_combo combo
-		int fix_op_invert(const int); // just north <-> south etc
-	public:
-		collisionable(sprite&);
+		collisionable_sprite(sprite&);
 
 		/// <summary>
-		/// <para>Test collision with another collision and push case into the list for further work().</para>
+		/// <para>This tries to go back a step based on last movement.</para>
+		/// <para>As sprite, this also divides speed by 4 (for less bumpyness).</para>
 		/// </summary>
-		/// <param name="{collisionable}">Another collisionable.</param>
-		void overlap(collisionable&);
+		void revert_once();
 
 		/// <summary>
-		/// <para>Reset list of collided objects.</para>
+		/// <para>This does think() (or equivalent) and check movement caused by that.</para>
+		/// <para>As sprite, it think() and then calculate movement of the object.</para>
 		/// </summary>
-		void reset();
+		void think_once(); // no collision, continue its work (think())
 
-		/// <summary>
-		/// <para>Run the work function with latest information.</para>
-		/// </summary>
-		void work();
-
-		/// <summary>
-		/// <para>Set the working function to handle the collision information.</para>
-		/// </summary>
-		/// <param name="{function}">The function that does things with collision information.</param>
-		void set_work(const std::function<void(result, sprite&)>);
-
-		/// <summary>
-		/// <para>This can be used for a quick point collision check.</para>
-		/// </summary>
-		/// <param name="{float}">Position X.</param>
-		/// <param name="{float}">Position Y.</param>
-		/// <returns></returns>
-		each_result quick_one_point_overlap(const float, const float);
-		
-		/// <summary>
-		/// <para>This can be used for a quick collision check.</para>
-		/// </summary>
-		/// <param name="{collisionable}">Another collisionable object.</param>
-		/// <returns>{result} The result of this collision.</returns>
-		result quick_one_sprite_overlap(const collisionable&);
-
-		/// <summary>
-		/// <para>Should it work all cases or only one max (if more than one collision case, get random one).</para>
-		/// </summary>
-		/// <param name="{bool}">Process every collision?</param>
-		void set_work_works_all_cases(const bool);
+		using collisionable_base::set;
+		using collisionable_base::get;
+		using collisionable_base::index;
+		using collisionable_base::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::size;
 	};
 
 	/// <summary>
-	/// <para>Work on many collisionable at once.</para>
+	/// <para>Implementation of collisionable_base for vertexes.</para>
+	/// <para>This references a vertexes and handle its collision.</para>
 	/// </summary>
-	/// <param name="{collisionable*}">Begin.</param>
-	/// <param name="{collisionable*}">End.</param>
-	void work_all_auto(collisionable*, const collisionable*);
+	class collisionable_vertexes : public collisionable_base {
+		vertexes& ref;
+
+		float get_center_x() const;
+		float get_center_y() const;
+	public:
+		collisionable_vertexes(vertexes&);
+
+		/// <summary>
+		/// <para>This tries to go back a step based on last movement.</para>
+		/// </summary>
+		void revert_once();
+
+		/// <summary>
+		/// <para>This does think() (or equivalent) and check movement caused by that.</para>
+		/// <para>As vertexes, this only calculates possible movement of object compared to last time you did think_once().</para>
+		/// </summary>
+		void think_once(); // no collision, continue its work (think())
+
+		using collisionable_base::set;
+		using collisionable_base::get;
+		using collisionable_base::index;
+		using collisionable_base::size;
+	};
+
+	/// <summary>
+	/// <para>This is an easy-to-use class that integrates implemented variations of collisionable_base.</para>
+	/// <para>The objects must follow the same rules to work properly.</para>
+	/// </summary>
+	class collisionable_manager : public NonCopyable {
+	protected:
+		std::vector<std::unique_ptr<collisionable_base>> objs;
+		mutable std::shared_mutex objs_safe;
+	public:
+		/// <summary>
+		/// <para>Add a reference to a sprite (automatically builds collision object inside referencing this).</para>
+		/// </summary>
+		/// <param name="{sprite&amp;}">Sprite to test collision.</param>
+		/// <param name="{bool}">Lock this sprite movement (from this)?</param>
+		void push_back(sprite&, const bool = false);
+
+		/// <summary>
+		/// <para>Add a reference to a vertexes (automatically builds collision object inside referencing this).</para>
+		/// </summary>
+		/// <param name="{vertexes&amp;}">Vertexes to test collision.</param>
+		/// <param name="{bool}">Lock this sprite movement (from this)?</param>
+		void push_back(vertexes&, const bool = false);
+
+		/// <summary>
+		/// <para>The amount of collisionables in here.</para>
+		/// </summary>
+		/// <returns>{size_t} Vector size.</returns>
+		size_t size() const;
+
+		/// <summary>
+		/// <para>It is considered valid if there's at least 2 collisionables set.</para>
+		/// </summary>
+		/// <returns>{bool} True if 2 or more set.</returns>
+		bool valid() const;
+
+		/// <summary>
+		/// <para>It is considered empty if there's no collisionable set.</para>
+		/// </summary>
+		/// <returns>{bool} True if no collisionables pushed yet.</returns>
+		bool empty() const;
+
+		/// <summary>
+		/// <para>Access internal vector safely.</para>
+		/// </summary>
+		/// <param name="{function}">A function that handles a vector of unique ptr of collisionables.</param>
+		void safe(std::function<void(std::vector<std::unique_ptr<collisionable_base>>&)>);
+
+		/// <summary>
+		/// <para>Access internal vector safely.</para>
+		/// </summary>
+		/// <param name="{function}">A function that handles a vector of unique ptr of collisionables.</param>
+		void csafe(std::function<void(const std::vector<std::unique_ptr<collisionable_base>>&)>) const;
+
+		/// <summary>
+		/// <para>Think, test and apply all collisions once.</para>
+		/// </summary>
+		void think_all();
+	};
+
 
 }
