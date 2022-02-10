@@ -1606,14 +1606,10 @@ int graphics_test()
 		//}
 	}
 
-	fast_collisionable_manager colmng;
+	collisionable_manager colmng;
 	colmng.push_back(blk_mouse);
 	colmng.push_back(blk_fixed);
 	colmng.push_back(polygony);
-
-	printf_s("blk_mouse: %p\n", (void*)colmng.get()[0].get());
-	printf_s("blk_fixed: %p\n", (void*)colmng.get()[1].get());
-	printf_s("polygony:  %p\n", (void*)colmng.get()[2].get());
 
 	size_t tps = 0, tps_c = 0;
 	double tim_at = 0;

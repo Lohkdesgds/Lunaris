@@ -17,25 +17,25 @@ namespace Lunaris {
 
 	enum class enum_sprite_float_e {
 		// READONLY DATA
-		RO_DRAW_PROJ_POS_X,				// smooth POS_X (real in-screen value)									-- IN_USE / READY
-		RO_DRAW_PROJ_POS_Y,				// smooth POS_Y (real in-screen value)									-- IN_USE / READY
-		RO_DRAW_PROJ_ROTATION,			// smooth ROTATION (real in-screen value) (in rad)						-- IN_USE / READY
-		RO_THINK_SPEED_X,				// accel makes speed. Speed is smooth.									-- IN_USE
-		RO_THINK_SPEED_Y,				// accel makes speed. Speed is smooth.									-- IN_USE / READY
-		RO_THINK_SPEED_ROTATION,		// accel makes speed. Speed is smooth.
-		RO_THINK_POINT_NORTHWEST_X,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_NORTHWEST_Y,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_NORTHEAST_X,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_NORTHEAST_Y,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_SOUTHWEST_X,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_SOUTHWEST_Y,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_SOUTHEAST_X,		// Automatically calculates pixel-like positions for further collision
-		RO_THINK_POINT_SOUTHEAST_Y,		// Automatically calculates pixel-like positions for further collision
+		RO_DRAW_PROJ_POS_X,				    // smooth POS_X (real in-screen value)									-- IN_USE / READY
+		RO_DRAW_PROJ_POS_Y,				    // smooth POS_Y (real in-screen value)									-- IN_USE / READY
+		RO_DRAW_PROJ_ROTATION,			    // smooth ROTATION (real in-screen value) (in rad)						-- IN_USE / READY
+		RO_THINK_SPEED_X,				    // accel makes speed. Speed is smooth.									-- IN_USE
+		RO_THINK_SPEED_Y,				    // accel makes speed. Speed is smooth.									-- IN_USE / READY
+		RO_THINK_SPEED_ROTATION,		    // accel makes speed. Speed is smooth.
+		RO_THINK_POINT_NORTHWEST_X,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_NORTHWEST_Y,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_NORTHEAST_X,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_NORTHEAST_Y,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_SOUTHWEST_X,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_SOUTHWEST_Y,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_SOUTHEAST_X,		    // Automatically calculates pixel-like positions for further collision
+		RO_THINK_POINT_SOUTHEAST_Y,		    // Automatically calculates pixel-like positions for further collision
 
 		// REFERENCE DATA (set by user)
 
 		// * Specific for some "tasks"
-		//DRAW_ELASTIC_POSITION_PROP,			// (0.0, 1.0] = How smooth position update should be. Near 0 means smoother (also means very out of date because of that)
+		//DRAW_ELASTIC_POSITION_PROP,		// (0.0, 1.0] = How smooth position update should be. Near 0 means smoother (also means very out of date because of that)
 		DRAW_RELATIVE_CENTER_X,				// generally [-1.0, 1.0] = When rotating, where should the anchor be? (relative to sprite size)
 		DRAW_RELATIVE_CENTER_Y,				// generally [-1.0, 1.0] = When rotating, where should the anchor be? (relative to sprite size)
 		DRAW_MOVEMENT_RESPONSIVENESS,		// (0.0, inf) = how fast should it "update" the screen pos compared to thinking pos? 1.0 is "smooth", ~1 tick frame behind (fairly smooth). Default is 1.25. Bigger than 1 is more accurate, but less smooth. Do not use 0.0 or less.
@@ -52,14 +52,15 @@ namespace Lunaris {
 		SCALE_X,							// Scale (horizontal)																	-- IN_USE
 		SCALE_Y,							// Scale (vertical)																		-- IN_USE
 		OUT_OF_SIGHT_POS,					// [0.0, inf) = What coords (any direction) should be considered "too far" so it should not attempt to draw itself? Default: 2.0 (distant from screen)
-		_SIZE								// For easy sizing
+
+		_SIZE
 	};
 
 	enum class enum_sprite_double_e {
 		// READONLY DATA
-		RO_THINK_LAST_THINK,			// last think time (double, in seconds)									-- IN_USE / READY
-		RO_THINK_DELTA_THINKS,			// (last think time) - (one before that)								-- IN_USE / READY
-		RO_DRAW_LAST_DRAW,				// last draw time (double, in seconds)									-- IN_USE
+		RO_THINK_LAST_THINK,				// last think time (double, in seconds)									-- IN_USE / READY
+		RO_THINK_DELTA_THINKS,				// (last think time) - (one before that)								-- IN_USE / READY
+		RO_DRAW_LAST_DRAW,					// last draw time (double, in seconds)									-- IN_USE
 
 		_SIZE
 	};
