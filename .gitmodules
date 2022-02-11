@@ -4,3 +4,6 @@
 [submodule "include/Lunaris/Utility/socket"]
 	path = include/Lunaris/Utility/socket
 	url = https://github.com/Lohkdesgds/Lunaris-Socket
+[submodule "include/Lunaris/Utility/process"]
+	path = include/Lunaris/Utility/process
+	url = https://www.github.com/Lohkdesgds/Lunaris-Process

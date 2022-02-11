@@ -843,27 +843,35 @@ int utility_test(const std::string& self_path)
 	{
 		cout << "Testing a process... (self with FIRST_ARGUMENT..., it should show raw test here in dark green with =)";
 
-		process proc;
+		process_async proc;
 		bool had_any_output = false;
 
-		proc.hook_stdout([&](const std::string& out, const process::message_type& typ) {
-			switch (typ) {
-			case process::message_type::START:
-				cout << console::color::DARK_GREEN << "[BEGIN] " << out;
-			break;
-			case process::message_type::APP_OUTPUT:
+		TESTLU(proc.reset(self_path, { "FIRST_ARGUMENT", "SECOND_ARGUMENT", "THIRD_ARGUMENT", "\"Forth argument, but within these \\\"\"" },
+			[&](process_sync& pr, const std::string& out) {
 				cout << console::color::DARK_GREEN << "[RUNNG] " << out;
-			break;
-			case process::message_type::ENDED:
-				cout << console::color::DARK_GREEN << "[ENDED] " << out;
-			break;
-			}
-			had_any_output = true;
-		});
-		
-		TESTLU(proc.launch(self_path + " FIRST_ARGUMENT SECOND_ARGUMENT THIRD_ARGUMENT \"Forth argument, but within these \\\"\""), "Could not launch process in a reasonable time!");
+				had_any_output = true;
+			}), "Could not launch process in a reasonable time!");
 
-		while (proc.running()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		while (proc.is_running()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		//proc.hook_stdout([&](const std::string& out, const process::message_type& typ) {
+		//	switch (typ) {
+		//	case process::message_type::START:
+		//		cout << console::color::DARK_GREEN << "[BEGIN] " << out;
+		//	break;
+		//	case process::message_type::APP_OUTPUT:
+		//		cout << console::color::DARK_GREEN << "[RUNNG] " << out;
+		//	break;
+		//	case process::message_type::ENDED:
+		//		cout << console::color::DARK_GREEN << "[ENDED] " << out;
+		//	break;
+		//	}
+		//	had_any_output = true;
+		//});
+		//
+		//TESTLU(proc.launch(self_path + " FIRST_ARGUMENT SECOND_ARGUMENT THIRD_ARGUMENT \"Forth argument, but within these \\\"\""), "Could not launch process in a reasonable time!");
+		//
+		//while (proc.running()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 		cout << "It seems that the task has ended.";
 
