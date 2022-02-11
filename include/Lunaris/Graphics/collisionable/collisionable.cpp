@@ -50,9 +50,9 @@ namespace Lunaris {
 
 		float maxx = 0.0f;
 		for (const auto& it : polygon) {
-			if (it.px > maxx) maxx = it.px + 1.0f;
+			if (it.px > maxx) maxx = it.px + 10.0f;
 		}
-		if (p.px > maxx) maxx = p.px + 1.0f;
+		if (p.px > maxx) maxx = p.px + 10.0f;
 
 		// Create a point for line segment from p to infinite
 		supported_fast_point_2d extreme = { maxx, p.py };
@@ -96,8 +96,8 @@ namespace Lunaris {
 	}
 
 	LUNARIS_DECL collisionable_base::collisionable_base() :
-		fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>(default_fast_collisionable_float_il),
-		fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>(default_fast_collisionable_boolean_il)
+		fixed_multi_map_work<static_cast<size_t>(enum_collisionable_float_e::_SIZE), float, enum_collisionable_float_e>(default_collisionable_float_il),
+		fixed_multi_map_work<static_cast<size_t>(enum_collisionable_boolean_e::_SIZE), bool, enum_collisionable_boolean_e>(default_collisionable_boolean_il)
 	{
 	}
 
@@ -106,20 +106,10 @@ namespace Lunaris {
 		return generated_on_think;
 	}
 
-	//LUNARIS_DECL float collisionable_base::get_dx() const
-	//{
-	//	return direction_x_revert;
-	//}
-	//
-	//LUNARIS_DECL float collisionable_base::get_dy() const
-	//{
-	//	return direction_y_revert;
-	//}
-
 	LUNARIS_DECL void collisionable_base::collide_auto(collisionable_base& oth)
 	{
-		bool& last_was_collision = get<bool>(enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
-		bool& oth_last_was_collision = oth.get<bool>(enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
+		bool& last_was_collision = get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
+		bool& oth_last_was_collision = oth.get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
 
 		if (last_was_collision && oth_last_was_collision) return; // already col
 
@@ -169,25 +159,49 @@ namespace Lunaris {
 			if (center_ot_limit_max[1] < it.py) center_ot_limit_max[1] = it.py;
 		}
 
-		const float& prop_move_col = get<float>(enum_fast_collisionable_float_e::PROPORTION_MOVE_ON_COLLISION);
-		const float& alt_direction_prop = get<float>(enum_fast_collisionable_float_e::ALT_DIRECTION_PROP);
-		const float& min_fix_delta = get<float>(enum_fast_collisionable_float_e::MINIMUM_FIX_DELTA);
-		const float& fix_delta_center_prop = get<float>(enum_fast_collisionable_float_e::FIX_DELTA_CENTER_PROP);
+		const float& prop_move_col = get<float>(enum_collisionable_float_e::PROPORTION_MOVE_ON_COLLISION);
+		const float& alt_direction_prop = get<float>(enum_collisionable_float_e::ALT_DIRECTION_PROP);
+		const float& min_fix_delta = get<float>(enum_collisionable_float_e::MINIMUM_FIX_DELTA);
+		const float& fix_delta_center_prop = get<float>(enum_collisionable_float_e::FIX_DELTA_CENTER_PROP);
 
+		const float& o_prop_move_col = oth.get<float>(enum_collisionable_float_e::PROPORTION_MOVE_ON_COLLISION);
+		const float& o_alt_direction_prop = oth.get<float>(enum_collisionable_float_e::ALT_DIRECTION_PROP);
+		const float& o_min_fix_delta = oth.get<float>(enum_collisionable_float_e::MINIMUM_FIX_DELTA);
+		const float& o_fix_delta_center_prop = oth.get<float>(enum_collisionable_float_e::FIX_DELTA_CENTER_PROP);
 
-		const float ddx = center_me[0] - center_ot[0];
-		const float ddy = center_me[1] - center_ot[1];
+		const float raw_dd[2] = {
+			center_me[0] - center_ot[0],
+			center_me[1] - center_ot[1]
+		};
 
-		const float directx = ddx * 1.0f / (0.000000000001f + (fabsf(center_me_limit_max[0] - center_me_limit_min[0]) + fabsf(center_ot_limit_max[0] - center_ot_limit_min[0])));
-		const float directy = ddy * 1.0f / (0.000000000001f + (fabsf(center_me_limit_max[1] - center_me_limit_min[1]) + fabsf(center_ot_limit_max[1] - center_ot_limit_min[1])));
+		const float sumvec[2] = {
+			(fabsf(center_me_limit_max[0] - center_me_limit_min[0]) + fabsf(center_ot_limit_max[0] - center_ot_limit_min[0])),
+			(fabsf(center_me_limit_max[1] - center_me_limit_min[1]) + fabsf(center_ot_limit_max[1] - center_ot_limit_min[1]))
+		};
 
-		const float somemovex = (fabsf(directx) < fabsf(directy) ? alt_direction_prop : 1.0f) * (fabsf(fix_delta_center_prop * ddx) < min_fix_delta ? ((ddx >= 0.0f ? 1.0f : -1.0f) * min_fix_delta) : (fix_delta_center_prop * ddx));
-		const float somemovey = (fabsf(directx) > fabsf(directy) ? alt_direction_prop : 1.0f) * (fabsf(fix_delta_center_prop * ddy) < min_fix_delta ? ((ddy >= 0.0f ? 1.0f : -1.0f) * min_fix_delta) : (fix_delta_center_prop * ddy));		
+		const float d_rs[2] = {
+			(raw_dd[0] >= 0.0f ? 1.0f : -1.0f) * fabsf(1.0f - (fabsf(raw_dd[0]) * 2.0f / sumvec[0])) * sumvec[0],
+			(raw_dd[1] >= 0.0f ? 1.0f : -1.0f) * fabsf(1.0f - (fabsf(raw_dd[1]) * 2.0f / sumvec[1])) * sumvec[1]
+		};
 
-		get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL) += (somemovex + prop_move_col * get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_REVERT));
-		get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL) += (somemovey + prop_move_col * get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_REVERT));
-		oth.get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL) -= (somemovex + prop_move_col * get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_REVERT));
-		oth.get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL) -= (somemovey + prop_move_col * get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_REVERT));
+		const float fix_d[2] = {
+			(raw_dd[0] > 0.0f ? 1.0f : -1.0f),
+			(raw_dd[1] > 0.0f ? 1.0f : -1.0f)
+		};
+
+		const float mres[2] = {
+			(fabsf(raw_dd[0]) < fabsf(raw_dd[1]) ? alt_direction_prop : 1.0f) * fix_d[0] * fabsf((fabsf(d_rs[0] * fix_delta_center_prop) < min_fix_delta ? min_fix_delta : d_rs[0] * fix_delta_center_prop)),
+			(fabsf(raw_dd[0]) > fabsf(raw_dd[1]) ? alt_direction_prop : 1.0f) * fix_d[1] * fabsf((fabsf(d_rs[1] * fix_delta_center_prop) < min_fix_delta ? min_fix_delta : d_rs[1] * fix_delta_center_prop))
+		};
+		const float omres[2] = {
+			(fabsf(raw_dd[0]) < fabsf(raw_dd[1]) ? o_alt_direction_prop : 1.0f) * fix_d[0] * fabsf((fabsf(d_rs[0] * o_fix_delta_center_prop) < o_min_fix_delta ? o_min_fix_delta : d_rs[0] * o_fix_delta_center_prop)),
+			(fabsf(raw_dd[0]) > fabsf(raw_dd[1]) ? o_alt_direction_prop : 1.0f) * fix_d[1] * fabsf((fabsf(d_rs[1] * o_fix_delta_center_prop) < o_min_fix_delta ? o_min_fix_delta : d_rs[1] * o_fix_delta_center_prop))
+		};
+	
+		get<float>(enum_collisionable_float_e::RO_DIRECTION_X_FINAL)		+= mres[0]  + prop_move_col   * fix_d[0] * fabsf(get<float>(enum_collisionable_float_e::RO_DIRECTION_X_REVERT));
+		get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_FINAL)		+= mres[1]  + prop_move_col   * fix_d[1] * fabsf(get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_REVERT));
+		oth.get<float>(enum_collisionable_float_e::RO_DIRECTION_X_FINAL)	-= omres[0] + o_prop_move_col * fix_d[0] * fabsf(get<float>(enum_collisionable_float_e::RO_DIRECTION_X_REVERT));
+		oth.get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_FINAL)	-= omres[1] + o_prop_move_col * fix_d[1] * fabsf(get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_REVERT));
 	}
 
 	LUNARIS_DECL bool collisionable_base::collide_test(const collisionable_base& oth) const
@@ -210,13 +224,26 @@ namespace Lunaris {
 		return polygon_is_point_inside({ x, y }, me_pts);
 	}
 
+	LUNARIS_DECL void collisionable_base::set_run_on_collision(std::function<void(collisionable_base*)> f)
+	{
+		on_collision_do = f;
+	}
+
+	LUNARIS_DECL void collisionable_base::unset_run_on_collision()
+	{
+		on_collision_do = {};
+	}
+
 	LUNARIS_DECL void collisionable_base::apply()
 	{
-		revert_once();
+		if (get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION)) {
+			revert_once();
+			if (on_collision_do) on_collision_do(this);
+		}
 	}
 
 	LUNARIS_DECL collisionable_sprite::collisionable_sprite(sprite& s) : 
-		fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>(default_fast_collisionable_sprite_float_il),
+		fixed_multi_map_work<static_cast<size_t>(enum_collisionable_sprite_float_e::_SIZE), float, enum_collisionable_sprite_float_e>(default_collisionable_sprite_float_il),
 		collisionable_base(),
 		ref(s)
 	{
@@ -225,18 +252,18 @@ namespace Lunaris {
 
 	LUNARIS_DECL void collisionable_sprite::revert_once()
 	{
-		const bool& last_was_collision = get<bool>(enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
+		const bool& last_was_collision = get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
 
 		if (last_was_collision) {
-			const float& direction_x_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL);
-			const float& direction_y_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL);
-			const float& reflectiveness = get<float>(enum_fast_collisionable_sprite_float_e::REFLECTIVENESS);
+			const float& direction_x_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_X_FINAL);
+			const float& direction_y_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_FINAL);
+			const float& reflectiveness = get<float>(enum_collisionable_sprite_float_e::REFLECTIVENESS);
 
 			ref.set<float>(enum_sprite_float_e::POS_X, ref.get<float>(enum_sprite_float_e::POS_X) + direction_x_final * 1.000001f);
 			ref.set<float>(enum_sprite_float_e::POS_Y, ref.get<float>(enum_sprite_float_e::POS_Y) + direction_y_final * 1.000001f);
 
-			ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, (direction_x_final >= 1.0f ? 1.0f : -1.0f) * fabsf(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_X) * reflectiveness));
-			ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, (direction_y_final >= 1.0f ? 1.0f : -1.0f) * fabsf(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y) * reflectiveness));
+			ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_X, (direction_x_final >= 0.0f ? 1.0f : -1.0f) * fabsf(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_X) * reflectiveness));
+			ref.set<float>(enum_sprite_float_e::RO_THINK_SPEED_Y, (direction_y_final >= 0.0f ? 1.0f : -1.0f) * fabsf(ref.get<float>(enum_sprite_float_e::RO_THINK_SPEED_Y) * reflectiveness));
 		}
 	}
 
@@ -246,26 +273,29 @@ namespace Lunaris {
 
 		const float entcenter[2] = { ref.get<float>(enum_sprite_float_e::POS_X), ref.get<float>(enum_sprite_float_e::POS_Y) };
 
-		bool& last_was_collision = get<bool>(enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
-		float& direction_x_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL);
-		float& direction_y_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL);
-		float& direction_x_revert = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_REVERT);
-		float& direction_y_revert = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_REVERT);
-		float& last_px = get<float>(enum_fast_collisionable_float_e::RO_LAST_PX);
-		float& last_py = get<float>(enum_fast_collisionable_float_e::RO_LAST_PY);
+		bool& last_was_collision = get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
+		float& direction_x_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_X_FINAL);
+		float& direction_y_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_FINAL);
+		float& direction_x_revert = get<float>(enum_collisionable_float_e::RO_DIRECTION_X_REVERT);
+		float& direction_y_revert = get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_REVERT);
+		float& last_px = get<float>(enum_collisionable_float_e::RO_LAST_PX);
+		float& last_py = get<float>(enum_collisionable_float_e::RO_LAST_PY);
 
 
 		if (!last_was_collision) {
 			direction_x_revert = last_px - entcenter[0];
 			direction_y_revert = last_py - entcenter[1];
 		}
-		else last_was_collision = false;
+		else {
+			if (const float _t = last_px - entcenter[0]; fabsf(_t) > fabsf(direction_x_revert) && (_t * direction_x_revert > 0.0f)) direction_x_revert = _t; // if bigger and same dir (same signal, mult > 0)
+			if (const float _t = last_py - entcenter[1]; fabsf(_t) > fabsf(direction_y_revert) && (_t * direction_y_revert > 0.0f)) direction_y_revert = _t; // if bigger and same dir (same signal, mult > 0)
+
+			last_was_collision = false;
+		}
 
 		direction_x_final = direction_y_final = 0.0f;
 		last_px = entcenter[0];
 		last_py = entcenter[1];
-		
-		//printf_s("UPD %p [%.4f,%.4f]\n", (void*)this, direction_x_revert, direction_y_revert);
 
 		vec_get_at(0).px = ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_X);
 		vec_get_at(0).py = ref.get<float>(enum_sprite_float_e::RO_THINK_POINT_NORTHWEST_Y);
@@ -305,11 +335,11 @@ namespace Lunaris {
 
 	LUNARIS_DECL void collisionable_vertexes::revert_once()
 	{
-		const bool& last_was_collision = get<bool>(enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
+		const bool& last_was_collision = get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
 
 		if (last_was_collision) {
-			const float& direction_x_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL);
-			const float& direction_y_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL);
+			const float& direction_x_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_X_FINAL);
+			const float& direction_y_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_FINAL);
 
 			ref.translate(direction_x_final * 1.000001f, direction_y_final * 1.000001f);
 		}
@@ -319,13 +349,13 @@ namespace Lunaris {
 	{
 		const float entcenter[2] = { get_center_x(), get_center_y() };
 
-		bool& last_was_collision = get<bool>(enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
-		float& direction_x_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL);
-		float& direction_y_final = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL);
-		float& direction_x_revert = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_X_REVERT);
-		float& direction_y_revert = get<float>(enum_fast_collisionable_float_e::RO_DIRECTION_Y_REVERT);
-		float& last_px = get<float>(enum_fast_collisionable_float_e::RO_LAST_PX);
-		float& last_py = get<float>(enum_fast_collisionable_float_e::RO_LAST_PY);
+		bool& last_was_collision = get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION);
+		float& direction_x_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_X_FINAL);
+		float& direction_y_final = get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_FINAL);
+		float& direction_x_revert = get<float>(enum_collisionable_float_e::RO_DIRECTION_X_REVERT);
+		float& direction_y_revert = get<float>(enum_collisionable_float_e::RO_DIRECTION_Y_REVERT);
+		float& last_px = get<float>(enum_collisionable_float_e::RO_LAST_PX);
+		float& last_py = get<float>(enum_collisionable_float_e::RO_LAST_PY);
 
 		ref.generate_transformed();
 		vec_fit(ref.size());
@@ -335,7 +365,12 @@ namespace Lunaris {
 			direction_x_revert = last_px - entcenter[0];
 			direction_y_revert = last_py - entcenter[1];
 		}
-		else last_was_collision = false;
+		else {
+			if (const float _t = last_px - entcenter[0]; fabsf(_t) > fabsf(direction_x_revert) && (_t * direction_x_revert > 0.0f)) direction_x_revert = _t; // if bigger and same dir (same signal, mult > 0)
+			if (const float _t = last_py - entcenter[1]; fabsf(_t) > fabsf(direction_y_revert) && (_t * direction_y_revert > 0.0f)) direction_y_revert = _t; // if bigger and same dir (same signal, mult > 0)
+
+			last_was_collision = false;
+		}
 
 		direction_x_final = direction_y_final = 0.0f;
 		last_px = entcenter[0];
@@ -344,15 +379,27 @@ namespace Lunaris {
 
 	LUNARIS_DECL void collisionable_manager::push_back(sprite& s, const bool lckd)
 	{
-		auto ptr = std::unique_ptr<collisionable_base>(new collisionable_sprite(s));
-		ptr->set<bool>(enum_fast_collisionable_boolean_e::LOCKED, lckd);
-		objs.push_back(std::move(ptr));
+		push_back(s, {}, lckd);
 	}
 
 	LUNARIS_DECL void collisionable_manager::push_back(vertexes& s, const bool lckd)
 	{
+		push_back(s, {}, lckd);
+	}
+
+	LUNARIS_DECL void collisionable_manager::push_back(sprite& s, std::function<void(collisionable_sprite*)> f, const bool lckd)
+	{
+		auto ptr = std::unique_ptr<collisionable_base>(new collisionable_sprite(s));
+		if (f) f((collisionable_sprite*)ptr.get());
+		ptr->set<bool>(enum_collisionable_boolean_e::LOCKED, lckd);
+		objs.push_back(std::move(ptr));
+	}
+
+	LUNARIS_DECL void collisionable_manager::push_back(vertexes& s, std::function<void(collisionable_vertexes*)> f, const bool lckd)
+	{
 		auto ptr = std::unique_ptr<collisionable_base>(new collisionable_vertexes(s));
-		ptr->set<bool>(enum_fast_collisionable_boolean_e::LOCKED, lckd);
+		if (f) f((collisionable_vertexes*)ptr.get());
+		ptr->set<bool>(enum_collisionable_boolean_e::LOCKED, lckd);
 		objs.push_back(std::move(ptr));
 	}
 

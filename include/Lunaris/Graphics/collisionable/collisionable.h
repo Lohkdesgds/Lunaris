@@ -23,80 +23,77 @@ NOTES:
 
 namespace Lunaris {
 
-	constexpr float default_collision_oversize = 1e-3;
-	constexpr float default_collision_oversize_prop = 1.005f;
-
 	struct supported_fast_point_2d {
 		float px, py;
 	};
 
 	// all, not used yet
-	enum class enum_fast_collisionable_float_e {
+	enum class enum_collisionable_float_e {
 		// READONLY DATA
-		RO_LAST_PX,
-		RO_LAST_PY,
-		RO_DIRECTION_X_REVERT,
-		RO_DIRECTION_Y_REVERT,
-		RO_DIRECTION_X_FINAL,
-		RO_DIRECTION_Y_FINAL,
+		RO_LAST_PX,							// Last position in X saved in memory for further collision testing
+		RO_LAST_PY,							// Last position in Y saved in memory for further collision testing
+		RO_DIRECTION_X_REVERT,				// Last calculated revert movement based on last position
+		RO_DIRECTION_Y_REVERT,				// Last calculated revert movement based on last position
+		RO_DIRECTION_X_FINAL,				// Final value calculated to apply on itself when there's collision
+		RO_DIRECTION_Y_FINAL,				// Final value calculated to apply on itself when there's collision
 
 		// REFERENCE DATA (set by user)
 		CORRECTION_FACTOR,					// [0.0, inf) (default: 1.000001f) Proportion fix for movement. 1.0 means value calculated is applied 1:1. Less means less move fix.
 		MINIMUM_FIX_DELTA,					// [0.0, inf) (default: 0.0003f) Minimum movement value.
-		FIX_DELTA_CENTER_PROP,				// [0.0, 1.0] (default: 0.0000001f) Center delta multiplier
-		ALT_DIRECTION_PROP,					// [0.0, 1.0] (default: 0.1f) Percentage applied to the other axis, like, if code thinks thing should go up/down, 20% of the value will go like left/right
+		FIX_DELTA_CENTER_PROP,				// [0.0, 1.0] (default: 0.000005f) Center delta multiplier
+		ALT_DIRECTION_PROP,					// [0.0, 1.0] (default: 0.02f) Percentage applied to the other axis, like, if code thinks thing should go up/down, 20% of the value will go like left/right
 		PROPORTION_MOVE_ON_COLLISION,		// [0.0, inf) (default: 0.49f) Amount sliced to objects on collision. 0.49f is near 0.5f that means 1/2 for each side.
 
 		_SIZE
 	};
 
-	enum class enum_fast_collisionable_boolean_e {
+	enum class enum_collisionable_boolean_e {
 		// READONLY DATA
-		RO_LAST_WAS_COLLISION,
+		RO_LAST_WAS_COLLISION,				// True if last check was a collision.
 
 		// REFERENCE DATA (set by user)
-		LOCKED,
+		LOCKED,								// (default: false) Lock any changes by collision in position?
 
 		_SIZE
 	};
 
 	// sprite only, not used yet
-	enum class enum_fast_collisionable_sprite_float_e {
+	enum class enum_collisionable_sprite_float_e {
 		// REFERENCE DATA (set by user)
-		REFLECTIVENESS,						// [0.0, 1.0) 244 & 255 lines @ collisionable_sprite::revert_once() (SPEED MULTIPLIER)
+		REFLECTIVENESS,						// [0.0, 1.0) (default: 0.5f) How much of the speed is converted back to the diretion it should go? Multiple collision tests result in lower result
 
 		_SIZE
 	};
 
 
-	const std::initializer_list<multi_pair<float, enum_fast_collisionable_float_e>>			default_fast_collisionable_float_il = {
+	const std::initializer_list<multi_pair<float, enum_collisionable_float_e>>			default_collisionable_float_il = {
 		// READONLY DATA
-		{0.0f,			enum_fast_collisionable_float_e::RO_LAST_PX},
-		{0.0f,			enum_fast_collisionable_float_e::RO_LAST_PY},
-		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_X_REVERT},
-		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_Y_REVERT},
-		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_X_FINAL},
-		{0.0f,			enum_fast_collisionable_float_e::RO_DIRECTION_Y_FINAL},
+		{0.0f,			enum_collisionable_float_e::RO_LAST_PX},
+		{0.0f,			enum_collisionable_float_e::RO_LAST_PY},
+		{0.0f,			enum_collisionable_float_e::RO_DIRECTION_X_REVERT},
+		{0.0f,			enum_collisionable_float_e::RO_DIRECTION_Y_REVERT},
+		{0.0f,			enum_collisionable_float_e::RO_DIRECTION_X_FINAL},
+		{0.0f,			enum_collisionable_float_e::RO_DIRECTION_Y_FINAL},
 
 		// REFERENCE DATA (set by user)
-		{1.000001f,		enum_fast_collisionable_float_e::CORRECTION_FACTOR},
-		{0.0003f,		enum_fast_collisionable_float_e::MINIMUM_FIX_DELTA},
-		{0.0000001f,	enum_fast_collisionable_float_e::FIX_DELTA_CENTER_PROP},
-		{0.1f,			enum_fast_collisionable_float_e::ALT_DIRECTION_PROP},
-		{0.49f,			enum_fast_collisionable_float_e::PROPORTION_MOVE_ON_COLLISION}
+		{1.000001f,		enum_collisionable_float_e::CORRECTION_FACTOR},
+		{0.0003f,		enum_collisionable_float_e::MINIMUM_FIX_DELTA},
+		{0.0001f,		enum_collisionable_float_e::FIX_DELTA_CENTER_PROP},
+		{0.02f,			enum_collisionable_float_e::ALT_DIRECTION_PROP},
+		{0.49f,			enum_collisionable_float_e::PROPORTION_MOVE_ON_COLLISION}
 	};
 
-	const std::initializer_list<multi_pair<bool, enum_fast_collisionable_boolean_e>>		default_fast_collisionable_boolean_il = {
+	const std::initializer_list<multi_pair<bool, enum_collisionable_boolean_e>>		default_collisionable_boolean_il = {
 		// REFERENCE DATA (set by user)
-		{false,			enum_fast_collisionable_boolean_e::RO_LAST_WAS_COLLISION},
+		{false,			enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION},
 
 		// REFERENCE DATA (set by user)
-		{false,			enum_fast_collisionable_boolean_e::LOCKED}
+		{false,			enum_collisionable_boolean_e::LOCKED}
 	};
 
-	const std::initializer_list<multi_pair<float, enum_fast_collisionable_sprite_float_e>>	default_fast_collisionable_sprite_float_il = {
+	const std::initializer_list<multi_pair<float, enum_collisionable_sprite_float_e>>	default_collisionable_sprite_float_il = {
 		// REFERENCE DATA (set by user)
-		{0.3f,			enum_fast_collisionable_sprite_float_e::REFLECTIVENESS}
+		{0.5f,			enum_collisionable_sprite_float_e::REFLECTIVENESS}
 	};
 
 
@@ -105,10 +102,11 @@ namespace Lunaris {
 	/// <para>Classes derived from this will work with the fast collision algorithm.</para>
 	/// <para>- The collision test is based on https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon </para>
 	/// <para>- The revert algorithm was created by me. If collision happens, you should revert_once(), so based on movement it knows where it should go.</para>
+	/// <para>Note: it may not be thread-safe. This is aimed to be configured and applied to a manager or directly from it.</para>
 	/// </summary>
 	class collisionable_base :
-		public fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>,
-		public fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>
+		public fixed_multi_map_work<static_cast<size_t>(enum_collisionable_float_e::_SIZE), float, enum_collisionable_float_e>,
+		public fixed_multi_map_work<static_cast<size_t>(enum_collisionable_boolean_e::_SIZE), bool, enum_collisionable_boolean_e>
 	{
 	protected:
 		static bool line_on_segment(const supported_fast_point_2d&, const supported_fast_point_2d&, const supported_fast_point_2d&);
@@ -117,6 +115,7 @@ namespace Lunaris {
 		static bool polygon_is_point_inside(const supported_fast_point_2d&, const std::vector<supported_fast_point_2d>&);
 
 		std::vector<supported_fast_point_2d> generated_on_think; // commonly based on screen position (for easier "real" collision)
+		std::function<void(collisionable_base*)> on_collision_do;
 
 		// Easy get index of vector (always valid, but vec_fit() first is recommended)
 		supported_fast_point_2d& vec_get_at(const size_t);
@@ -164,18 +163,28 @@ namespace Lunaris {
 		bool collide_test(const float&, const float&) const;
 
 		/// <summary>
+		/// <para>If on apply() there was a collision, this is called.</para>
+		/// </summary>
+		void set_run_on_collision(std::function<void(collisionable_base*)>);
+
+		/// <summary>
+		/// <para>Reset any function set to run on collision.</para>
+		/// </summary>
+		void unset_run_on_collision();
+
+		/// <summary>
 		/// <para>Apply data acquired during collide_auto (if not locked).</para>
 		/// </summary>
 		void apply();
 
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::set;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::get;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::index;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_float_e::_SIZE), float, enum_fast_collisionable_float_e>::size;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::set;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::get;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::index;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_boolean_e::_SIZE), bool, enum_fast_collisionable_boolean_e>::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_float_e::_SIZE), float, enum_collisionable_float_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_float_e::_SIZE), float, enum_collisionable_float_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_float_e::_SIZE), float, enum_collisionable_float_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_float_e::_SIZE), float, enum_collisionable_float_e>::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_boolean_e::_SIZE), bool, enum_collisionable_boolean_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_boolean_e::_SIZE), bool, enum_collisionable_boolean_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_boolean_e::_SIZE), bool, enum_collisionable_boolean_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_boolean_e::_SIZE), bool, enum_collisionable_boolean_e>::size;
 	};
 
 	/// <summary>
@@ -184,7 +193,7 @@ namespace Lunaris {
 	/// </summary>
 	class collisionable_sprite : 
 		public collisionable_base,
-		public fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>
+		public fixed_multi_map_work<static_cast<size_t>(enum_collisionable_sprite_float_e::_SIZE), float, enum_collisionable_sprite_float_e>
 	{
 		sprite& ref;
 	public:
@@ -206,10 +215,10 @@ namespace Lunaris {
 		using collisionable_base::get;
 		using collisionable_base::index;
 		using collisionable_base::size;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::set;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::get;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::index;
-		using fixed_multi_map_work<static_cast<size_t>(enum_fast_collisionable_sprite_float_e::_SIZE), float, enum_fast_collisionable_sprite_float_e>::size;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_sprite_float_e::_SIZE), float, enum_collisionable_sprite_float_e>::set;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_sprite_float_e::_SIZE), float, enum_collisionable_sprite_float_e>::get;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_sprite_float_e::_SIZE), float, enum_collisionable_sprite_float_e>::index;
+		using fixed_multi_map_work<static_cast<size_t>(enum_collisionable_sprite_float_e::_SIZE), float, enum_collisionable_sprite_float_e>::size;
 	};
 
 	/// <summary>
@@ -263,6 +272,22 @@ namespace Lunaris {
 		/// <param name="{vertexes&amp;}">Vertexes to test collision.</param>
 		/// <param name="{bool}">Lock this sprite movement (from this)?</param>
 		void push_back(vertexes&, const bool = false);
+
+		/// <summary>
+		/// <para>Add a reference to a sprite (automatically builds collision object inside referencing this).</para>
+		/// </summary>
+		/// <param name="{sprite&amp;}">Sprite to test collision.</param>
+		/// <param name="{std::function}">Do you want to setup something before the real push? Use this.</param>
+		/// <param name="{bool}">Lock this sprite movement (from this)?</param>
+		void push_back(sprite&, std::function<void(collisionable_sprite*)>, const bool = false);
+
+		/// <summary>
+		/// <para>Add a reference to a vertexes (automatically builds collision object inside referencing this).</para>
+		/// </summary>
+		/// <param name="{vertexes&amp;}">Vertexes to test collision.</param>
+		/// <param name="{std::function}">Do you want to setup something before the real push? Use this.</param>
+		/// <param name="{bool}">Lock this sprite movement (from this)?</param>
+		void push_back(vertexes&, std::function<void(collisionable_vertexes*)>, const bool = false);
 
 		/// <summary>
 		/// <para>The amount of collisionables in here.</para>

@@ -161,7 +161,7 @@ namespace Lunaris {
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_boolean_e::_SIZE), bool, enum_sprite_boolean_e>,
 		public fixed_multi_map_work<static_cast<size_t>(enum_sprite_color_e::_SIZE), color, enum_sprite_color_e>
 	{
-		transform m_assist_transform{}, m_assist_inuse{}; // it doesn't need to be created every time, and it can be shared between collision and drawing threads
+		transform m_assist_transform{}, m_assist_inuse{}, m_assist_inuse_think{}; // it doesn't need to be created every time, and it can be shared between collision and drawing threads
 	protected:
 		// raw transform, adapted transform, limit_x, limit_y
 		virtual void draw_task(transform, transform, const float&, const float&) {}
@@ -184,6 +184,12 @@ namespace Lunaris {
 		/// </summary>
 		/// <returns>{transform} Latest transform matrix.</returns>
 		transform copy_transform_in_use() const;
+
+		/// <summary>
+		/// <para>Get latest transformation used by think() function</para>
+		/// </summary>
+		/// <returns>{transform} Latest transform matrix.</returns>
+		transform copy_transform_in_use_think() const;
 
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::set;
 		using fixed_multi_map_work<static_cast<size_t>(enum_sprite_float_e::_SIZE), float, enum_sprite_float_e>::get;

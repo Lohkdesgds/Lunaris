@@ -84,7 +84,36 @@ namespace Lunaris {
 			}
 		};
 
+		const auto updcam_think = [&](const float& xx, const float& yy, const float& rr) {
+			std::lock_guard<std::recursive_mutex> supersafe(m_assist_inuse_think.get_internal_mutex());
+			if (draw_is_unaffected) {
+				float vx = 1.0f, vy = 1.0f;
+				m_assist_inuse_think.build_classic_fixed_proportion_stretched_auto();
+				m_assist_inuse_think.compare_scale_of(m_assist_transform, vx, vy); // ex: 1.777777 / 1.0
+				const float relxy = m_assist_transform.get_x_by_y();
+
+				const float corr_x = draw_scale_one_to_one ? (vx * relxy / vy) : (vx / vy); // OK, POSX * this
+
+				const float fixx = corr_x > 1.0f ? corr_x : 1.0f;
+				const float fixy = corr_x < 1.0f ? (1.0f / corr_x) : 1.0f;
+
+				m_assist_inuse_think.build_classic_fixed_proportion_auto(draw_scale_one_to_one ? 1.0f : relxy, 1.0f);
+
+				m_assist_inuse_think.translate_inverse(-xx * fixx, -yy * fixy);
+				m_assist_inuse_think.rotate_inverse(rr);
+				m_assist_inuse_think.apply();
+			}
+			else {
+				m_assist_inuse_think.identity();
+				m_assist_inuse_think.rotate(rr);
+				m_assist_inuse_think.translate(xx, yy);
+				m_assist_inuse_think.compose(m_assist_transform);
+				m_assist_inuse_think.apply();
+			}
+		};
+
 		updcam(draw_pos_x, draw_pos_y, draw_rot);
+		updcam_think(real_posx, real_posy, target_rot);
 
 		// - - - - - - - - Working - - - - - - - - //
 		if (draw_should_draw && // basic rule
@@ -186,8 +215,8 @@ namespace Lunaris {
 
 		think_task();
 
-		std::lock_guard<std::recursive_mutex> supersafe(m_assist_inuse.get_internal_mutex());
-		if (!m_assist_inuse.is_transform_coordinates_usable()) throw std::runtime_error("Transformation got invalid state!");
+		std::lock_guard<std::recursive_mutex> supersafe(m_assist_inuse_think.get_internal_mutex());
+		if (!m_assist_inuse_think.is_transform_coordinates_usable()) throw std::runtime_error("Transformation got invalid state!");
 
 		const float& scale_g = get<float>(enum_sprite_float_e::SCALE_G);
 		const float& scale_x = get<float>(enum_sprite_float_e::SCALE_X);
@@ -216,15 +245,20 @@ namespace Lunaris {
 		sex =   (scale_g * scale_x) * 0.5;
 		sey =   (scale_g * scale_y) * 0.5;		
 
-		m_assist_inuse.transform_coords(nwx, nwy);
-		m_assist_inuse.transform_coords(nex, ney);
-		m_assist_inuse.transform_coords(swx, swy);
-		m_assist_inuse.transform_coords(sex, sey);
+		m_assist_inuse_think.transform_coords(nwx, nwy);
+		m_assist_inuse_think.transform_coords(nex, ney);
+		m_assist_inuse_think.transform_coords(swx, swy);
+		m_assist_inuse_think.transform_coords(sex, sey);
 	}
 
 	LUNARIS_DECL transform sprite::copy_transform_in_use() const
 	{
 		return m_assist_inuse;
+	}
+
+	LUNARIS_DECL transform sprite::copy_transform_in_use_think() const
+	{
+		return m_assist_inuse_think;
 	}
 
 }

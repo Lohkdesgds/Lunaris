@@ -1255,7 +1255,7 @@ int graphics_test()
 		ffbmp.reset_shared();
 		bmppp.reset_shared();
 		giffye.reset_shared();
-		});
+	});
 
 	TESTLU(my_display.create(display_config()
 		.set_fullscreen(false)
@@ -1494,16 +1494,16 @@ int graphics_test()
 
 		switch (ev.key_id) {
 		case ALLEGRO_KEY_W:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, -0.001f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, -0.01f * ev.down);
 			break;
 		case ALLEGRO_KEY_A:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, -0.001f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, -0.01f * ev.down);
 			break;
 		case ALLEGRO_KEY_S:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, 0.001f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_Y, 0.01f * ev.down);
 			break;
 		case ALLEGRO_KEY_D:
-			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, 0.001f * ev.down);
+			blk_fixed.set<float>(enum_sprite_float_e::ACCEL_X, 0.01f * ev.down);
 			break;
 		case ALLEGRO_KEY_F11:
 			if (!ev.down) return;
@@ -1616,7 +1616,7 @@ int graphics_test()
 
 	collisionable_manager colmng;
 	colmng.push_back(blk_mouse);
-	colmng.push_back(blk_fixed);
+	colmng.push_back(blk_fixed, [](collisionable_sprite* s) { s->set_run_on_collision([](collisionable_base*) {cout << console::color::DARK_GRAY << "Block \"fixed\" collided once! lmao"; }); });
 	colmng.push_back(polygony);
 
 	size_t tps = 0, tps_c = 0;
@@ -1695,7 +1695,7 @@ int graphics_test()
 			txt_main.set<text::safe_string>(enum_text_safe_string_e::STRING, dat);
 		}
 	//}, thread::speed::HIGH_PERFORMANCE);//, 1.0/150);
-	}, thread::speed::INTERVAL, 1.0/500);
+	}, thread::speed::INTERVAL, 1.0/20);
 
 	cout << "Enabling things on screen...";
 
