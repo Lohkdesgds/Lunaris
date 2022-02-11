@@ -101,14 +101,12 @@ namespace Lunaris {
 
 				m_assist_inuse_think.translate_inverse(-xx * fixx, -yy * fixy);
 				m_assist_inuse_think.rotate_inverse(rr);
-				m_assist_inuse_think.apply();
 			}
 			else {
 				m_assist_inuse_think.identity();
 				m_assist_inuse_think.rotate(rr);
 				m_assist_inuse_think.translate(xx, yy);
 				m_assist_inuse_think.compose(m_assist_transform);
-				m_assist_inuse_think.apply();
 			}
 		};
 

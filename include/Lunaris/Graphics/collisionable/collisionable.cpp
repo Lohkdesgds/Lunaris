@@ -237,6 +237,10 @@ namespace Lunaris {
 	LUNARIS_DECL void collisionable_base::apply()
 	{
 		if (get<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION)) {
+			if (get<bool>(enum_collisionable_boolean_e::LOCKED)) {
+				set<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION, false);
+				return;
+			}
 			revert_once();
 			if (on_collision_do) on_collision_do(this);
 		}

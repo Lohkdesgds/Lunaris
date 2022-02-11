@@ -1615,7 +1615,7 @@ int graphics_test()
 	}
 
 	collisionable_manager colmng;
-	colmng.push_back(blk_mouse);
+	colmng.push_back(blk_mouse, true);
 	colmng.push_back(blk_fixed, [](collisionable_sprite* s) { s->set_run_on_collision([](collisionable_base*) {cout << console::color::DARK_GRAY << "Block \"fixed\" collided once! lmao"; }); });
 	colmng.push_back(polygony);
 
