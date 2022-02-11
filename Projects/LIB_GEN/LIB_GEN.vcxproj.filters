@@ -258,9 +258,6 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.h">
       <Filter>include\Lunaris\Utility\__impl\process</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp">
-      <Filter>include\Lunaris\Utility\__impl\process</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.h">
       <Filter>include\Lunaris\Utility\__impl\multi_map</Filter>
     </ClInclude>
@@ -473,6 +470,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.ipp">
       <Filter>include\Lunaris\Utility\__impl\tie</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp">
+      <Filter>include\Lunaris\Utility\__impl\process</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
