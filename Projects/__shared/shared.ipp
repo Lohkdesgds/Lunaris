@@ -132,6 +132,18 @@ int main(int argc, char* argv[]) {
 	if (argc > 1) {
 		cout << "Hello someone calling me with custom arguments! I received those:";
 		for (int a = 0; a < argc; a++) cout << "Argument #" << a << ": '" << argv[a] << "'";
+		cout << "Checking for input now...";
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::string _tmp;
+		std::cin >> _tmp;
+		cout << "If you see CORRECT here, we are GOOD: " << _tmp;
+
+		if (_tmp != "CORRECT") {
+			cout << "Sad news. INPUT not working. Locking process.";
+			while(1)
+				std::this_thread::sleep_for(std::chrono::seconds(5));
+		}
+
 		cout << "Have a great day! Exiting the app...";
 		return 0;
 	}
@@ -849,8 +861,11 @@ int utility_test(const std::string& self_path)
 		TESTLU(proc.reset(self_path, { "FIRST_ARGUMENT", "SECOND_ARGUMENT", "THIRD_ARGUMENT", "\"Forth argument, but within these \\\"\"" },
 			[&](process_sync& pr, const std::string& out) {
 				cout << console::color::DARK_GREEN << "[RUNNG] " << out;
+				if (out.find("KEYWORD"))
 				had_any_output = true;
 			}), "Could not launch process in a reasonable time!");
+
+		proc.write("CORRECT");
 
 		while (proc.is_running()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
