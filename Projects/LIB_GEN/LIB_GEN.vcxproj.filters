@@ -432,17 +432,11 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\bomb.h">
       <Filter>include\Lunaris\Utility\__include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\Lunaris\Utility\bomb\bomb.h">
-      <Filter>include\Lunaris\Utility\__impl\bomb</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Graphics\menu.h">
       <Filter>include\Lunaris\Graphics\__include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Graphics\menu\menu.h">
       <Filter>include\Lunaris\Graphics\__impl\menu</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.h">
-      <Filter>include\Lunaris\Utility\__impl\mutex</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\mutex.h">
       <Filter>include\Lunaris\Utility\__include</Filter>
@@ -473,6 +467,18 @@
     </ClInclude>
     <ClInclude Include="..\..\include\Lunaris\Utility\process\process.ipp">
       <Filter>include\Lunaris\Utility\__impl\process</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\bomb\bomb.h">
+      <Filter>include\Lunaris\Utility\__impl\bomb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\bomb\bomb.ipp">
+      <Filter>include\Lunaris\Utility\__impl\bomb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.h">
+      <Filter>include\Lunaris\Utility\__impl\mutex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.ipp">
+      <Filter>include\Lunaris\Utility\__impl\mutex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -560,14 +566,8 @@
     <ClCompile Include="..\..\include\Lunaris\Utility\path\path.cpp">
       <Filter>include\Lunaris\Utility\__impl\path</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\Lunaris\Utility\bomb\bomb.cpp">
-      <Filter>include\Lunaris\Utility\__impl\bomb</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\include\Lunaris\Graphics\menu\menu.cpp">
       <Filter>include\Lunaris\Graphics\__impl\menu</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\include\Lunaris\Utility\mutex\mutex.cpp">
-      <Filter>include\Lunaris\Utility\__impl\mutex</Filter>
     </ClCompile>
     <ClCompile Include="..\..\include\Lunaris\Graphics\vertex\vertex.cpp">
       <Filter>include\Lunaris\Graphics\__impl\vertex</Filter>

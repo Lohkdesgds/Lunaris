@@ -79,6 +79,7 @@
     <ClInclude Include="..\..\include\Lunaris\utility.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\bomb.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\bomb\bomb.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\bomb\bomb.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\config.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\config\config.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\config\config.ipp" />
@@ -102,6 +103,7 @@
     <ClInclude Include="..\..\include\Lunaris\Utility\multi_map\multi_map.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\mutex.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.h" />
+    <ClInclude Include="..\..\include\Lunaris\Utility\mutex\mutex.ipp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package\package.h" />
     <ClInclude Include="..\..\include\Lunaris\Utility\package\package.ipp" />
@@ -150,12 +152,10 @@
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\bitmap.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\gif.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Imported\algif5\lzw.cpp" />
-    <ClCompile Include="..\..\include\Lunaris\Utility\bomb\bomb.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\config\config.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\downloader\downloader.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\file\file.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\hash\hash.cpp" />
-    <ClCompile Include="..\..\include\Lunaris\Utility\mutex\mutex.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\path\path.cpp" />
     <ClCompile Include="..\..\include\Lunaris\Utility\random\random.cpp" />
     <ClInclude Include="..\..\include\Lunaris\Utility\tie\tie.ipp" />

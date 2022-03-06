@@ -7,3 +7,15 @@
 [submodule "include/Lunaris/Utility/process"]
 	path = include/Lunaris/Utility/process
 	url = https://www.github.com/Lohkdesgds/Lunaris-Process
+[submodule "include/Lunaris/Utility/bomb"]
+	path = include/Lunaris/Utility/bomb
+	url = https://github.com/Lohkdesgds/Lunaris-Bomb
+[submodule "include/Lunaris/Utility/future"]
+	path = include/Lunaris/Utility/future
+	url = https://github.com/Lohkdesgds/Lunaris-Future
+[submodule "include/Lunaris/Utility/multi_map"]
+	path = include/Lunaris/Utility/multi_map
+	url = https://github.com/Lohkdesgds/Lunaris-Multimap
+[submodule "include/Lunaris/Utility/mutex"]
+	path = include/Lunaris/Utility/mutex
+	url = https://github.com/Lohkdesgds/Lunaris-Mutex
