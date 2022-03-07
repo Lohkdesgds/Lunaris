@@ -22,7 +22,7 @@ namespace Lunaris {
 			float relative_posx = -1.0f, relative_posy = -1.0f; // [-1.0f, 1.0f]
 			unsigned buttons_pressed = 0;
 			uint8_t scroll_event = 0; // updated each event.
-			ALLEGRO_MOUSE_EVENT raw_mouse_event;
+			ALLEGRO_MOUSE_EVENT raw_mouse_event{};
 			mouse& mouse_itself;
 
 			mouse_event(mouse&);

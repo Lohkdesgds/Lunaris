@@ -2,6 +2,7 @@
 
 LUNARIS_DECL ALGIF_BITMAP* algif_create_bitmap(int w, int h) {
     ALGIF_BITMAP* bitmap = (ALGIF_BITMAP*)calloc(1, sizeof(ALGIF_BITMAP));
+    if (!bitmap) throw std::bad_alloc();
     bitmap->w = w;
     bitmap->h = h;
     bitmap->data = (uint8_t*)calloc(1, static_cast<size_t>(w * h));

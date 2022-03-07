@@ -46,7 +46,7 @@ LUNARIS_DECL int LZW_decode(ALLEGRO_FILE* file, ALGIF_BITMAP* bmp)
         int c;
         int len;
     }
-    codes[4096];                /* Maximum bit size is 12. */
+    codes[4096]{};                /* Maximum bit size is 12. */
     int n;
     int i, prev, code, c;
     int out_pos = 0;

@@ -16,7 +16,7 @@ namespace Lunaris {
 	/// </summary>
 	class transform : public NonMovable {
 		mutable std::recursive_mutex safe; // for modifiers
-		ALLEGRO_TRANSFORM t;
+		ALLEGRO_TRANSFORM t{};
 	public:
 		transform() = default;
 

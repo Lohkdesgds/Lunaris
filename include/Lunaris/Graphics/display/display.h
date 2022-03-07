@@ -503,7 +503,7 @@ namespace Lunaris {
 		const ALLEGRO_EVENT& _ev;
 		display& _ref;
 
-		ALLEGRO_DISPLAY_EVENT _transl; // non standard window event translated
+		ALLEGRO_DISPLAY_EVENT _transl{}; // non standard window event translated
 	public:
 		display_event(display&, const ALLEGRO_EVENT&);
 

@@ -241,8 +241,8 @@ namespace Lunaris {
 				set<bool>(enum_collisionable_boolean_e::RO_LAST_WAS_COLLISION, false);
 				return;
 			}
-			revert_once();
 			if (on_collision_do) on_collision_do(this);
+			else revert_once();
 		}
 	}
 

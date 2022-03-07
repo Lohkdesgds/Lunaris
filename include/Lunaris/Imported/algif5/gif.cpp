@@ -148,8 +148,8 @@ LUNARIS_DECL ALGIF_ANIMATION* algif_load_raw(ALLEGRO_FILE* file, const bool del_
             bmp = NULL;
 
             gif->frames_count++;
-            gif->frames = (ALGIF_FRAME*)realloc((void*)gif->frames,
-                gif->frames_count * sizeof * gif->frames);
+            gif->frames = (ALGIF_FRAME*)realloc((void*)gif->frames, gif->frames_count * sizeof * gif->frames);
+            if (!gif->frames) throw std::bad_alloc();
             gif->frames[gif->frames_count - 1] = frame;
 
             memset(&frame, 0, sizeof frame); /* For next frame. */
